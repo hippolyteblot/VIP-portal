@@ -6,6 +6,9 @@ import java.util.Set;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 
+import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.models.GroupType;
+
 public interface GroupDAO {
 
     public void add(Group group) throws DAOException;
