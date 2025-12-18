@@ -7,12 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.PageBuilder;
 
 public abstract class CommonBusiness {
 
     protected CorePermissions permissions;
     protected Supplier<User> userSupplier;
     protected ConfigurationBusiness configurationBusiness;
+    protected PageBuilder pageBuilder;
 
     @Autowired
     public void setUserSupplier(Supplier<User> userSupplier) {
@@ -27,6 +29,11 @@ public abstract class CommonBusiness {
     @Autowired
     public void setCorePermissions(CorePermissions corePermissions) {
         this.permissions = corePermissions;
+    }
+
+    @Autowired
+    public void setPageBuilder(PageBuilder pageBuilder) {
+        this.pageBuilder = pageBuilder;
     }
 
     public User getUser() {
