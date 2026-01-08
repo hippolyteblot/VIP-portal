@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
@@ -20,10 +21,11 @@ public class AppVersion implements IsSerializable {
     private Map<String, String> settings;
     private String source;
 
-    public AppVersion() {}
+    public AppVersion() {
+    }
 
     public AppVersion(String applicationName, String version, String descriptor,
-                      Map<String, String> settings, boolean visible, String source) {
+            Map<String, String> settings, boolean visible, String source) {
         this.applicationName = applicationName;
         this.version = version;
         this.descriptor = descriptor;
@@ -39,13 +41,13 @@ public class AppVersion implements IsSerializable {
     }
 
     public AppVersion(String applicationName, String version, String descriptor,
-                      String doi, Map<String, String> settings, boolean visible, String source) {
+            String doi, Map<String, String> settings, boolean visible, String source) {
         this(applicationName, version, descriptor, settings, visible, source);
         this.doi = doi;
     }
 
     public AppVersion(String applicationName, String version, String descriptor,
-                      String doi, boolean visible, String source, List<Resource> resources, List<Tag> tags) {
+            String doi, boolean visible, String source, List<Resource> resources, List<Tag> tags) {
         this(applicationName, version, descriptor, new HashMap<>(), visible, source);
         this.doi = doi;
         this.resources = resources;
@@ -61,13 +63,17 @@ public class AppVersion implements IsSerializable {
     }
 
     public String getDescriptorFilename() {
-        // Return the "canonical filename" of the boutiques descriptor for this AppVersion.
-        // Both applicationName and version strings are assumed to be filename-safe already,
+        // Return the "canonical filename" of the boutiques descriptor for this
+        // AppVersion.
+        // Both applicationName and version strings are assumed to be filename-safe
+        // already,
         // except for spaces which are replaced with underscores.
-        return applicationName.replace(' ', '_') + '-' + version.replace(' ','_') + ".json";
+        return applicationName.replace(' ', '_') + '-' + version.replace(' ', '_') + ".json";
     }
 
-    public String getDescriptor() { return descriptor; }
+    public String getDescriptor() {
+        return descriptor;
+    }
 
     public String getDoi() {
         return doi;
@@ -103,5 +109,39 @@ public class AppVersion implements IsSerializable {
 
     public void setTags(List<Tag> tags) {
         this.tags = tags;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof AppVersion))
+            return false;
+
+        AppVersion other = (AppVersion) o;
+
+        return visible == other.visible &&
+                Objects.equals(applicationName, other.applicationName) &&
+                Objects.equals(version, other.version) &&
+                Objects.equals(descriptor, other.descriptor) &&
+                Objects.equals(doi, other.doi) &&
+                Objects.equals(resources, other.resources) &&
+                Objects.equals(tags, other.tags) &&
+                Objects.equals(settings, other.settings) &&
+                Objects.equals(source, other.source);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                applicationName,
+                version,
+                descriptor,
+                doi,
+                visible,
+                resources,
+                tags,
+                settings,
+                source);
     }
 }
