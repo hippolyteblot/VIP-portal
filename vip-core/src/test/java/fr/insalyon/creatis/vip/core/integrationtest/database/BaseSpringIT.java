@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.ActiveProfiles;
@@ -39,6 +40,7 @@ import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.inter.CheckedRunnable;
 import fr.insalyon.creatis.vip.core.server.security.common.SpringPrincipalUser;
 import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticationProvider;
 
@@ -153,11 +155,22 @@ public abstract class BaseSpringIT {
         groupBusiness.add(new Group(groupName, isPublic, type));
     }
 
-    public void setAdminContext() throws VipException, GRIDAClientException {
+    public void setAdminContext() throws VipException {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
         User adminUser = configurationBusiness.getUserWithGroups(adminEmail);
 
         SecurityContextHolder.getContext().setAuthentication(provider.createAuthenticationFromUser(adminUser));
+    }
+
+    protected <E extends Exception> void asAdminContext(CheckedRunnable<E> action) throws Exception {
+        SecurityContext original = SecurityContextHolder.getContext();
+
+        try {
+            setAdminContext();
+            action.run();
+        } finally {
+            SecurityContextHolder.setContext(original);
+        }
     }
 
     protected RequestPostProcessor getUserSecurityMock(User user) {
