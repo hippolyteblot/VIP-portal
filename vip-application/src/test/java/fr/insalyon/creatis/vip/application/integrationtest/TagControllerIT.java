@@ -79,9 +79,12 @@ public class TagControllerIT extends BaseSpringIT {
         Tag b = new Tag("test2", "true", ValueType.BOOLEAN, "appA", "0.1", false, false);
 
         applicationDAO.add(app);
-        appVersionBusiness.add(version);
-        tagBusiness.add(a);
-        tagBusiness.add(b);
+        asAdminContext(() -> {
+            appVersionBusiness.add(version);
+            tagBusiness.add(a);
+            tagBusiness.add(b);
+
+        });
 
         // not the rights
         mockMvc.perform(get("/internal/tags")

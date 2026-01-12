@@ -76,6 +76,14 @@ public class CorePermissions {
         }
     }
 
+    public <T> void checkListInList(List<T> expected, List<T> actual) throws VipException {
+     for (T item : actual) {
+        if ( ! expected.contains(item)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+     }
+    }
+
     public <T> void checkUnchanged(T a, T b) throws VipException {
         if (a != b) {
             throw new VipException(DefaultError.ACCESS_DENIED); 
