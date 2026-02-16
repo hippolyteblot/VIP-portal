@@ -10,39 +10,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.vip.application.models.Resource;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
-import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
+import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.SpringInternalApiConfig;
 
-@ContextConfiguration(classes = { SpringInternalApiConfig.class })
-public class ResourceControllerIT extends BaseSpringIT {
+public class ResourceControllerIT extends BaseInternalApiSpringIT {
 
-    @Autowired
-    private WebApplicationContext wac;
-
-    private MockMvc mockMvc;
-    private ObjectMapper mapper;
     private User adminUser;
     private User developperUser;
     private User basicUser;
@@ -51,12 +36,6 @@ public class ResourceControllerIT extends BaseSpringIT {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(wac)
-                .defaultRequest(MockMvcRequestBuilders.get("/").servletPath("/internal"))
-                .apply(SecurityMockMvcConfigurers.springSecurity())
-                .build();
-        mapper = new ObjectMapper();
 
         adminUser = createUser(emailUser1, UserLevel.Administrator);
         developperUser = createUser(emailUser2, UserLevel.Developer);
@@ -73,7 +52,7 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(resource)))
-                .andExpect(jsonPath("$.errorCode").value(1001))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                 .andExpect(status().is4xxClientError());
 
         // forbidden for developer User
@@ -82,7 +61,7 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(resource)))
-                .andExpect(jsonPath("$.errorCode").value(1001))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                 .andExpect(status().is4xxClientError());
 
         // ok for admin
@@ -116,14 +95,14 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(resource)))
-                .andExpect(jsonPath("$.errorCode").value(1001))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                 .andExpect(status().is4xxClientError());
         mockMvc.perform(put("/internal/resources/" + resource.getName())
                 .with(getUserSecurityMock(developperUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(resource)))
-                .andExpect(jsonPath("$.errorCode").value(1001))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                 .andExpect(status().is4xxClientError());
 
         // update resource wrong ids
@@ -134,7 +113,7 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .content(mapper.writeValueAsString(resource)))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(8009));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.BAD_INPUT_FIELD.getCode()));
 
         // update & check
         MvcResult result = mockMvc.perform(put("/internal/resources/" + resource.getName())
@@ -167,14 +146,14 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(resource)))
-                .andExpect(jsonPath("$.errorCode").value(1000))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                 .andExpect(status().is4xxClientError());
         mockMvc.perform(delete("/internal/resources/" + resource.getName())
                 .with(getUserSecurityMock(developperUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(resource)))
-                .andExpect(jsonPath("$.errorCode").value(1000))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                 .andExpect(status().is4xxClientError());
 
         // delete
@@ -195,7 +174,7 @@ public class ResourceControllerIT extends BaseSpringIT {
         Group groupPublic = groupBusiness.get("public");
         Resource resource = new Resource("test");
 
-        resource.setGroups(List.of(groupPrivate, groupPublic));
+        resource.setGroups(Set.of(groupPrivate, groupPublic));
         configurationBusiness.addUserToGroup(emailUser2, "private");
         developperUser = configurationBusiness.getUserWithGroups(emailUser2);
 
@@ -212,7 +191,7 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .with(getUserSecurityMock(adminUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.errorCode").value(1000))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                 .andExpect(status().is4xxClientError());
 
         // not access (basic user)
@@ -220,7 +199,7 @@ public class ResourceControllerIT extends BaseSpringIT {
                 .with(getUserSecurityMock(basicUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf())
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.errorCode").value(1000))
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                 .andExpect(status().is4xxClientError());
 
         // access because private group of developer
@@ -251,7 +230,7 @@ public class ResourceControllerIT extends BaseSpringIT {
         createGroup("test", GroupType.RESOURCE, true);
 
         Group group = groupBusiness.get("test");
-        resource1.setGroups(List.of(group));
+        resource1.setGroups(Set.of(group));
 
         // create resources
         mockMvc.perform(post("/internal/resources")
