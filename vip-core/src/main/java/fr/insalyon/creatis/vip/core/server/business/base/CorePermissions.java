@@ -52,7 +52,7 @@ public class CorePermissions {
         }
     }
 
-    public Set<Group> filterOnlyUserGroups(List<Group> toFilter) {
+    public Set<Group> filterOnlyUserGroups(Set<Group> toFilter) {
         User user = uSupplier.get();
         Set<Group> result = new HashSet<>();
         Set<Group> userGroups = user.getGroups();

@@ -271,12 +271,12 @@ public class ApplicationBusiness extends CommonBusiness {
     // this function need to only map groups that user can see
     // otherwise it will lead to permission leak issues
     private Application mapGroups(Application app) throws VipException {
-        List<Group> appGroups;
+        Set<Group> appGroups;
 
         if (app == null) {
             return null;
         } else {
-            appGroups = groupBusiness.getByApplication(app.getName());
+            appGroups = new HashSet<Group>(groupBusiness.getByApplication(app.getName()));
 
             app.setGroups(permissions.filterOnlyUserGroups(appGroups));
             return app;
