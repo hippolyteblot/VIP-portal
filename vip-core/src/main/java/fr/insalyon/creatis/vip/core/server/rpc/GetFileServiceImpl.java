@@ -3,8 +3,8 @@ package fr.insalyon.creatis.vip.core.server.rpc;
 import fr.insalyon.creatis.devtools.zip.FolderZipper;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.Server;
-import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
+import fr.insalyon.creatis.vip.core.server.business.util.FileUtil;
+
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,35 +20,44 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Path;
 
 public class GetFileServiceImpl extends HttpServlet {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private UserDAO userDAO;
-    private Server server;
+    private FileUtil fileUtil;
 
     @Override
     public void init() throws ServletException {
         super.init();
         ApplicationContext applicationContext = WebApplicationContextUtils.findWebApplicationContext(getServletContext());
-        userDAO = applicationContext.getBean(UserDAO.class);
-        server = applicationContext.getBean(Server.class);
+        fileUtil = applicationContext.getBean(FileUtil.class);
     }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException {
         try {
-            User user = userDAO.getUserBySession(
-                    req.getParameter(CoreConstants.COOKIES_SESSION));
 
+            User user = (User) req.getSession().getAttribute(CoreConstants.SESSION_USER);
             String filepath = req.getParameter("filepath");
 
-            if (filepath != null && !filepath.isEmpty()) {
+            if (user == null) {
+                logger.warn("Download from an unlogged user (filepath : {}", filepath);
+                resp.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not logged in");
+                return;
+            }
 
-                File file = new File(server.getWorkflowsPath()
-                        + filepath);
+            if (filepath != null && !filepath.isEmpty()) {
+                Path requestedPath = fileUtil.getValidWorkflowPath(user, filepath);
+
+                if (requestedPath == null) {
+                    resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid file path");
+                    return;
+                }
+
+                File file = requestedPath.toFile();
 
                 boolean isDir = false;
                 if (file.isDirectory()) {

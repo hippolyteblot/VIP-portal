@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 import fr.insalyon.creatis.vip.api.exception.ApiError;
-import fr.insalyon.creatis.vip.api.rest.config.BaseWebSpringIT;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.server.model.Module;
 import fr.insalyon.creatis.vip.core.server.model.SupportedTransferProtocol;
@@ -37,7 +37,7 @@ import fr.insalyon.creatis.vip.core.server.model.SupportedTransferProtocol;
 /**
  * Test method on platform path
  */
-public class PlatformControllerIT extends BaseWebSpringIT {
+public class PlatformControllerIT extends BaseRestApiSpringIT {
 
     @Test
     public void platformShouldNotBeSecured() throws Exception {

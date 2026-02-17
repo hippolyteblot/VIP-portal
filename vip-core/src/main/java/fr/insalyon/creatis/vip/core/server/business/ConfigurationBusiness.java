@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -939,5 +940,12 @@ public class ConfigurationBusiness {
         } catch (VipException e) {
             logger.error("Cannot sent mail to admin. Ignoring", e);
         }
+    }
+
+    public Set<Group> getOrLoadUserGroups(User user) throws VipException {
+        if (user.getGroups() == null || user.getGroups().isEmpty()) {
+            user.setGroups(getUserGroups(user.getEmail()));
+        }
+        return user.getGroups();
     }
 }

@@ -1,6 +1,7 @@
 package fr.insalyon.creatis.vip.core.server.dao;
 
 import java.util.List;
+import java.util.Set;
 
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
@@ -19,5 +20,5 @@ public interface GroupDAO {
 
     public List<Group> getByApplication(String applicationName) throws DAOException;
 
-    public List<Group> getByRessource(String ressourceName) throws DAOException;
+    public Set<Group> getByRessource(String ressourceName) throws DAOException;
 }

@@ -6,10 +6,9 @@ import static fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants.TR
 import static fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants.USERS_HOME;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -55,7 +54,6 @@ import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness
 import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness.LFCAccessType;
 import fr.insalyon.creatis.vip.datamanager.server.business.TransferPoolBusiness;
 import jakarta.annotation.PreDestroy;
-
 
 @Service
 public class DataApiBusiness {
@@ -375,7 +373,6 @@ public class DataApiBusiness {
 
     private void writeFileFromBase64(String base64Content, String localFilePath) throws VipException {
         Base64.Decoder decoder = Base64.getDecoder();
-        StringReader stringReader = new StringReader(base64Content);
         try {
             InputStream inputStream = ReaderInputStream.builder()
                     .setReader(new StringReader(base64Content))
@@ -390,7 +387,7 @@ public class DataApiBusiness {
     }
 
     private boolean saveInputStreamToFile(InputStream is, String path) throws VipException {
-        try (FileOutputStream fos = new FileOutputStream(path)) {
+        try (OutputStream fos = Files.newOutputStream(Paths.get(path))) {
             byte[] buffer = new byte[1024];
             int bytesRead;
             boolean isFileEmpty = true;
@@ -400,9 +397,6 @@ public class DataApiBusiness {
             }
             fos.flush();
             return isFileEmpty;
-        } catch (FileNotFoundException e) {
-            logger.error("Error creating new file {}", path ,e);
-            throw new VipException("Upload error", e);
         } catch (IOException e) {
             logger.error("IO Error storing file {}", path, e);
             throw new VipException("Upload error", e);
@@ -504,27 +498,24 @@ public class DataApiBusiness {
     }
 
     private List<Data> baseGetFileData(String path) throws VipException {
-        return lfcBusiness.listDir(
-            currentUserProvider.get(), path, true);
+        return lfcBusiness.listDir(currentUserProvider.get(), path, true);
     }
 
     /* return the operation id */
     private String baseDownloadFile(String path) throws VipException {
-        return transferPoolBusiness.downloadFile(
-            currentUserProvider.get(), path);
+        return transferPoolBusiness.downloadFile(currentUserProvider.get(), path);
     }
 
     private String baseUploadFile(String localPath, String lfcPath)
             throws VipException {
         return transferPoolBusiness.uploadFile(
-            currentUserProvider.get(), localPath, lfcPath);
+                currentUserProvider.get(), localPath, lfcPath);
     }
 
     private PoolOperation baseGetPoolOperation(String operationId, User user)
             throws VipException {
         // need to specify the user to avoid accessing apiContext from another thread
-        return transferPoolBusiness.getOperationById(
-                operationId, user.getFolder());
+        return transferPoolBusiness.getOperationById(operationId, user.getFolder());
     }
 
     private PoolOperation baseGetDownloadOperation(String operationId) throws VipException {
@@ -532,8 +523,7 @@ public class DataApiBusiness {
     }
 
     private Long baseGetFileModificationDate(String path) throws VipException {
-        return lfcBusiness.getModificationDate(
-            currentUserProvider.get(), path);
+        return lfcBusiness.getModificationDate(currentUserProvider.get(), path);
     }
 
     private void baseDeletePath(String path) throws VipException {

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
-import fr.insalyon.creatis.vip.api.rest.config.BaseWebSpringIT;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.api.tools.spring.ApikeyRequestPostProcessor;
 import fr.insalyon.creatis.vip.api.tools.spring.BearerTokenRequestPostProcessor;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
@@ -20,9 +20,9 @@ import fr.insalyon.creatis.vip.core.client.DefaultError;
  * These tests check the authentication with the spring test tools.
  * It requests a wrong url that should be secured and expects a 404 when OK
  * <p>
- * Use common vip spring test configuration ({@link BaseWebSpringIT}
+ * Use common vip spring test configuration ({@link BaseRestApiSpringIT}
  */
-public class SpringAuthenticationIT extends BaseWebSpringIT {
+public class SpringAuthenticationIT extends BaseRestApiSpringIT {
 
     @Test
     public void authenticationOK() throws Exception {

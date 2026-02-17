@@ -2,8 +2,6 @@ package fr.insalyon.creatis.vip.application.server.dao;
 
 import java.util.List;
 
-import java.util.List;
-
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.core.models.Group;

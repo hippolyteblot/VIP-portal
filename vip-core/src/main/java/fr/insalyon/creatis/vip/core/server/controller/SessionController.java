@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.business.SessionBusiness;
 import fr.insalyon.creatis.vip.core.server.model.AuthenticationCredentials;
 import fr.insalyon.creatis.vip.core.server.model.Session;
@@ -61,19 +63,17 @@ public class SessionController {
 
             sessionBusiness.createLoginCookies(request, response, session);
             return session;
-        } catch (UnsupportedEncodingException e) {
+        } catch (UnsupportedEncodingException | VipException e) {
+            if (e.getMessage().startsWith("Authentication failed")) {
+                throw new VipException(DefaultError.BAD_CREDENTIALS);
+            }
             throw new VipException("Failed to create user session!", e);
         }
     }
 
     @DeleteMapping
     public void deleteSession(HttpServletRequest request, HttpServletResponse response) throws VipException {
-        try {
-            sessionBusiness.signout();
-            sessionBusiness.clearLoginCookies(response);
-
-        } catch (VipException e) {
-            throw new VipException(e); // change
-        }
+        sessionBusiness.signout();
+        sessionBusiness.clearLoginCookies(response);
     }
 }

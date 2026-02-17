@@ -5,7 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,7 @@ public class ResourceIT extends BaseSpringIT {
             ResourceType.BATCH, 
             "conf.file",
             new ArrayList<>(),
-            new ArrayList<>());
+            new HashSet<>());
     
         createGroup("test_resource", GroupType.RESOURCE);
         resourceBusiness.add(resource);
@@ -105,7 +106,7 @@ public class ResourceIT extends BaseSpringIT {
         Group group = groupBusiness.get("resourcetest");
         User user = configurationBusiness.getUser("super@test.insa");
 
-        resource.setGroups(Arrays.asList(group));
+        resource.setGroups(Set.of(group));
         resourceBusiness.update(resource);
         assertEquals(0, resourceBusiness.getAvailableForExecution(user).size());
 

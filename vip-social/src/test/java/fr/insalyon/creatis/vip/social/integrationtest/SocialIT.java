@@ -172,7 +172,7 @@ public class SocialIT extends BaseSpringIT {
         );
 
         // INSERT + nonExistent foreign key sender => violation
-        assertTrue(StringUtils.contains(exception.getMessage(), "JdbcSQLException: Referential integrity constraint violation"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "Referential integrity constraint violation"));
     }
 
 
@@ -562,7 +562,7 @@ public class SocialIT extends BaseSpringIT {
                 );
 
         // INSERT + nonExistent foreign key sender => violation
-        assertTrue(StringUtils.contains(exception.getMessage(), "JdbcSQLException: Referential integrity constraint violation"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "Referential integrity constraint violation"));
     }
 
 
@@ -581,7 +581,7 @@ public class SocialIT extends BaseSpringIT {
                 );
 
         // INSERT + nonExistent foreign key groupName => violation
-        assertTrue(StringUtils.contains(exception.getMessage(), "JdbcSQLException: Referential integrity constraint violation"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "Referential integrity constraint violation"));
     }
 
     @Test

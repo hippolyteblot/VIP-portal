@@ -17,10 +17,7 @@ import fr.insalyon.creatis.vip.application.server.business.BoutiquesBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
 
-public class BoutiquesParsingIT extends BaseSpringIT {
-
-    @Autowired
-    BoutiquesBusiness boutiquesBusiness;
+public class BoutiquesParsingIT extends BaseApplicationSpringIT {
 
     @Value("classpath:FreeSurfer-Recon-all_v731.json")
     Resource resourceFile;

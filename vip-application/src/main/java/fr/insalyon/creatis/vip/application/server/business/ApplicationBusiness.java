@@ -52,7 +52,7 @@ public class ApplicationBusiness extends CommonBusiness {
     public void add(Application app) throws VipException {
         permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
 
-        if (userSupplier.get().getLevel().equals(UserLevel.Developer)) {
+        if (getUserLevel().equals(UserLevel.Developer)) {
             // developers can only assign from private groups they belong to
             // at application creation
             permissions.checkOnlyUserPrivateGroups(app.getGroups());
@@ -61,7 +61,7 @@ public class ApplicationBusiness extends CommonBusiness {
             applicationDAO.add(app);
 
             for (String groupName : app.getGroupsNames()) {
-                associate(app, new Group(groupName));
+                associate(app, groupName);
             }
         } catch (DAOException ex) {
             throw new VipException(ex);
@@ -77,7 +77,7 @@ public class ApplicationBusiness extends CommonBusiness {
         }
         permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
 
-        if (userSupplier.get().getLevel().equals(UserLevel.Developer)) {
+        if (getUserLevel().equals(UserLevel.Developer)) {
             // this is related to developers
             // they can only remove application from private groups they belong to
             permissions.checkItemInList(app, getUserContextApplications());
@@ -97,22 +97,23 @@ public class ApplicationBusiness extends CommonBusiness {
 
         permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
 
-        if (userSupplier.get().getLevel().equals(UserLevel.Developer)) {
+        if (getUserLevel().equals(UserLevel.Developer)) {
             // developer can only associate group at CREATION
             permissions.checkUnchanged(app.getGroups(), existingApp.getGroups());
+            // edition only on application from privates groups
+            permissions.checkOnlyUserPrivateGroups(existingApp.getGroups());
         }
         try {
-            Application before = getApplication(app.getName());
-            List<String> beforeGroupsNames = before.getGroupsNames();
+            Set<String> beforeGroupsNames = existingApp.getGroupsNames();
 
             applicationDAO.update(app);
             for (String group : app.getGroupsNames()) {
                 if (!beforeGroupsNames.removeIf((s) -> s.equals(group))) {
-                    associate(app, new Group(group));
+                    associate(app, group);
                 }
             }
             for (String group : beforeGroupsNames) {
-                dissociate(app, new Group(group));
+                dissociate(app, group);
             }
         } catch (DAOException ex) {
             throw new VipException(ex);
@@ -145,7 +146,7 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public List<Application> getUserContextApplications() throws VipException {
-        User user = userSupplier.get();
+        User user = getUser();
 
         if (user.isSystemAdministrator()) {
             return getApplications();
@@ -176,7 +177,7 @@ public class ApplicationBusiness extends CommonBusiness {
         // if you perform this function as an Admin you will only get
         // applications of groups you belong to.
         // notes: use getApplications() to retrieve everything in DB
-        List<Group> userGroups = configurationBusiness.getUserGroups(user.getEmail()).keySet()
+        List<Group> userGroups = configurationBusiness.getOrLoadUserGroups(user)
             .stream()
             .filter((g) -> g.getType().equals(GroupType.APPLICATION))
             .collect(Collectors.toList());
@@ -246,9 +247,9 @@ public class ApplicationBusiness extends CommonBusiness {
         }
     }
 
-    public void associate(Application app, Group group) throws VipException {
+    public void associate(Application app, String groupName) throws VipException {
         app = getApplication(app.getName());
-        group = groupBusiness.get(group.getName());
+        Group group = groupBusiness.get(groupName);
 
         try {
             applicationDAO.associate(app, group);
@@ -257,7 +258,9 @@ public class ApplicationBusiness extends CommonBusiness {
         }
     }
 
-    public void dissociate(Application app, Group group) throws VipException {
+    public void dissociate(Application app, String groupName) throws VipException {
+        Group group = groupBusiness.get(groupName);
+
         try {
             applicationDAO.dissociate(app, group);
         } catch (DAOException e) {
@@ -268,12 +271,12 @@ public class ApplicationBusiness extends CommonBusiness {
     // this function need to only map groups that user can see
     // otherwise it will lead to permission leak issues
     private Application mapGroups(Application app) throws VipException {
-        List<Group> appGroups;
+        Set<Group> appGroups;
 
         if (app == null) {
             return null;
         } else {
-            appGroups = groupBusiness.getByApplication(app.getName());
+            appGroups = new HashSet<Group>(groupBusiness.getByApplication(app.getName()));
 
             app.setGroups(permissions.filterOnlyUserGroups(appGroups));
             return app;

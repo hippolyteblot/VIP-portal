@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Assertions;
@@ -51,7 +52,7 @@ import fr.insalyon.creatis.vip.api.data.UserTestUtils;
 import fr.insalyon.creatis.vip.api.exception.ApiError;
 import fr.insalyon.creatis.vip.api.model.Execution;
 import fr.insalyon.creatis.vip.api.model.ExecutionStatus;
-import fr.insalyon.creatis.vip.api.rest.config.BaseWebSpringIT;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.api.rest.config.RestTestUtils;
 import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.job.TaskStatus;
@@ -61,7 +62,6 @@ import fr.insalyon.creatis.vip.application.models.ResourceType;
 import fr.insalyon.creatis.vip.application.models.Task;
 import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
 import fr.insalyon.creatis.vip.application.server.business.ResourceBusiness;
-import fr.insalyon.creatis.vip.application.server.business.util.FileUtil;
 import fr.insalyon.creatis.vip.application.server.dao.SimulationDAO;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
@@ -71,7 +71,7 @@ import fr.insalyon.creatis.vip.core.models.GroupType;
 /**
  * Test method on platform path
  */
-public class ExecutionControllerIT extends BaseWebSpringIT {
+public class ExecutionControllerIT extends BaseRestApiSpringIT {
 
     private Workflow w1;
     private Workflow w2;
@@ -387,8 +387,8 @@ public class ExecutionControllerIT extends BaseWebSpringIT {
 
         Mockito.when(server.getVoName()).thenReturn("test-vo-name");
         Mockito.when(server.getServerProxy("test-vo-name")).thenReturn("/path/to/proxy");
-        Mockito.when(getWebServiceEngine().launch(eq(engineEndpoint), workflowContentCaptor.capture(), inputsCaptor.capture(), eq("{\"default.executor\":\"LOCAL\"}"), eq(""), eq("/path/to/proxy"))).thenReturn(workflowId, (String) null);
-        Mockito.when(getWebServiceEngine().getStatus(engineEndpoint, workflowId)).thenReturn(SimulationStatus.Running, (SimulationStatus) null);
+        Mockito.when(webServiceEngine.launch(eq(engineEndpoint), workflowContentCaptor.capture(), inputsCaptor.capture(), eq("{\"default.executor\":\"LOCAL\"}"), eq(""), eq("/path/to/proxy"))).thenReturn(workflowId, (String) null);
+        Mockito.when(webServiceEngine.getStatus(engineEndpoint, workflowId)).thenReturn(SimulationStatus.Running, (SimulationStatus) null);
 
         Workflow w = new Workflow(workflowId, baseUser1.getFullName(), WorkflowStatus.Running, startDate, null, "Exec test 1", appName, versionName, "", engineEndpoint, null);
         when(workflowDAO.get(workflowId)).thenReturn(w, (Workflow) null);
@@ -415,7 +415,7 @@ public class ExecutionControllerIT extends BaseWebSpringIT {
                 ));
 
         // verify workflow path
-        Assertions.assertEquals(FileUtil.read(getBoutiquesTestFile()), workflowContentCaptor.getValue());
+        Assertions.assertEquals(fileUtil.read(getBoutiquesTestFile()), workflowContentCaptor.getValue());
 
         // verify inputs / same as gwendia without optional one
         String inputs = inputsCaptor.getValue();
@@ -451,7 +451,7 @@ public class ExecutionControllerIT extends BaseWebSpringIT {
             ResourceType.LOCAL, 
             "", 
             Arrays.asList(engine.getName()),
-            Arrays.asList(new Group("testResources", true, GroupType.APPLICATION)));
+            Set.of(new Group("testResources", true, GroupType.APPLICATION)));
 
         engineBusiness.add(engine);
         resourceBusiness.add(resource);

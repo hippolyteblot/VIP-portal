@@ -20,35 +20,37 @@ public class AppVersion implements IsSerializable {
     private List<Tag> tags;
     private Map<String, String> settings;
     private String source;
+    private String note;
 
     public AppVersion() {
     }
 
     public AppVersion(String applicationName, String version, String descriptor,
-            Map<String, String> settings, boolean visible, String source) {
+                      Map<String, String> settings, boolean visible, String source, String note) {
         this.applicationName = applicationName;
         this.version = version;
         this.descriptor = descriptor;
         this.visible = visible;
         this.source = source;
+        this.note = note;
         this.resources = new ArrayList<>();
         this.tags = new ArrayList<>();
         this.settings = settings;
     }
 
     public AppVersion(String applicationName, String version, String descriptor, boolean visible) {
-        this(applicationName, version, descriptor, new HashMap<>(), visible, "");
+        this(applicationName, version, descriptor, new HashMap<>(), visible, "", "");
     }
 
     public AppVersion(String applicationName, String version, String descriptor,
-            String doi, Map<String, String> settings, boolean visible, String source) {
-        this(applicationName, version, descriptor, settings, visible, source);
+                      String doi, Map<String, String> settings, boolean visible, String source, String note) {
+        this(applicationName, version, descriptor, settings, visible, source, note);
         this.doi = doi;
     }
 
     public AppVersion(String applicationName, String version, String descriptor,
-            String doi, boolean visible, String source, List<Resource> resources, List<Tag> tags) {
-        this(applicationName, version, descriptor, new HashMap<>(), visible, source);
+                      String doi, boolean visible, String source, String note, List<Resource> resources, List<Tag> tags) {
+        this(applicationName, version, descriptor, new HashMap<>(), visible, source, note);
         this.doi = doi;
         this.resources = resources;
         this.tags = tags;
@@ -111,6 +113,10 @@ public class AppVersion implements IsSerializable {
         this.tags = tags;
     }
 
+    public String getNote() {
+        return note;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)
@@ -128,7 +134,8 @@ public class AppVersion implements IsSerializable {
                 Objects.equals(resources, other.resources) &&
                 Objects.equals(tags, other.tags) &&
                 Objects.equals(settings, other.settings) &&
-                Objects.equals(source, other.source);
+                Objects.equals(source, other.source) &&
+                Objects.equals(note, other.note);
     }
 
     @Override
@@ -142,6 +149,7 @@ public class AppVersion implements IsSerializable {
                 resources,
                 tags,
                 settings,
-                source);
+                source,
+                note);
     }
 }

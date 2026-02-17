@@ -4,13 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -28,19 +28,11 @@ import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.Engine;
 import fr.insalyon.creatis.vip.application.models.Tag;
-import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
-import fr.insalyon.creatis.vip.application.server.business.ApplicationBusiness;
-import fr.insalyon.creatis.vip.application.server.business.EngineBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 
-public class ApplicationIT extends BaseSpringIT {
-
-    @Autowired private ApplicationBusiness applicationBusiness;
-    @Autowired private EngineBusiness engineBusiness;
-    @Autowired private AppVersionBusiness appVersionBusiness;
+public class ApplicationIT extends BaseApplicationSpringIT {
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -64,8 +56,8 @@ public class ApplicationIT extends BaseSpringIT {
         engines.add("test engine");
         engineBusiness.add(engine);
 
-        Application application = new Application("Application1", "test1@test.fr", "test1", "citation1");
-        applicationBusiness.add(application);
+        Application application = new Application("Application1", "test1@test.fr", "citation1", "test1");
+        appBusiness.add(application);
 
         AppVersion appVersion = new AppVersion("Application1", "version 0.0", "{}", true);
         appVersionBusiness.add(appVersion);
@@ -75,10 +67,10 @@ public class ApplicationIT extends BaseSpringIT {
     @Test
     public void testInitialization() throws VipException {
         // verify number of applications
-        Assertions.assertEquals(1, applicationBusiness.getApplications().size(), "Incorrect number of applications");
+        Assertions.assertEquals(1, appBusiness.getApplications().size(), "Incorrect number of applications");
 
         // verify properties of one application
-        Application application = applicationBusiness.getApplication("Application1");
+        Application application = appBusiness.getApplication("Application1");
         Assertions.assertEquals("citation1", application.getCitation(), "Incorrect citation of application");
         Assertions.assertEquals("Application1", application.getName(), "Incorrect name of application");
         Assertions.assertEquals("test1@test.fr", application.getOwner(), "Incorrect owner of application");
@@ -95,9 +87,9 @@ public class ApplicationIT extends BaseSpringIT {
     @Test
     public void testUpdateApplication() throws VipException {
         Application updatedApplication = new Application("Application1", "test2@test.fr", "test1", "citation1");
-        applicationBusiness.update(updatedApplication);
+        appBusiness.update(updatedApplication);
 
-        Assertions.assertEquals("test2@test.fr", applicationBusiness.getApplication("Application1").getOwner(), "Incorrect owner of updated application");
+        Assertions.assertEquals("test2@test.fr", appBusiness.getApplication("Application1").getOwner(), "Incorrect owner of updated application");
     }
 
     /* ********************************************************************************************************************************************** */
@@ -106,18 +98,18 @@ public class ApplicationIT extends BaseSpringIT {
 
     @Test
     public void testRemoveApplication() throws VipException {
-        applicationBusiness.remove("Application1");
+        appBusiness.remove("Application1");
 
-        Assertions.assertEquals(0, applicationBusiness.getApplications().size(), "Incorrect number of applications");
+        Assertions.assertEquals(0, appBusiness.getApplications().size(), "Incorrect number of applications");
     }
 
     @Test
     public void testCatchRemoveNonExistentApplication() throws VipException {
         // DELETE + nonExistent primary key publicationId => no exception
         // We decided not to add an exception because if this occurs, it will not create problem, just no row will be deleted
-        applicationBusiness.remove("NonExistent application");
+        appBusiness.remove("NonExistent application");
 
-        Assertions.assertEquals(1, applicationBusiness.getApplications().size(), "Incorrect number of applications");
+        Assertions.assertEquals(1, appBusiness.getApplications().size(), "Incorrect number of applications");
     }
 
     /* ********************************************************************************************************************************************** */
@@ -127,12 +119,12 @@ public class ApplicationIT extends BaseSpringIT {
 
     @Test
     public void testGetCitationApplication() throws VipException {
-        Assertions.assertEquals("citation1", applicationBusiness.getCitation("Application1"), "Incorrect citation");
+        Assertions.assertEquals("citation1", appBusiness.getCitation("Application1"), "Incorrect citation");
     }
 
     @Test
     public void testCatchGetCitationNonExistentApplication() throws VipException {
-        assertNull(applicationBusiness.getCitation("NonExistent application"));
+        assertNull(appBusiness.getCitation("NonExistent application"));
     }
 
     /* ********************************************************************************************************************************************** */
@@ -181,7 +173,7 @@ public class ApplicationIT extends BaseSpringIT {
 
     @Test 
     public void getApplication() throws VipException {
-        Application app = applicationBusiness.getApplication("Application1");
+        Application app = appBusiness.getApplication("Application1");
 
         assertEquals(app.getOwner(), "test1@test.fr");
     }
@@ -190,36 +182,36 @@ public class ApplicationIT extends BaseSpringIT {
     public void getApplications() throws VipException {
         Application appbis = new Application("test", "testeu");
 
-        applicationBusiness.add(appbis);
-        List<Application> apps = applicationBusiness.getApplications();
+        appBusiness.add(appbis);
+        List<Application> apps = appBusiness.getApplications();
         assertEquals(2, apps.size());
     }
 
     @Test
     public void getApplicationsByGroup() throws VipException {
-        Application app = applicationBusiness.getApplication("Application1");
+        Application app = appBusiness.getApplication("Application1");
         Group group = new Group("test", false, GroupType.APPLICATION);
 
         groupBusiness.add(group);
-        app.setGroups(Arrays.asList(group));
-        applicationBusiness.update(app);
+        app.setGroups(Set.of(group));
+        appBusiness.update(app);
 
-        assertEquals(1, applicationBusiness.getApplications(group).size());
+        assertEquals(1, appBusiness.getApplications(group).size());
     }
 
     @Test
     public void getApplicationByGroupNotIn() throws VipException {
-        Application app = applicationBusiness.getApplication("Application1");
+        Application app = appBusiness.getApplication("Application1");
         Group group = new Group("test", false, GroupType.APPLICATION);
 
         groupBusiness.add(group);
-        app.setGroups(Arrays.asList(group));
-        applicationBusiness.update(app);
+        app.setGroups(Set.of(group));
+        appBusiness.update(app);
 
-        assertEquals(1, applicationBusiness.getApplications(group).size());  
-        app.setGroups(new ArrayList<>());
-        applicationBusiness.update(app);
+        assertEquals(1, appBusiness.getApplications(group).size());
+        app.setGroups(new HashSet<>());
+        appBusiness.update(app);
 
-        assertEquals(0, applicationBusiness.getApplications(group).size());  
+        assertEquals(0, appBusiness.getApplications(group).size());
     }
 }

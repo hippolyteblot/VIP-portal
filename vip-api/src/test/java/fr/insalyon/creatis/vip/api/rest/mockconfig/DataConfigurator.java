@@ -19,13 +19,13 @@ import java.util.Collections;
 
 import org.mockito.Mockito;
 
-import fr.insalyon.creatis.vip.api.rest.config.BaseWebSpringIT;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.datamanager.server.business.LFCBusiness;
 
 public class DataConfigurator {
 
-    public static void configureFS(BaseWebSpringIT testSuite) throws VipException {
+    public static void configureFS(BaseRestApiSpringIT testSuite) throws VipException {
         // exists
         // getModifDate
         // listDir

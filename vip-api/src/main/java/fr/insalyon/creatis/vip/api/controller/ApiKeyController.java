@@ -71,7 +71,7 @@ public class ApiKeyController extends ApiController{
             throws VipException {
         logMethodInvocation(logger, "deleteApiKey");
         apiKeyBusiness.deleteApiKey(
-            storageIdentifier, currentUser().getEmail());
+                storageIdentifier, currentUser().getEmail());
     }
 
     public static class KeyInfo {

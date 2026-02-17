@@ -21,7 +21,7 @@ public class ApiBusiness {
     private final Server server;
     private final ConfigurationBusiness configurationBusiness;
 
-    public ApiBusiness(Server server, ConfigurationBusiness configurationBusiness) {
+    public ApiBusiness(final Server server, final ConfigurationBusiness configurationBusiness) {
         this.server = server;
         this.configurationBusiness = configurationBusiness;
     }

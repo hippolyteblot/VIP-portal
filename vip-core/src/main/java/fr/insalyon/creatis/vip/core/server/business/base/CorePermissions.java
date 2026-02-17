@@ -1,9 +1,11 @@
 package fr.insalyon.creatis.vip.core.server.business.base;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,7 +37,7 @@ public class CorePermissions {
         throw new VipException(DefaultError.ACCESS_DENIED);
     }
 
-    public void checkOnlyUserPrivateGroups(List<Group> groupsToCheck) throws VipException {
+    public void checkOnlyUserPrivateGroups(Set<Group> groupsToCheck) throws VipException {
         User user = uSupplier.get();
         Set<Group> userGroups = user.getGroups();
 
@@ -50,15 +52,15 @@ public class CorePermissions {
         }
     }
 
-    public List<Group> filterOnlyUserGroups(List<Group> toFilter) {
+    public Set<Group> filterOnlyUserGroups(Set<Group> toFilter) {
         User user = uSupplier.get();
-        List<Group> result = new ArrayList<>();
+        Set<Group> result = new HashSet<>();
         Set<Group> userGroups = user.getGroups();
 
         if (user.isSystemAdministrator()) {
             result.addAll(toFilter);
         } else {
-            result = filterOnlySame(toFilter, new ArrayList<>(userGroups));
+            result = toFilter.stream().filter((g) -> userGroups.contains(g)).collect(Collectors.toSet());
         }
         return result;
     }
@@ -76,16 +78,8 @@ public class CorePermissions {
         }
     }
 
-    public <T> void checkListInList(List<T> expected, List<T> actual) throws VipException {
-     for (T item : actual) {
-        if ( ! expected.contains(item)) {
-            throw new VipException(DefaultError.ACCESS_DENIED);
-        }
-     }
-    }
-
     public <T> void checkUnchanged(T a, T b) throws VipException {
-        if (a != b) {
+        if (!a.equals(b)) {
             throw new VipException(DefaultError.ACCESS_DENIED); 
         }
     }

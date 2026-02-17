@@ -21,21 +21,14 @@ public class ApiUserBusiness {
         this.configurationBusiness = configurationBusiness;
     }
 
-    /**
-     *
-     * @param user
-     * @param comments
-     * @param applicationNames
-     * @throws VipException
-     */
     public void signup(User user, String comments) throws VipException {
         configurationBusiness.signup(
-                user, 
+                user,
                 comments,
-                false, 
-                true, 
+                false,
+                true,
                 new ArrayList<>());
-            logger.info("Signing up with the " + user.getEmail());
+        logger.info("Signing up with the " + user.getEmail());
     }
 
 

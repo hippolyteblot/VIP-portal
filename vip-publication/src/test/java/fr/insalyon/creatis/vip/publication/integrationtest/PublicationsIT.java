@@ -1,4 +1,4 @@
-package integrationtest;
+package fr.insalyon.creatis.vip.publication.integrationtest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -66,11 +66,7 @@ public class PublicationsIT extends BaseSpringIT {
         Publication publication3 = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author1, author2", "type", "typeName", null);
         publicationBusiness.addPublication(publication3);
 
-        // Without parameter
-        Publication publication4 = new Publication();
-        publicationBusiness.addPublication(publication4);
-
-        Assertions.assertEquals(5, publicationBusiness.getPublications().size(), "Incorrect publications number");
+        Assertions.assertEquals(4, publicationBusiness.getPublications().size(), "Incorrect publications number");
     }
 
     @Test
@@ -91,7 +87,7 @@ public class PublicationsIT extends BaseSpringIT {
         );
 
         // INSERT + nonExistent foreign key vipAuthor => violation
-        assertTrue(StringUtils.contains(exception.getMessage(), "JdbcSQLException: Referential integrity constraint violation"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "Referential integrity constraint violation"));
     }
 
 
@@ -158,7 +154,7 @@ public class PublicationsIT extends BaseSpringIT {
         );
 
         // UPDATE + nonExistent foreign key vipAuthor => violation
-        assertTrue(StringUtils.contains(exception.getMessage(), "JdbcSQLException: Referential integrity constraint violation"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "Referential integrity constraint violation"));
         // Verify the update didn't take place
         assertEquals(adminEmail, publicationBusiness.getPublication(idPublicationCreated).getVipAuthor(), "Incorrect vipAuthor publication updated");
     }
@@ -207,6 +203,25 @@ public class PublicationsIT extends BaseSpringIT {
 
         // Verify there is still 1 publication
         Assertions.assertEquals(1, publicationBusiness.getPublications().size(), "Incorrect number of publications");
+    }
+
+    /* ********************************************************************************************************************************************** */
+    /* ************************************************************** special characters test ******************************************************* */
+    /* ********************************************************************************************************************************************** */
+
+    @Test
+    public void testNonAsciiCharacter() {
+
+        Publication publication3 = new Publication(idPublicationCreated, "Publication title with special character :" +
+                " CT‑scan or \u2011 (non breaking hyphen / U+2011)"
+                + " un coeur : I \u2764 Java!",
+                "21/06/2023", "01010100", "author1, author2", "type", "typeName", null);
+
+        VipException businessException = assertThrows(VipException.class,
+                () -> publicationBusiness.addPublication(publication3));
+
+        System.out.println(businessException.getMessage());
+        Assertions.assertTrue(businessException.getMessage().startsWith("Non-valid characters : [‑‑❤]"));
     }
 
 }

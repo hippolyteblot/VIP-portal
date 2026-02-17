@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.publication.models.Publication;
 import fr.insalyon.creatis.vip.publication.server.dao.PublicationDAO;
@@ -51,6 +52,7 @@ public class PublicationBusiness {
     public void addPublication(Publication pub)
             throws VipException {
         try {
+            assertDataIsOK(pub);
             publicationDAO.add(pub);
         } catch (DAOException ex) {
             throw new VipException(ex);
@@ -60,11 +62,27 @@ public class PublicationBusiness {
     public void updatePublication(Publication pub)
             throws VipException {
         try {
+            assertDataIsOK(pub);
             publicationDAO.update(pub);
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
+
+    private void assertDataIsOK(Publication publication) throws VipException {
+        if (publication.getTitle() == null || publication.getTitle().isEmpty()) {
+            throw new VipException("Wrong publication : no title !");
+        }
+        if (publication.getAuthors() == null || publication.getAuthors().isEmpty()) {
+            throw new VipException("Wrong publication : no author !");
+        }
+        CoreUtil.assertOnlyLatin1Characters(publication.getTitle());
+        CoreUtil.assertOnlyLatin1Characters(publication.getDoi());
+        if (publication.getDoi() != null) {
+            CoreUtil.assertOnlyLatin1Characters(publication.getAuthors());
+        }
+    }
+
     public Publication getPublication(Long id)
             throws VipException {
         try {

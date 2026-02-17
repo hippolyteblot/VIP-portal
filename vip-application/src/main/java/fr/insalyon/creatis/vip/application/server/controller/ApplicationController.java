@@ -53,8 +53,14 @@ public class ApplicationController {
     }
 
     @DeleteMapping(value = "{id}")
-    public void delete(@PathVariable String id) throws VipException {
-        applicationBusiness.remove(id);
+    public void deleteApplication(@PathVariable String id) throws VipException {
+        Application app = applicationBusiness.get(id);
+
+        if (app == null) {
+            throw new VipException(DefaultError.NOT_FOUND, id);
+        } else {
+            applicationBusiness.remove(id);
+        }
     }
 
     @PutMapping(value = "{id}")

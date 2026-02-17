@@ -2,9 +2,11 @@ package fr.insalyon.creatis.vip.application.client.view.system.applications.app;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -18,6 +20,7 @@ import com.smartgwt.client.widgets.RichTextEditor;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 
 import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
@@ -40,6 +43,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
 
     private boolean newApplication = true;
     private TextItem nameField;
+    private TextAreaItem noteField;
     private RichTextEditor richTextEditor;
     private SelectItem groupsList;
     private IButton saveButton;
@@ -58,6 +62,12 @@ public class EditApplicationLayout extends AbstractFormLayout {
     private void configure() {
 
         nameField = FieldUtil.getTextItem(450, null);
+
+        noteField = new TextAreaItem();
+        noteField.setRequired(false);
+        noteField.setShowTitle(false);
+        noteField.setWidth(450);
+        noteField.setHeight(70);
 
         usersPickList = new SelectItem();
         usersPickList.setShowTitle(false);
@@ -83,13 +93,14 @@ public class EditApplicationLayout extends AbstractFormLayout {
             public void onClick(ClickEvent event) {
                 if (nameField.validate()) {
                     List<String> groupsNames = Arrays.asList(groupsList.getValues());
-                    List<Group> groups = groupsNames.stream()
-                        .map((name) -> new Group(groupsMap.get(name), false, GroupType.RESOURCE)).collect(Collectors.toList());
+                    Set<Group> groups = groupsNames.stream()
+                        .map((name) -> new Group(groupsMap.get(name), false, GroupType.RESOURCE)).collect(Collectors.toSet());
 
                     if (newApplication) {
                         save(new Application(
                             nameField.getValueAsString().trim(),
                             richTextEditor.getValue(),
+                            noteField.getValueAsString().trim(),
                             groups));
                     } else {
                         save(new Application(
@@ -97,6 +108,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
                             usersPickList.getValueAsString(), 
                             null,
                             richTextEditor.getValue(),
+                            noteField.getValueAsString().trim(),
                             groups));
                     }
                 }
@@ -122,6 +134,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
         addField("Name", nameField);
         addField("Owner", usersPickList);
         addField("Groups", groupsList);
+        addFieldResponsiveHeight("Note", noteField);
         addMember(WidgetUtil.getLabel("<b>Citation</b>", 15));
         addMember(richTextEditor);
         addMember(removeButton);
@@ -133,7 +146,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
         }
     }
 
-    public void setApplication(String name, String owner, String citation, Map<String, String> groups) {
+    public void setApplication(String name, String owner, String citation, String note, Map<String, String> groups) {
         if (name != null) {
             usersPickList.setCanEdit(true);
             fetchUsers(owner);
@@ -141,6 +154,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
             nameField.setDisabled(true);
             groupsList.setValues(groups.keySet().stream().toArray(String[]::new));
             richTextEditor.setValue(citation);
+            noteField.setValue(note);
             newApplication = false;
             removeButton.setDisabled(false);
             groupsMap = groups;
@@ -150,6 +164,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
             nameField.setValue("");
             nameField.setDisabled(false);
             richTextEditor.setValue("");
+            noteField.setValue("");
             newApplication = true;
             removeButton.setDisabled(true);
             groupsMap = new HashMap<>();
@@ -187,7 +202,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
                 WidgetUtil.resetIButton(saveButton, "Save", CoreConstants.ICON_SAVED);
                 WidgetUtil.resetIButton(removeButton, "Remove", CoreConstants.ICON_DELETE);
 
-                setApplication(null, null, null, null);
+                setApplication(null, null, null, null, null);
                 ManageApplicationsTab tab = (ManageApplicationsTab) Layout.getInstance().getTab(ApplicationConstants.TAB_MANAGE_APPLICATION);
                 tab.loadApplications();
                 
@@ -239,7 +254,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
                 List<Group> data = result.stream()
                     .filter((g) -> g.getType() == GroupType.APPLICATION)
                     .collect(Collectors.toList());
-                List<String> formatGroups = SystemUtils.formatGroups(data);
+                List<String> formatGroups = SystemUtils.formatGroups(new HashSet<>(data));
 
                 groupsMap.putAll(IntStream.range(0, Math.min(formatGroups.size(), data.size()))
                     .boxed()

@@ -30,6 +30,8 @@ public class StatsApiBusiness {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final StatsBusiness statsBusiness;
+    private final String dateTimeFormat = "dd-MM-yyyy";
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dateTimeFormat);
 
     @Autowired
     public StatsApiBusiness(StatsBusiness statsBusiness) {
@@ -151,7 +153,6 @@ public class StatsApiBusiness {
 
         List<User> users;
         users = statsBusiness.getUsersRegistered(searchCriteria);
-
         List<StatUser> statUsers = users
                 .stream()
                 .map(this::mapVipUserToStatUser)
@@ -180,8 +181,6 @@ public class StatsApiBusiness {
         return country;
     }
 
-    private final String DATE_TIME_FORMAT = "dd-MM-yyyy";
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
     private LocalDate parseDate(String dateString) throws VipException {
         if (dateString == null) {
             return null;
@@ -189,8 +188,8 @@ public class StatsApiBusiness {
         try {
             return LocalDate.parse(dateString, formatter);
         } catch (DateTimeParseException e) {
-            logger.error("Wrong date format for {} (required : {})", dateString, DATE_TIME_FORMAT);
-            throw new VipException(ApiError.WRONG_DATE_FORMAT, e, dateString, DATE_TIME_FORMAT);
+            logger.error("Wrong date format for {} (required : {})", dateString, dateTimeFormat);
+            throw new VipException(ApiError.WRONG_DATE_FORMAT, e, dateString, dateTimeFormat);
         }
     }
 }

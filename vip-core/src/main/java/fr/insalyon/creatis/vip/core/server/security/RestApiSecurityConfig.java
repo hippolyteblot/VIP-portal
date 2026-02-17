@@ -2,19 +2,24 @@ package fr.insalyon.creatis.vip.core.server.security;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.DefaultHttpFirewall;
 import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.security.apikey.ApikeyAuthenticationFilter;
@@ -53,6 +58,22 @@ public class RestApiSecurityConfig {
         this.oidcResolver = oidcResolver;
     }
 
+    // Do not make it a bean as it is only used to configure CORS exceptions specific to /rest endpoints
+    // It is used in the apiFilterChain method just bellow
+    // It allows some CORS exceptions only for the /rest endpoints
+    public CorsConfigurationSource restCorsConfigurationSource() {
+        // applyPermitDefaultValues allows all origins, GET-HEAD-POST, and all headers
+        CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
+        // We override with a white list of origins
+        configuration.setAllowedOrigins(Arrays.asList(server.getCarminCorsAuthorizedDomains()));
+        // We override with all methods (to allow PUT and DELETE)
+        configuration.setAllowedMethods(List.of("*"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // protect all requests of this security chain (the /rest one)
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Bean
     @Order(1)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
@@ -79,7 +100,7 @@ public class RestApiSecurityConfig {
                 // session must be activated otherwise OIDC auth info will be lost when accessing /rest/loginOIDC
                 // .sessionManagement((sessionManagement) -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .anonymous((anonymous) -> anonymous.disable())
-                .cors(Customizer.withDefaults())
+                .cors(corsConfigurer -> corsConfigurer.configurationSource(restCorsConfigurationSource()))
                 .headers((headers) -> headers.frameOptions((frameOptions) -> frameOptions.sameOrigin()))
                 .csrf((csrf) -> csrf.disable());
         // API key authentication always active

@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.application.server.business;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -132,7 +133,7 @@ public class ResourceBusiness extends CommonBusiness {
         try {
             Resource before = mapAssociated(resourceDAO.getByName(resource.getName()));
             List<String> beforeEnginesNames = before.getEngines();
-            List<String> beforeGroupsNames = before.getGroupsNames();
+            Set<String> beforeGroupsNames = before.getGroupsNames();
 
             resourceDAO.update(resource);
             for (String engine : resource.getEngines()) {

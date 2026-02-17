@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.core.server.business;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -124,7 +125,7 @@ public class GroupBusiness {
         }
     }
 
-    public List<Group> getByResource(String ressourceName) throws VipException {
+    public Set<Group> getByResource(String ressourceName) throws VipException {
         try {
             return groupDAO.getByRessource(ressourceName);
         } catch (DAOException e) {
@@ -144,7 +145,7 @@ public class GroupBusiness {
         }
     }
 
-    public String getWarningSameVisibility(List<String> groupNames) throws VipException {
+    public String getWarningSameVisibility(Set<String> groupNames) throws VipException {
         List<Group> groups = new ArrayList<>();
 
         for (String name : groupNames) {

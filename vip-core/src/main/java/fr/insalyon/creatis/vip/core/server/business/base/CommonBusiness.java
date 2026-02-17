@@ -3,13 +3,12 @@ package fr.insalyon.creatis.vip.core.server.business.base;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.PageBuilder;
 
-@Service
 public abstract class CommonBusiness {
 
     protected CorePermissions permissions;
@@ -35,5 +34,13 @@ public abstract class CommonBusiness {
     @Autowired
     public void setPageBuilder(PageBuilder pageBuilder) {
         this.pageBuilder = pageBuilder;
+    }
+
+    public User getUser() {
+        return userSupplier.get();
+    }
+
+    public UserLevel getUserLevel() {
+        return getUser().getLevel();
     }
 }

@@ -147,7 +147,7 @@ public class ExecutionBusiness {
                 s.getSimulationName(),
                 pipelineBusiness.getPipelineIdentifier(s.getApplicationName(), s.getApplicationVersion()),
                 0, // timeout (no timeout set in VIP)
-                VIPtoCarminStatus(s.getStatus()),
+                convertVIPtoCarminStatus(s.getStatus()),
                 null, // study identifier (not available in VIP yet)
                 null, // error codes and mesasges (not available in VIP yet)
                 s.getDate().getTime(),
@@ -347,10 +347,10 @@ public class ExecutionBusiness {
     }
 
     private String initExecution(String pipelineId,
-                                Map<String,String> inputValues,
-                                Integer timeoutInSeconds,
-                                String executionName,
-                                String studyId) throws VipException {
+            Map<String, String> inputValues,
+            Integer timeoutInSeconds,
+            String executionName,
+            String studyId) throws VipException {
         // We cannot easily initialize an execution without starting it.
         // So we will just launch the execution, and launch an error in case
         // playExecution is not true.
@@ -474,7 +474,7 @@ public class ExecutionBusiness {
         return pathResults;
     }
 
-    private ExecutionStatus VIPtoCarminStatus(SimulationStatus s) {
+    private ExecutionStatus convertVIPtoCarminStatus(SimulationStatus s) {
 
         switch (s) {
             case Running:

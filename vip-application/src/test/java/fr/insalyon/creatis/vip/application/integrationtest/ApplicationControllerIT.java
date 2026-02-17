@@ -8,38 +8,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.vip.application.models.Application;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
-import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
+import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.SpringInternalApiConfig;
 
-@ContextConfiguration(classes = { SpringInternalApiConfig.class })
-public class ApplicationControllerIT extends BaseSpringIT {
+public class ApplicationControllerIT extends BaseInternalApiSpringIT {
     
-    @Autowired
-    private WebApplicationContext wac;
-
-    private MockMvc mockMvc;
-    private ObjectMapper mapper;
     private User adminUser;
     private User developperUser;
     private User basicUser;
@@ -50,12 +35,6 @@ public class ApplicationControllerIT extends BaseSpringIT {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(wac)
-                .defaultRequest(MockMvcRequestBuilders.get("/").servletPath("/internal"))
-                .apply(SecurityMockMvcConfigurers.springSecurity())
-                .build();
-        mapper = new ObjectMapper();
 
         adminUser = createUser(emailUser1, UserLevel.Administrator);
         developperUser = createUser(emailUser2, UserLevel.Developer);
@@ -70,7 +49,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
     @Test
     public void add() throws Exception {
         Application app = new Application("super_app", "les applications sont vraiment belles");
-        app.setGroups(List.of(group));
+        app.setGroups(Set.of(group));
 
         // not the rights
         mockMvc.perform(post("/internal/applications")
@@ -78,7 +57,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
             .with(SecurityMockMvcRequestPostProcessors.csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(app)))
-                    .andExpect(jsonPath("$.errorCode").value(1001))
+                    .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                     .andExpect(status().is4xxClientError());
 
         // developer not in the private group
@@ -87,7 +66,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
             .with(SecurityMockMvcRequestPostProcessors.csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(app)))
-                    .andExpect(jsonPath("$.errorCode").value(1001))
+                    .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                     .andExpect(status().is4xxClientError());
 
         configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
@@ -114,7 +93,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
     @Test
     public void remove() throws Exception {
         Application app = new Application("super_app", "les applications sont vraiment belles");
-        app.setGroups(List.of(group));
+        app.setGroups(Set.of(group));
 
         // create app first
         mockMvc.perform(post("/internal/applications")
@@ -130,23 +109,15 @@ public class ApplicationControllerIT extends BaseSpringIT {
             .with(SecurityMockMvcRequestPostProcessors.csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(app.getName())))
-                    .andExpect(jsonPath("$.errorCode").value(1001))
+                    .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                     .andExpect(status().is4xxClientError());
 
         configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
         developperUser = configurationBusiness.getUserWithGroups(emailUser2);
 
-        // developer in the private group can do that
+        // developer/admin in the private group can do that
         mockMvc.perform(delete("/internal/applications/" + app.getName())
             .with(getUserSecurityMock(developperUser))
-            .with(SecurityMockMvcRequestPostProcessors.csrf())
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(mapper.writeValueAsString(app.getName())))
-                    .andExpect(status().isOk());
-    
-        // good one and admin!
-        mockMvc.perform(delete("/internal/applications/" + app.getName())
-            .with(getUserSecurityMock(adminUser))
             .with(SecurityMockMvcRequestPostProcessors.csrf())
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(app.getName())))
@@ -155,7 +126,15 @@ public class ApplicationControllerIT extends BaseSpringIT {
 
     @Test
     public void update() throws Exception {
+        // set group public
+        group.setPublicGroup(true);
+        groupBusiness.update(nameGroup1, group);
+
         Application app = new Application("super_app", "les applications sont vraiment belles");
+        app.setGroups(Set.of(group));
+
+        configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
+        developperUser = configurationBusiness.getUserWithGroups(emailUser2);
 
         // create app
         mockMvc.perform(post("/internal/applications")
@@ -163,7 +142,16 @@ public class ApplicationControllerIT extends BaseSpringIT {
             .contentType(MediaType.APPLICATION_JSON).content(mapper.writeValueAsString(app)))
                     .andExpect(status().isOk());
 
-        app.setCitation("les applications sont vraimen moches");
+        app.setCitation("les applications sont vraiment moches");
+
+        // developer try to edit application in public group
+        mockMvc.perform(put("/internal/applications/" + app.getName())
+            .with(getUserSecurityMock(developperUser))
+            .with(SecurityMockMvcRequestPostProcessors.csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(app)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()));
 
         // update app wrong matching ids
         mockMvc.perform(put("/internal/applications/not_good_name")
@@ -172,7 +160,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
             .contentType(MediaType.APPLICATION_JSON)
             .content(mapper.writeValueAsString(app)))
                     .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.errorCode").value(8009));
+                    .andExpect(jsonPath("$.errorCode").value(DefaultError.BAD_INPUT_FIELD.getCode()));
 
         // do update
         mockMvc.perform(put("/internal/applications/" + app.getName())
@@ -196,7 +184,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
         // retrieve wrong
         mockMvc.perform(get("/internal/applications/wrong")
                 .with(getUserSecurityMock(adminUser)).with(SecurityMockMvcRequestPostProcessors.csrf()))
-                    .andExpect(jsonPath("$.errorCode").value(1000))
+                    .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                     .andExpect(status().is4xxClientError());
 
         // good one
@@ -213,7 +201,7 @@ public class ApplicationControllerIT extends BaseSpringIT {
         Application app2 = new Application("app2", "wow super app2");
         Application app3 = new Application("app3", "wow super app3");
 
-        app3.setGroups(List.of(group, group2));
+        app3.setGroups(Set.of(group, group2));
         configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
         developperUser = configurationBusiness.getUserWithGroups(emailUser2);
 

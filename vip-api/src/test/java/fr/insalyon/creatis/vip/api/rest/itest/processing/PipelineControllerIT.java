@@ -25,10 +25,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 import fr.insalyon.creatis.vip.api.exception.ApiError;
-import fr.insalyon.creatis.vip.api.rest.config.BaseWebSpringIT;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 
-public class PipelineControllerIT extends BaseWebSpringIT {
+public class PipelineControllerIT extends BaseRestApiSpringIT {
 
     @BeforeEach
     public void setUp() throws Exception {

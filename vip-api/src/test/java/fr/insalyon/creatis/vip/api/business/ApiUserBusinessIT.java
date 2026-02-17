@@ -53,7 +53,7 @@ public class ApiUserBusinessIT extends BaseSpringIT {
     }
 
     @Test
-    public void testResetPassword() throws VipException{
+    public void testResetPassword() throws VipException {
         apiUserBusiness.resetPassword("email1@test.fr", configurationBusiness.getUser("email1@test.fr").getCode(), "test new password");
     }
 

@@ -11,10 +11,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
-import fr.insalyon.creatis.vip.api.rest.config.BaseWebSpringIT;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 
-public class AuthenticationControllerIT extends BaseWebSpringIT {
+public class AuthenticationControllerIT extends BaseRestApiSpringIT {
 
     @Test
     public void badPasswordAuthentication() throws Exception {
@@ -24,7 +24,7 @@ public class AuthenticationControllerIT extends BaseWebSpringIT {
                                 .contentType("application/json")
                                 .content(getResourceAsString("jsonObjects/user-credentials.json")))
                 .andDo(print())
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.errorCode")
                         .value(DefaultError.BAD_CREDENTIALS.getCode()));;
