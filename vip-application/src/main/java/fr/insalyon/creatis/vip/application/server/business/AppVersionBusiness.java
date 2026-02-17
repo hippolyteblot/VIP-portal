@@ -1,31 +1,45 @@
 package fr.insalyon.creatis.vip.application.server.business;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.application.models.AppVersion;
+import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.Resource;
 import fr.insalyon.creatis.vip.application.models.Tag;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.models.GroupType;
+import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
+import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
+import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 
 @Service
 @Transactional
-public class AppVersionBusiness {
+public class AppVersionBusiness extends CommonBusiness {
 
-    private TagBusiness tagBusiness;
-    private ResourceBusiness resourceBusiness;
-    private ApplicationDAO applicationDAO;
+    private final TagBusiness tagBusiness;
+    private final ResourceBusiness resourceBusiness;
+    private final ApplicationBusiness applicationBusiness;
+    private final ApplicationDAO applicationDAO;
+    private final GroupBusiness groupBusiness;
 
     @Autowired
-    public AppVersionBusiness(TagBusiness tagBusiness, ResourceBusiness resourceBusiness, ApplicationDAO applicationDAO) {
+    public AppVersionBusiness(TagBusiness tagBusiness, ResourceBusiness resourceBusiness, ApplicationDAO applicationDAO, ApplicationBusiness applicationBusiness, GroupBusiness groupBusiness) {
         this.tagBusiness = tagBusiness;
         this.resourceBusiness = resourceBusiness;
+        this.applicationBusiness = applicationBusiness;
         this.applicationDAO = applicationDAO;
+        this.groupBusiness = groupBusiness;
     }
 
     public void add(AppVersion version) throws VipException {
@@ -103,20 +117,80 @@ public class AppVersionBusiness {
         }
     }
 
-    public AppVersion getVersion(String applicationName, String applicationVersion)
-            throws VipException {
+    public List<Application> getPublicApplications() throws VipException {
+        List<Group> publicAppGroups = groupBusiness.getPublic()
+            .stream()
+            .filter((g) -> g.getType().equals(GroupType.APPLICATION))
+            .collect(Collectors.toList());
+        List<Application> apps = new ArrayList<>();
+
+        for (Group group : publicAppGroups) {
+            for (Application app : applicationBusiness.getApplications(group)) {
+                // keep application if at least a Version is visible
+                if (getVersions(app.getName()).stream().anyMatch(AppVersion::isVisible)) {
+                    apps.add(app);
+                }
+            }
+        }
+
+        // remove doublons + sort
+        return apps.stream().collect(Collectors.toMap(Application::getName, a -> a, (a1, a2) -> a1)).values()
+                .stream().sorted(Comparator.comparing(Application::getName)).collect(Collectors.toList());
+    }
+
+    public AppVersion getVersion(String applicationName, String applicationVersion) throws VipException {
         try {
             AppVersion version = applicationDAO.getVersion(applicationName, applicationVersion);
-            if (version == null) {
-                return null;
-            }
 
-            version.setResources(resourceBusiness.getByAppVersion(version));
-            version.setTags(tagBusiness.getTags(version));
+            if (version != null) {
+                version.setResources(resourceBusiness.getByAppVersion(version));
+                version.setTags(tagBusiness.getTags(version));
+            }
 
             return version;
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
+
+    @VIPExternalSafe
+    public AppVersion get(String application, String version) throws VipException {
+        try {
+            Application app = applicationBusiness.get(application);
+            AppVersion appVersion = applicationDAO.getVersion(app.getName(), version);
+
+            if (appVersion != null) {
+                // to avoid permissions leaks
+                appVersion.setResources(permissions.filterOnlySame(
+                        resourceBusiness.getByAppVersion(appVersion),
+                        resourceBusiness.getUserContextResources()));
+                appVersion.setTags(tagBusiness.getTags(appVersion));
+            }
+
+            return appVersion;
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
+    }
+
+    @VIPExternalSafe
+    public PrecisePage<AppVersion> get(int offset, int quantity, String application) throws VipException {
+        try {
+            Application app = applicationBusiness.get(application);
+            List<AppVersion> versions = applicationDAO.getVersions(app.getName());
+            List<Resource> userResources = resourceBusiness.getUserContextResources();
+
+            for (AppVersion v : versions) {
+                // to avoid permissions leaks
+                v.setResources(permissions.filterOnlySame(
+                        resourceBusiness.getByAppVersion(v),
+                        userResources));
+                v.setTags(tagBusiness.getTags(v));
+            }
+
+            return pageBuilder.doPrecise(offset, quantity, versions);
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
+    } 
 }

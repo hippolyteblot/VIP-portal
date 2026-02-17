@@ -1,7 +1,6 @@
 package fr.insalyon.creatis.vip.application.server.business;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -36,15 +34,12 @@ public class ApplicationBusiness extends CommonBusiness {
 
     private ApplicationDAO applicationDAO;
     private GroupBusiness groupBusiness;
-    private AppVersionBusiness appVersionBusiness;
     private PageBuilder pageBuilder;
 
     @Autowired
-    public ApplicationBusiness(ApplicationDAO applicationDAO, GroupBusiness groupBusiness,
-            AppVersionBusiness appVersionBusiness, PageBuilder pageBuilder) {
+    public ApplicationBusiness(ApplicationDAO applicationDAO, GroupBusiness groupBusiness, PageBuilder pageBuilder) {
         this.applicationDAO = applicationDAO;
         this.groupBusiness = groupBusiness;
-        this.appVersionBusiness = appVersionBusiness;
         this.pageBuilder = pageBuilder;
     }
 
@@ -208,27 +203,6 @@ public class ApplicationBusiness extends CommonBusiness {
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
-    }
-
-    public List<Application> getPublicApplications() throws VipException {
-        List<Group> publicAppGroups = groupBusiness.getPublic()
-            .stream()
-            .filter((g) -> g.getType().equals(GroupType.APPLICATION))
-            .collect(Collectors.toList());
-        List<Application> apps = new ArrayList<>();
-
-        for (Group group : publicAppGroups) {
-            for (Application app : getApplications(group)) {
-                // keep application if at least a Version is visible
-                if (appVersionBusiness.getVersions(app.getName()).stream().anyMatch(AppVersion::isVisible)) {
-                    apps.add(app);
-                }
-            }
-        }
-
-        // remove doublons + sort
-        return apps.stream().collect(Collectors.toMap(Application::getName, a -> a, (a1, a2) -> a1)).values()
-                .stream().sorted(Comparator.comparing(Application::getName)).collect(Collectors.toList());
     }
 
     public List<String> getApplicationNames() throws VipException {

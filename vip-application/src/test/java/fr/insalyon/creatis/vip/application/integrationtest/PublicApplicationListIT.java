@@ -30,7 +30,7 @@ public class PublicApplicationListIT extends BaseApplicationSpringIT {
         appBusiness.add(app);
         appVersionBusiness.add(appVersion);
 
-        List<Application> publicApplications = appBusiness.getPublicApplications();
+        List<Application> publicApplications = appVersionBusiness.getPublicApplications();
         assertEquals(1, publicApplications.size());
 
         Application resultApp = publicApplications.get(0);
