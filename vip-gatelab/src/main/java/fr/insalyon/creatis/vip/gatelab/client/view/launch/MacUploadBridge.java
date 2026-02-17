@@ -10,12 +10,12 @@ public final class MacUploadBridge {
 
         GateLabLaunchTab tab = GateLabLaunchTab.findActive();
 
-        if (tab == null) {
-            Console.log("No active GateLab found.");
-            return;
+        if (tab != null) {
+            tab.uploadMacComplete(inputList);
+        } else {
+            Console.log("GateLabLaunchTab tab not active.");
         }
 
-        tab.uploadMacComplete(inputList);
     }
 
 }

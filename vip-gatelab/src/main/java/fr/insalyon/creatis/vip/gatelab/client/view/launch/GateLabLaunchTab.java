@@ -72,7 +72,7 @@ public class GateLabLaunchTab extends LaunchTab {
 
         if (this.inputs == null) {
             // if inputs is null, it is NOT a relaunch and only the launch mac button must be shown first
-            initComplete(this);
+            initComplete();
             configureLoadMacButton();
         }
     }
@@ -159,11 +159,6 @@ public class GateLabLaunchTab extends LaunchTab {
     private native void initComplete() /*-{
      $wnd.uploadMacComplete = function (inputList) {
            @fr.insalyon.creatis.vip.gatelab.client.view.launch.MacUploadBridge::notifyUploadComplete(Ljava/lang/String;)(inputList);
-     };
-     $wnd.close = function () {
-     uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::close()();
-     };
-     }-*/;Complete(Ljava/lang/String;)(inputList);
      };
      $wnd.close = function () {
      uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::close()();
