@@ -1,9 +1,12 @@
 package fr.insalyon.creatis.vip.gatelab.client.view.launch;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.Composite;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 import fr.insalyon.creatis.vip.application.client.bean.boutiquesTools.BoutiquesApplication;
 import fr.insalyon.creatis.vip.application.client.bean.boutiquesTools.BoutiquesApplicationExtensions;
 import fr.insalyon.creatis.vip.application.client.bean.boutiquesTools.BoutiquesInput;
@@ -34,14 +37,31 @@ public class GateLabLaunchTab extends LaunchTab {
     public static final String NB_JOBS_INPUT_ID = "numberOfJobs";
     public static final String MACFILE_INPUT_ID = "macfileName";
 
+    private static GateLabLaunchTab activeInstance;
+    public static GateLabLaunchTab findActive() {
+        return activeInstance;
+    }
     public GateLabLaunchTab(String applicationName, String applicationVersion, String applicationClass) {
         super(applicationName, applicationVersion, applicationClass);
+        addTabSelectedHandler(new TabSelectedHandler() {
+            @Override
+            public void onTabSelected(TabSelectedEvent event) {
+                activeInstance = GateLabLaunchTab.this;
+            }
+        });
     }
 
     public GateLabLaunchTab(String applicationName, String applicationVersion, String applicationClass,
             String simulationName, Map<String, String> inputs) {
         super(applicationName, applicationVersion, applicationClass, simulationName, inputs);
+        addTabSelectedHandler(new TabSelectedHandler() {
+            @Override
+            public void onTabSelected(TabSelectedEvent event) {
+                activeInstance = GateLabLaunchTab.this;
+            }
+        });
     }
+
 
     @Override
     protected void init() {
@@ -136,9 +156,14 @@ public class GateLabLaunchTab extends LaunchTab {
     }
 
     //Bug #2368
-    private native void initComplete(GateLabLaunchTab uploadMac) /*-{
+    private native void initComplete() /*-{
      $wnd.uploadMacComplete = function (inputList) {
-     uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::uploadMacComplete(Ljava/lang/String;)(inputList);
+           @fr.insalyon.creatis.vip.gatelab.client.view.launch.MacUploadBridge::notifyUploadComplete(Ljava/lang/String;)(inputList);
+     };
+     $wnd.close = function () {
+     uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::close()();
+     };
+     }-*/;Complete(Ljava/lang/String;)(inputList);
      };
      $wnd.close = function () {
      uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::close()();
