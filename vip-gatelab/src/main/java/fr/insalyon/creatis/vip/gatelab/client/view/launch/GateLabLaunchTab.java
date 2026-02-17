@@ -82,8 +82,12 @@ public class GateLabLaunchTab extends LaunchTab {
                 new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        loadMacWindow = new LoadMacWindow(modal, baseDir);
-                        loadMacWindow.show();
+                        if (launchFormLayout.getSimulationName() != null) {
+                            loadMacWindow = new LoadMacWindow(modal, baseDir);
+                            loadMacWindow.show();
+                        } else {
+                            Layout.getInstance().setWarningMessage("Please first fill in execution name.");
+                        }
                     }
                 });
         loadMacButton.setWidth(150);
@@ -149,7 +153,7 @@ public class GateLabLaunchTab extends LaunchTab {
     @Override
     protected void onLaunchFormReady() {
         super.onLaunchFormReady();
-        if (this.inputs != null) {
+        if ((simulationName != null) && (this.inputs != null)) {
             customizeGateForm();
         }
     }
@@ -186,9 +190,12 @@ public class GateLabLaunchTab extends LaunchTab {
             super.createButtons(); // override "load mac button" with "launch button"
             launchFormLayout.showInputs();
             launchFormLayout.enableErrorsAndWarnings();
-            launchFormLayout.loadInputs(launchFormLayout.getSimulationName(), valuesMap, false);
-
-            customizeGateForm();
+            if (launchFormLayout.getSimulationName() != null) {
+                launchFormLayout.loadInputs(launchFormLayout.getSimulationName(), valuesMap, false);
+                customizeGateForm();
+            } else {
+                Layout.getInstance().setWarningMessage("Missing execution name. Please fill it in and start over.");
+            }
         }
     }
 
