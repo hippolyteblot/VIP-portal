@@ -42,7 +42,18 @@ public class AppVersionBusiness extends CommonBusiness {
         this.groupBusiness = groupBusiness;
     }
 
+    @VIPExternalSafe
     public void add(AppVersion version) throws VipException {
+        permissions.shouldExist(applicationBusiness.get(version.getApplicationName()));
+        permissions.filter((chain) -> chain
+            .admin()
+            .developer(() -> {
+                List<Resource> userResources = resourceBusiness.getUserContextResources();
+
+                for (Resource wantedResource : version.getResources()) {
+                    permissions.checkItemInList(wantedResource, userResources);
+                }
+        }));
         try {
             applicationDAO.addVersion(version);
 
@@ -54,16 +65,24 @@ public class AppVersionBusiness extends CommonBusiness {
             for (Resource resource : version.getResources()) {
                 resourceBusiness.associate(resource, version);
             }
-        } catch (DAOException ex) {
-            throw new VipException(ex);
+        } catch (DAOException e) {
+            throw new VipException(e);
         }
     }
 
+    @VIPExternalSafe
     public void update(AppVersion version) throws VipException {
+        AppVersion exisitingVersion = permissions.shouldExist(get(version.getApplicationName(), version.getVersion()));
+
+        permissions.filter((chain) -> chain
+            .admin()
+            .developer(() -> {
+                // developer can only associate resources at CREATION
+                permissions.checkUnchanged(version.getResources(), exisitingVersion.getResources());
+        }));
         try {
-            AppVersion before = getVersion(version.getApplicationName(), version.getVersion());
-            List<String> beforeResourceNames = before.getResourcesNames();
-            List<Tag> editedTags = before.getTags();
+            List<String> beforeResourceNames = exisitingVersion.getResourcesNames();
+            List<Tag> editedTags = exisitingVersion.getTags();
             editedTags.removeAll(version.getTags());
 
             applicationDAO.updateVersion(version);
@@ -87,7 +106,19 @@ public class AppVersionBusiness extends CommonBusiness {
         }
     }
 
+    @VIPExternalSafe
     public void remove(String applicationName, String version) throws VipException {
+        Application app = permissions.shouldExist(applicationBusiness.getApplication(applicationName));
+        AppVersion appVersion = get(applicationName, version);
+
+        if (appVersion == null) return;
+        permissions.filter((chain) -> chain
+            .admin()
+            .developer(() -> {
+                // same rule than for Application
+                permissions.checkItemInList(app, applicationBusiness.getUserContextApplications());
+                permissions.checkOnlyUserPrivateGroups(app.getGroups());
+        }));
         try {
             applicationDAO.removeVersion(applicationName, version);
         } catch (DAOException ex) {
@@ -192,5 +223,7 @@ public class AppVersionBusiness extends CommonBusiness {
         } catch (DAOException e) {
             throw new VipException(e);
         }
-    } 
+    }
 }
+
+

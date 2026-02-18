@@ -9,15 +9,16 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 
+@Service
 public class CorePermissions {
-
-    private Supplier<User> uSupplier;
+    private final Supplier<User> uSupplier;
 
     @Autowired
     public CorePermissions(Supplier<User> uSupplier) {
@@ -80,7 +81,7 @@ public class CorePermissions {
 
     public <T> T shouldExist(T a) throws VipException {
         if (a == null) {
-            throw new VipException(DefaultError.ACCESS_DENIED);
+            throw new VipException(DefaultError.NOT_FOUND);
         } else {
             return a;
         }
