@@ -65,7 +65,7 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void remove(String name) throws VipException {
-        Application app = getApplication(name); // not safe, do not return to user!
+        Application app = get(name);
 
         if (app == null) {
             return;
@@ -88,7 +88,7 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(Application app) throws VipException {
-        Application existingApp = getApplication(app.getName()); // not safe, do not return to user!
+        Application existingApp = get(app.getName());
 
         permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
 
