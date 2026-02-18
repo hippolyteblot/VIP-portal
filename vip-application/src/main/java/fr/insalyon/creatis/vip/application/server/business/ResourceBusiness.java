@@ -14,11 +14,11 @@ import fr.insalyon.creatis.vip.application.models.Engine;
 import fr.insalyon.creatis.vip.application.models.Resource;
 import fr.insalyon.creatis.vip.application.server.dao.ResourceDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
+import fr.insalyon.creatis.vip.core.server.business.base.PermissionChain;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
@@ -110,7 +110,7 @@ public class ResourceBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void add(Resource resource) throws VipException {
-        permissions.checkLevel(UserLevel.Administrator);
+        permissions.filter(PermissionChain::admin);
 
         try {
             resourceDAO.add(resource);
@@ -128,7 +128,7 @@ public class ResourceBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(Resource resource) throws VipException {
-        permissions.checkLevel(UserLevel.Administrator);
+        permissions.filter(PermissionChain::admin);
 
         try {
             Resource before = mapAssociated(resourceDAO.getByName(resource.getName()));
@@ -159,7 +159,7 @@ public class ResourceBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void remove(Resource resource) throws VipException {
-        permissions.checkLevel(UserLevel.Administrator);
+        permissions.filter(PermissionChain::admin);
 
         try {
             resourceDAO.remove(resource);

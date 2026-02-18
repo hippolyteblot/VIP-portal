@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -45,13 +44,13 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void add(Application app) throws VipException {
-        permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
-
-        if (getUserLevel().equals(UserLevel.Developer)) {
-            // developers can only assign from private groups they belong to
-            // at application creation
-            permissions.checkOnlyUserPrivateGroups(app.getGroups());
-        }
+        permissions.filter((chain) -> chain
+            .admin()
+            .developer(() -> {
+                // developers can only assign from private groups they belong to
+                // at application creation
+                permissions.checkOnlyUserPrivateGroups(app.getGroups());
+            }));
         try {
             applicationDAO.add(app);
 
@@ -66,18 +65,16 @@ public class ApplicationBusiness extends CommonBusiness {
     @VIPExternalSafe
     public void remove(String name) throws VipException {
         Application app = get(name);
+        if (app == null) return;
 
-        if (app == null) {
-            return;
-        }
-        permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
-
-        if (getUserLevel().equals(UserLevel.Developer)) {
-            // this is related to developers
-            // they can only remove application from private groups they belong to
-            permissions.checkItemInList(app, getUserContextApplications());
-            permissions.checkOnlyUserPrivateGroups(app.getGroups());
-        }
+        permissions.filter((chain) -> chain
+            .admin()
+            .developer(() -> {
+                // this is related to developers
+                // they can only remove application from private groups they belong to
+                permissions.checkItemInList(app, getUserContextApplications());
+                permissions.checkOnlyUserPrivateGroups(app.getGroups());
+            }));
         try {
             logger.trace("Removing application: {}", name);
             applicationDAO.remove(name);
@@ -88,16 +85,16 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(Application app) throws VipException {
-        Application existingApp = get(app.getName());
+        Application existingApp = permissions.shouldExist(get(app.getName()));
 
-        permissions.checkLevel(UserLevel.Administrator, UserLevel.Developer);
-
-        if (getUserLevel().equals(UserLevel.Developer)) {
-            // developer can only associate group at CREATION
-            permissions.checkUnchanged(app.getGroups(), existingApp.getGroups());
-            // edition only on application from privates groups
-            permissions.checkOnlyUserPrivateGroups(existingApp.getGroups());
-        }
+        permissions.filter((chain) -> chain
+            .admin()
+            .developer(() -> {
+                // developer can only associate group at CREATION
+                permissions.checkUnchanged(app.getGroups(), existingApp.getGroups());
+                // edition only on application from privates groups
+                permissions.checkOnlyUserPrivateGroups(existingApp.getGroups());
+            }));
         try {
             Set<String> beforeGroupsNames = existingApp.getGroupsNames();
 
