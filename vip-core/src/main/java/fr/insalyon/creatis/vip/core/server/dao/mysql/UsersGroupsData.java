@@ -68,7 +68,7 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
                     +   "FROM VIPGroups g JOIN VIPUsersGroups ug "
                     +   "ON g.name = ug.groupname AND email = ? "
                     +   "UNION "
-                    +   "SELECT name, public, type, auto, NULL AS role "
+                    +   "SELECT name, public, type, auto, 'User' AS role "
                     +   "FROM VIPGroups WHERE auto = true");
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();

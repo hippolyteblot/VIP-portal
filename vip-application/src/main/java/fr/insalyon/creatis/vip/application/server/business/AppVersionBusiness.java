@@ -44,7 +44,7 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void add(AppVersion version) throws VipException {
-        permissions.shouldExist(applicationBusiness.get(version.getApplicationName()));
+        Application app = permissions.shouldExist(applicationBusiness.get(version.getApplicationName()));
         permissions.filter((chain) -> chain
             .admin()
             .developer(() -> {
@@ -53,6 +53,7 @@ public class AppVersionBusiness extends CommonBusiness {
                 for (Resource wantedResource : version.getResources()) {
                     permissions.checkItemInList(wantedResource, userResources);
                 }
+                permissions.checkOnlyUserPrivateGroups(app.getGroups());
         }));
         try {
             applicationDAO.addVersion(version);
@@ -72,17 +73,19 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(AppVersion version) throws VipException {
-        AppVersion exisitingVersion = permissions.shouldExist(get(version.getApplicationName(), version.getVersion()));
+        AppVersion existingVersion = permissions.shouldExist(get(version.getApplicationName(), version.getVersion()));
+        Application app = applicationBusiness.get(version.getApplicationName());
 
         permissions.filter((chain) -> chain
             .admin()
             .developer(() -> {
-                // developer can only associate resources at CREATION
-                permissions.checkUnchanged(version.getResources(), exisitingVersion.getResources());
+                // developer can only associate resources at CREATION (on private apps)
+                permissions.checkUnchanged(version.getResources(), existingVersion.getResources());
+                permissions.checkOnlyUserPrivateGroups(app.getGroups());
         }));
         try {
-            List<String> beforeResourceNames = exisitingVersion.getResourcesNames();
-            List<Tag> editedTags = exisitingVersion.getTags();
+            List<String> beforeResourceNames = existingVersion.getResourcesNames();
+            List<Tag> editedTags = existingVersion.getTags();
             editedTags.removeAll(version.getTags());
 
             applicationDAO.updateVersion(version);
@@ -187,7 +190,7 @@ public class AppVersionBusiness extends CommonBusiness {
     @VIPExternalSafe
     public AppVersion get(String application, String version) throws VipException {
         try {
-            Application app = applicationBusiness.get(application);
+            Application app = permissions.shouldExist(applicationBusiness.get(application));
             AppVersion appVersion = applicationDAO.getVersion(app.getName(), version);
 
             if (appVersion != null) {
