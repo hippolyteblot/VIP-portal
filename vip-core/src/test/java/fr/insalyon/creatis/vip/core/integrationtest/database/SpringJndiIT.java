@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 
 import javax.sql.DataSource;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
+import fr.insalyon.creatis.vip.core.integrationtest.utils.JndiTestConfigLoader;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -83,6 +85,11 @@ public class SpringJndiIT {
     @Autowired private EmailBusiness emailBusiness;
     @Autowired private GRIDAClient gridaClient;
     @Autowired private GroupBusiness groupBusiness;
+
+    @BeforeAll
+    static public void setup() throws Exception {
+        JndiTestConfigLoader.load();
+    }
 
     /*
         First launch
