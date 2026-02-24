@@ -54,8 +54,10 @@ public class AppVersionControllerIT extends BaseInternalApiSpringIT {
         createGroup("group2", GroupType.APPLICATION, false);
         groupBusiness.add(new Group("groupauto", true, GroupType.APPLICATION, true));
 
-        group = groupBusiness.get(nameGroup1);
-        group2 = groupBusiness.get("group2");
+        asAdminContext(() -> {
+            group = groupBusiness.get(nameGroup1);
+            group2 = groupBusiness.get("group2");
+        });
 
         configurationBusiness.addUserToGroup(basicUser.getEmail(), group.getName());
         configurationBusiness.addUserToGroup(developperUser.getEmail(), group.getName());

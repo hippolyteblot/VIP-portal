@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -48,7 +49,9 @@ import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
+import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
+import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticationProvider;
 
 /*
     Use simple jndi to configure an h2 in-memory database and verify :
@@ -83,13 +86,22 @@ public class SpringJndiIT {
     @Autowired private EmailBusiness emailBusiness;
     @Autowired private GRIDAClient gridaClient;
     @Autowired private GroupBusiness groupBusiness;
+    @Autowired private Server server;
+
+    public void setAdminContext() throws VipException, GRIDAClientException {
+        SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
+        User adminUser = configurationBusiness.getUserWithGroups(server.getAdminEmail());
+
+        SecurityContextHolder.getContext().setAuthentication(provider.createAuthenticationFromUser(adminUser));
+    }
 
     /*
         First launch
      */
     @Test
     @Order(1)
-    public void testJNDIConfig() throws VipException {
+    public void testJNDIConfig() throws VipException, GRIDAClientException {
+        setAdminContext();
         // verify the vip-support group created on init is present
         assertNotNull(configurationBusiness);
         List<Group> groups = groupBusiness.get();
@@ -118,7 +130,8 @@ public class SpringJndiIT {
     */
     @Test
     @Order(2)
-    public void addNewGroup() throws VipException {
+    public void addNewGroup() throws VipException, GRIDAClientException {
+        setAdminContext();
         List<Group> groups = groupBusiness.get();
         assertEquals(0, groups.size());
         groupBusiness.add(new Group("test group", true, GroupType.RESOURCE));
@@ -132,7 +145,8 @@ public class SpringJndiIT {
     */
     @Test
     @Order(3)
-    public void isGroupStillThere() throws VipException {
+    public void isGroupStillThere() throws VipException, GRIDAClientException {
+        setAdminContext();
         List<Group> groups = groupBusiness.get();
         assertEquals(1, groups.size());
     }
@@ -143,7 +157,8 @@ public class SpringJndiIT {
     @Test
     @Order(4)
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD) // to restart spring
-    public void isGroupStillThereAfterRestart() throws VipException {
+    public void isGroupStillThereAfterRestart() throws VipException, GRIDAClientException {
+        setAdminContext();
         List<Group> groups = groupBusiness.get();
         assertEquals(1, groups.size());
     }

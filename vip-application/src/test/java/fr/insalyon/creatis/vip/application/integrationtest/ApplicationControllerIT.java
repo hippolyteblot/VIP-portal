@@ -42,8 +42,11 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
 
         createGroup(nameGroup1, GroupType.APPLICATION, false);
         createGroup("group2", GroupType.APPLICATION, false);
-        group = groupBusiness.get(nameGroup1);
-        group2 = groupBusiness.get("group2");
+
+        asAdminContext(() -> {
+            group = groupBusiness.get(nameGroup1);
+            group2 = groupBusiness.get("group2");
+        });
     }
 
     @Test
