@@ -1,29 +1,25 @@
 package fr.insalyon.creatis.vip.core.integrationtest.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
-import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
-import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
-import fr.insalyon.creatis.vip.core.server.model.AuthenticationCredentials;
-import org.junit.jupiter.api.BeforeEach;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MvcResult;
 
-import static org.hamcrest.Matchers.nullValue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
+import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
+import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
+import fr.insalyon.creatis.vip.core.server.model.AuthenticationCredentials;
 
 public class SessionControllerIT extends BaseInternalApiSpringIT {
-
-    private ObjectMapper mapper;
-
-    @BeforeEach
-    protected void setUpMapper() throws Exception {
-        mapper = new ObjectMapper();
-    }
 
     @Test
     public void getSession() throws Exception {
