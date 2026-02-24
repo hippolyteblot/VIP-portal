@@ -169,10 +169,10 @@ public class ResourceControllerIT extends BaseInternalApiSpringIT {
 
     @Test
     public void getResource() throws Exception {
-        createGroup("private", GroupType.RESOURCE, false);
-        createGroup("public", GroupType.RESOURCE, true);
-
         asAdminContext(() -> {
+            createGroup("private", GroupType.RESOURCE, false);
+            createGroup("public", GroupType.RESOURCE, true);
+
             groupPrivate = groupBusiness.get("private");
             groupPublic = groupBusiness.get("public");
         });
@@ -231,9 +231,9 @@ public class ResourceControllerIT extends BaseInternalApiSpringIT {
         Resource resource1 = new Resource("testA");
         Resource resource2 = new Resource("testB");
         Resource resource3 = new Resource("testC");
-        createGroup("test", GroupType.RESOURCE, true);
 
         asAdminContext(() -> {
+            createGroup("test", GroupType.RESOURCE, true);
             groupPublic = groupBusiness.get("test");
         });
         resource1.setGroups(Set.of(groupPublic));

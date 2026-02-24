@@ -285,7 +285,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
     @Test
     public void testRemoveGroup() throws VipException {
-        groupBusiness.remove(emailUser1, nameGroup1);
+        groupBusiness.remove(nameGroup1);
         Assertions.assertEquals(1, groupBusiness.get().size(), "incorrect groups number");
     }
 
@@ -293,7 +293,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     public void testCatchRemoveNonExistentGroup() throws VipException {
         // DELETE + nonExistent foreign key / part of primary key groupName => no exception
         // We decided not to add an exception because if this occurs, it will not create problem, just no row will be deleted
-        groupBusiness.remove(emailUser1, "nonExistent group");
+        groupBusiness.remove("nonExistent group");
         Assertions.assertEquals(2, groupBusiness.get().size(), "incorrect groups number");
     }
 
@@ -498,7 +498,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     public void testCatchNonExistentUserRemoveGroup() throws VipException {
         // DELETE + nonExistent foreign key user email => no exception
         // We decided not to add an exception because if this occurs, it will not create problem, just no row will be deleted
-        groupBusiness.remove("nonExistent user", nameGroup1);
+        groupBusiness.remove(nameGroup1);
         Assertions.assertEquals(1, groupBusiness.get().size(), "incorrect groups number");
     }
 

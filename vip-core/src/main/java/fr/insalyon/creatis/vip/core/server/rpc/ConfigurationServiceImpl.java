@@ -159,7 +159,7 @@ public class ConfigurationServiceImpl extends AbstractRemoteServiceServlet imple
         try {
             authenticateSystemAdministrator(logger);
             trace(logger, "Removing group '" + groupName + "'.");
-            groupBusiness.remove(getSessionUser().getEmail(), groupName);
+            groupBusiness.remove(groupName);
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
