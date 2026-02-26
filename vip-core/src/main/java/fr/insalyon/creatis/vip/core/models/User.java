@@ -1,18 +1,19 @@
 package fr.insalyon.creatis.vip.core.models;
 
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.gwt.user.client.rpc.IsSerializable;
+
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 
-import java.sql.Timestamp;
-import java.util.*;
 
-
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 public class User implements IsSerializable {
 
     private String firstName;
@@ -31,7 +32,6 @@ public class User implements IsSerializable {
     private int maxRunningSimulations;
     private CountryCode countryCode;
     private Map<Group, GROUP_ROLE> groups;
-    private boolean hasGroups;
     private Timestamp termsOfUse;
     private Timestamp lastUpdatePublications;
     private int failedAuthentications;
@@ -214,7 +214,6 @@ public class User implements IsSerializable {
 
     public void setGroups(Map<Group, GROUP_ROLE> groups) {
         this.groups = groups;
-        this.hasGroups = !groups.isEmpty();
         filterGroups();
     }
 
@@ -288,7 +287,7 @@ public class User implements IsSerializable {
        }
 
     public boolean hasGroups(){
-        return hasGroups;
+        return this.groups.isEmpty();
     }
 
     public int getFailedAuthentications() {
