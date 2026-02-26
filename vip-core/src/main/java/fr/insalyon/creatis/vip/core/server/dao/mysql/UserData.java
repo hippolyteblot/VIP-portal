@@ -32,12 +32,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         setDataSource(dataSource);
     }
 
-    /**
-     * Adds a user
-     *
-     * @param user
-     * @return
-     */
     @Override
     public void add(User user) throws DAOException {
 
@@ -82,12 +76,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param password
-     * @return
-     * @throws DAOException
-     */
     @Override
     public boolean authenticate(String email, String password) throws DAOException {
 
@@ -112,12 +100,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param code
-     * @return
-     * @throws DAOException
-     */
     @Override
     public boolean activate(String email, String code) throws DAOException {
 
@@ -152,11 +134,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @return
-     * @throws DAOException
-     */
     @Override
     public User getUser(String email) throws DAOException {
 
@@ -203,9 +180,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @return @throws DAOException
-     */
     @Override
     public List<User> getUsers() throws DAOException {
 
@@ -374,10 +348,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @throws DAOException
-     */
     @Override
     public void remove(String email) throws DAOException {
         try {
@@ -394,10 +364,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param user
-     * @throws DAOException
-     */
     @Override
     public void update(User user) throws DAOException {
 
@@ -424,12 +390,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param currentPassword
-     * @param newPassword
-     * @throws DAOException
-     */
     @Override
     public void updatePassword(String email, String currentPassword,
                                String newPassword) throws DAOException {
@@ -495,11 +455,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param session
-     * @throws DAOException
-     */
     @Override
     public void updateSession(String email, String session) throws DAOException {
 
@@ -519,12 +474,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param session
-     * @return
-     * @throws DAOException
-     */
     @Override
     public boolean verifySession(String email, String session) throws DAOException {
 
@@ -549,11 +498,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param lastLogin
-     * @throws DAOException
-     */
     @Override
     public void updateLastLogin(String email, Date lastLogin) throws DAOException {
 
@@ -592,11 +536,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param session
-     * @return
-     * @throws DAOException
-     */
     @Override
     public User getUserBySession(String session) throws DAOException {
 
@@ -639,9 +578,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @return @throws DAOException
-     */
     @Override
     public List<User> getAdministrators() throws DAOException {
 
@@ -684,14 +620,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param level
-     * @param countryCode
-     * @param maxRunningSimulations
-     * @param locked
-     * @throws DAOException
-     */
     @Override
     public void update(String email, UserLevel level, CountryCode countryCode,
                        int maxRunningSimulations, boolean locked) throws DAOException {
@@ -715,11 +643,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param code
-     * @throws DAOException
-     */
     @Override
     public void updateCode(String email, String code) throws DAOException {
 
@@ -738,11 +661,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param newPassword
-     * @throws DAOException
-     */
     @Override
     public void resetPassword(String email, String newPassword) throws DAOException {
 
