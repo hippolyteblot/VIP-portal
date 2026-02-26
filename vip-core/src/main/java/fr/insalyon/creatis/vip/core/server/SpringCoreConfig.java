@@ -25,6 +25,7 @@ import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import javax.sql.DataSource;
@@ -63,7 +64,8 @@ import static org.springframework.util.ResourceUtils.CLASSPATH_URL_PREFIX;
                 @ComponentScan.Filter(type = FilterType.ANNOTATION, value = RestController.class),
                 // Bean scanning must exclude other @EnableWebMvc beans, otherwise their own scanning rule
                 // would be recursively triggered, and all beans would end up in the root context.
-                @ComponentScan.Filter(type = FilterType.ANNOTATION, value = EnableWebMvc.class)
+                @ComponentScan.Filter(type = FilterType.ANNOTATION, value = EnableWebMvc.class),
+                @ComponentScan.Filter(type = FilterType.ANNOTATION, value = RestControllerAdvice.class)
         }
 )
 public class SpringCoreConfig {
