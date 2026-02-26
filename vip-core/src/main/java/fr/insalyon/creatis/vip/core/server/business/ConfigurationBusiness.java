@@ -118,7 +118,7 @@ public class ConfigurationBusiness {
 
     public User getUser(String email) throws VipException {
         try {
-            return userDAO.getUser(email);
+            return userDAO.get(email);
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
@@ -126,7 +126,7 @@ public class ConfigurationBusiness {
 
     public User getUserWithGroups(String email) throws VipException {
         try {
-            User user = userDAO.getUser(email);
+            User user = userDAO.get(email);
             user.setGroups(usersGroupsDAO.getUserGroups(email));
             return user;
         } catch (DAOException ex) {
@@ -352,7 +352,7 @@ public class ConfigurationBusiness {
                 if (resetSession) {
                     return getUserWithSession(email);
                 } else {
-                    return userDAO.getUser(email);
+                    return userDAO.get(email);
                 }
 
             } else {
@@ -416,7 +416,7 @@ public class ConfigurationBusiness {
             }
             if (userDAO.activate(email, code)) {
 
-                User user = userDAO.getUser(email);
+                User user = userDAO.get(email);
                 userDAO.resetNFailedAuthentications(email);
 
                 gridaClient.createFolder(server.getDataManagerUsersHome(),
@@ -446,7 +446,7 @@ public class ConfigurationBusiness {
 
     public void activateUser(String email) throws VipException {
         try {
-            User user = userDAO.getUser(email);
+            User user = userDAO.get(email);
             activate(email, user.getCode());
         } catch (DAOException ex) {
             throw new VipException(ex);
@@ -455,7 +455,7 @@ public class ConfigurationBusiness {
 
     public void sendActivationCode(String email) throws VipException {
         try {
-            User user = userDAO.getUser(email);
+            User user = userDAO.get(email);
 
             if (userDAO.isLocked(email)) {
                 logger.error("Cannot send activation code to {} : account locked", email);
@@ -484,7 +484,7 @@ public class ConfigurationBusiness {
 
     public void sendResetCode(String email) throws VipException {
         try {
-            User user = userDAO.getUser(email);
+            User user = userDAO.get(email);
 
             if (userDAO.isLocked(email)) {
                 logger.error("Cannot send reset code to {} : account locked", email);
@@ -638,7 +638,7 @@ public class ConfigurationBusiness {
 
     public User getUserData(String email) throws VipException {
         try {
-            return userDAO.getUser(email);
+            return userDAO.get(email);
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
@@ -777,7 +777,7 @@ public class ConfigurationBusiness {
             throws VipException {
 
         try {
-            User user = userDAO.getUser(email);
+            User user = userDAO.get(email);
 
             if (code.equals(user.getCode())) {
                 userDAO.resetPassword(email, MD5.get(password));
@@ -798,7 +798,7 @@ public class ConfigurationBusiness {
         String session = UUID.randomUUID().toString();
         userDAO.updateSession(email, session);
 
-        return userDAO.getUser(email);
+        return userDAO.get(email);
     }
 
     public String getLoginUrlCas(URL serviceURL) {

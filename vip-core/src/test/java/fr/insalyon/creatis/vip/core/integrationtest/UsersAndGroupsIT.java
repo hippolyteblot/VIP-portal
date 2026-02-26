@@ -63,7 +63,8 @@ public class UsersAndGroupsIT extends BaseSpringIT {
         user4 = configurationBusiness.getUser(emailUser4);
 
         // Create a very complete test users
-        user5 = new User("firstName", "lastName", "email5@test.fr", "nextEmail@test.fr", "institution", "password", false, "code", "folder", "session", new Date(), new Date(), Beginner, CountryCode.fr, 1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 0, false);
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
+        user5 = new User("firstName", "lastName", "email5@test.fr", "nextEmail@test.fr", "institution", "password", false, "code", "folder", "session", now, now, Beginner, CountryCode.fr, 1, now, now, 0, false, null);
         createUserInGroup("email5@test.fr", "suffix5", "group2");
 
         Map<Group, CoreConstants.GROUP_ROLE> groups = new HashMap<>();
@@ -720,7 +721,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
     @Test
     public void testSetRegistrationDate() throws VipException {
-        Date now = new Date();
+        Timestamp now = new Timestamp(System.currentTimeMillis());
         user1.setRegistration(now);
         Assertions.assertEquals(now, user1.getRegistration(), "incorrect registration date");
 
@@ -728,7 +729,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
     @Test
     public void testSetLastLogin() throws VipException {
-        Date now = new Date();
+        Timestamp now = new Timestamp(System.currentTimeMillis());
         user1.setLastLogin(now);
         Assertions.assertEquals(now, user1.getLastLogin(), "incorrect last login");
 

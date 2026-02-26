@@ -1,7 +1,6 @@
 package fr.insalyon.creatis.vip.core.models;
 
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -26,8 +25,8 @@ public class User implements IsSerializable {
     private String code;
     private String folder;
     private String session;
-    private Date registration;
-    private Date lastLogin;
+    private Timestamp registration;
+    private Timestamp lastLogin;
     private UserLevel level;
     private int maxRunningSimulations;
     private CountryCode countryCode;
@@ -36,7 +35,8 @@ public class User implements IsSerializable {
     private Timestamp lastUpdatePublications;
     private int failedAuthentications;
     private boolean accountLocked;
-    
+    private String apiKey;
+
     public User() {
     }
 
@@ -46,14 +46,14 @@ public class User implements IsSerializable {
     public User(String firstName, String lastName, String email, String institution, UserLevel level, CountryCode countryCode) {
 
         this(firstName, lastName, email, null, institution, "", false, "", "",
-                "", null, null, level, countryCode, 1,null,null,0,false);
+                "", null, null, level, countryCode, 1,null,null,0,false, null);
 
     }
 
     public User(String firstName, String lastName, String email, String institution, String password, UserLevel level, CountryCode countryCode) {
 
         this(firstName, lastName, email, null, institution, password, false, "", "",
-                "", null, null, level, countryCode, 1,null,null,0,false);
+                "", null, null, level, countryCode, 1,null,null,0,false, null);
 
     }
 
@@ -61,7 +61,7 @@ public class User implements IsSerializable {
             String password, CountryCode countryCode,Timestamp lastUpdatePublications) {
 
         this(firstName, lastName, email, null, institution, password, false,
-                "", "", "", new Date(), new Date(), null, countryCode, 1,null,lastUpdatePublications,0,false);
+                "", "", "", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1,null,lastUpdatePublications,0,false, null);
     }
 
     public User(
@@ -75,15 +75,16 @@ public class User implements IsSerializable {
             String code,
             String folder,
             String session,
-            Date registration,
-            Date lastLogin,
+            Timestamp registration,
+            Timestamp lastLogin,
             UserLevel level,
             CountryCode countryCode, 
             int maxRunningSimulations,
             Timestamp termsOfUse,
             Timestamp lastUpdatePublications,
             int failedAuthentications,
-            boolean locked
+            boolean locked,
+            String apiKey
     ) {
 
         this.firstName = firstName;
@@ -106,6 +107,7 @@ public class User implements IsSerializable {
         this.failedAuthentications = failedAuthentications;
         this.accountLocked = locked;
         this.groups = new HashMap<>();
+        this.apiKey = apiKey;
     }
 
     public boolean isConfirmed() {
@@ -172,11 +174,11 @@ public class User implements IsSerializable {
         return session;
     }
 
-    public Date getLastLogin() {
+    public Timestamp getLastLogin() {
         return lastLogin;
     }
 
-    public void setLastLogin(Date lastLogin) {
+    public void setLastLogin(Timestamp lastLogin) {
         this.lastLogin = lastLogin;
     }
 
@@ -204,11 +206,11 @@ public class User implements IsSerializable {
         this.countryCode = countryCode;
     }
 
-    public Date getRegistration() {
+    public Timestamp getRegistration() {
         return registration;
     }
 
-    public void setRegistration(Date registration) {
+    public void setRegistration(Timestamp registration) {
         this.registration = registration;
     }
 
@@ -296,6 +298,14 @@ public class User implements IsSerializable {
 
     public boolean isAccountLocked() {
         return this.accountLocked;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 
     @Override

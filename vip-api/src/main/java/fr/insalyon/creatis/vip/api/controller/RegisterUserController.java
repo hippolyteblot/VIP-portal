@@ -1,6 +1,6 @@
 package fr.insalyon.creatis.vip.api.controller;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,10 +52,12 @@ public class RegisterUserController extends ApiController {
                 signUpUser.getCountryCode(),
                 null
                 );
-        user.setRegistration(new Date());
-        user.setLastLogin(new Date());
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        user.setRegistration(now);
+        user.setLastLogin(now);
         this.apiUserBusiness.signup(user, signUpUser.getComments());
-        return new ResponseEntity(HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
 }

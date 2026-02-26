@@ -26,7 +26,7 @@ public interface UserDAO {
 
     public boolean activate(String email, String code) throws DAOException;
 
-    public User getUser(String email) throws DAOException;
+    public User get(String email) throws DAOException;
 
     public List<User> getUsers() throws DAOException;
 

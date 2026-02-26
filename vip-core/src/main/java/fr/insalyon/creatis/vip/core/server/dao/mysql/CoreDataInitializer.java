@@ -2,7 +2,7 @@ package fr.insalyon.creatis.vip.core.server.dao.mysql;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.sql.Timestamp;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -89,6 +89,8 @@ public class CoreDataInitializer extends JdbcDaoSupport {
                     + server.getAdminLastName().toLowerCase();
 
             try {
+                final Timestamp now = new Timestamp(System.currentTimeMillis());
+
                 userDAO.add(
                         new User(server.getAdminFirstName(),
                                 server.getAdminLastName(),
@@ -98,8 +100,8 @@ public class CoreDataInitializer extends JdbcDaoSupport {
                                 MD5.get(server.getAdminPassword()),
                                 true,
                                 UUID.randomUUID().toString(), folder, "",
-                                new Date(), new Date(), UserLevel.Administrator,
-                                CountryCode.fr, 100, null,null,0,false));
+                                now, now, UserLevel.Administrator,
+                                CountryCode.fr, 100, null,null,0,false, null));
 
             } catch (DAOException | NoSuchAlgorithmException | UnsupportedEncodingException ex) {
                 logger.error("Error creating VIPUsers table", ex);

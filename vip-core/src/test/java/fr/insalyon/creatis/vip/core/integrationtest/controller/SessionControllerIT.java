@@ -25,7 +25,7 @@ public class SessionControllerIT extends BaseInternalApiSpringIT {
     public void getSession() throws Exception {
         createUser(emailUser1);
         userDAO.updateSession(emailUser1, "super_session");
-        user1 = userDAO.getUser(emailUser1);
+        user1 = userDAO.get(emailUser1);
 
         // not connected
         mockMvc.perform(get("/internal/session"))
