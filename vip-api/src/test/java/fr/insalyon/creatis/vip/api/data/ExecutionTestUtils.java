@@ -64,7 +64,7 @@ public class ExecutionTestUtils {
 
     private static Execution getExecution(Simulation simulation, ExecutionStatus executionStatus) {
         // TODO : startDate should be in seconds
-        String resultsDirectory = null;
+        Object resultsDirectory = null;
         return new Execution(
             simulation.getID(),
             simulation.getSimulationName(),
