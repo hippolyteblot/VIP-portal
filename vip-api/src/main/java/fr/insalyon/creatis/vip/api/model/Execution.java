@@ -21,7 +21,7 @@ public class Execution {
     private Integer errorCode;
     private Long startDate;
     private Long endDate;
-    private String resultsLocation;
+    private Object resultsLocation;
     private Map<Integer, Map<String, Object>> jobs; // jobId -> status
 
     public Execution() {
@@ -39,7 +39,7 @@ public class Execution {
                      Integer errorCode,
                      Long startDate,
                      Long endDate,
-                     String resultsLocation) {
+                     Object resultsLocation) {
         this();
         this.identifier = identifier;
         this.name = name == null ? identifier : name; // null names sometimes happen due to a race condition in VIP.
@@ -146,11 +146,11 @@ public class Execution {
         this.endDate = endDate;
     }
 
-    public String getResultsLocation() {
+    public Object getResultsLocation() {
         return resultsLocation;
     }
 
-    public void setResultsLocation(String resultsLocation) {
+    public void setResultsLocation(Object resultsLocation) {
         this.resultsLocation = resultsLocation;
     }
 

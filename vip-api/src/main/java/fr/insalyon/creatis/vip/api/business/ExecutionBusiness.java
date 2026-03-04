@@ -295,9 +295,13 @@ public class ExecutionBusiness {
                     restInput.getKey(),
                     handleRestParameter(restInput.getKey(), restInput.getValue()));
         }
-        String resultsLocation = execution.getResultsLocation();
+
+        // We handle resultsLocation the same as others restInputs, since it can either be a String or a List<String>
+        Object resultsLocation = execution.getResultsLocation();
         if (resultsLocation != null) {
-            inputMap.put(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME, resultsLocation);
+            inputMap.put(
+                    CoreConstants.RESULTS_DIRECTORY_PARAM_NAME,
+                    handleRestParameter(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME, resultsLocation));
         }
 
         checkInputExecNameIsValid(execution.getName());
