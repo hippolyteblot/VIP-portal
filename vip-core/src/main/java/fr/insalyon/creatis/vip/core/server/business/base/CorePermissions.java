@@ -53,13 +53,15 @@ public class CorePermissions {
 
     public Set<Group> filterOnlyUserGroups(List<Group> toFilter) {
         User user = uSupplier.get();
-        Set<Group> result = new HashSet<>();
-        Set<Group> userGroups = user.getGroups();
+        Set<Group> result;
+        Set<Group> userGroups = (user == null) ? null : user.getGroups();
 
-        if (user.isSystemAdministrator()) {
-            result.addAll(toFilter);
+        if (user == null) {
+            result = toFilter.stream().filter( g -> g.isPublicGroup()).collect(Collectors.toSet());
+        } else if (user.isSystemAdministrator()) {
+            result = new HashSet<>(toFilter);
         } else {
-            result = toFilter.stream().filter((g) -> userGroups.contains(g)).collect(Collectors.toSet());
+            result = toFilter.stream().filter( g -> userGroups.contains(g)).collect(Collectors.toSet());
         }
         return result;
     }

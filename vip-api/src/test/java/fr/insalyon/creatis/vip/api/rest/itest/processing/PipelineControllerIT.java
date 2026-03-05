@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import fr.insalyon.creatis.vip.core.models.GroupType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -61,6 +62,30 @@ public class PipelineControllerIT extends BaseRestApiSpringIT {
     }
 
     @Test
+    public void shouldReturnPublicApps() throws Exception {
+        createGroup("group1");
+        createAnApplication("app1", "group1");
+        AppVersion app11 = createAVersion("app1", "v1", true);
+        AppVersion app12 = createAVersion("app1", "v2", true);
+        createAnApplication("app2", "group1");
+        AppVersion app21 = createAVersion("app2", "v1", true);
+        createGroup("group2", GroupType.APPLICATION, false);
+        createAnApplication("app3", "group2");
+        AppVersion app31 = createAVersion("app3", "v1", true);
+
+        // public URL, not authenticated
+        mockMvc.perform(get("/rest/pipelines?public"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$[*]", hasSize(3)))
+                .andExpect(jsonPath("$[*]", containsInAnyOrder(
+                        jsonCorrespondsToPipeline(getPipeline(app11)),
+                        jsonCorrespondsToPipeline(getPipeline(app12)),
+                        jsonCorrespondsToPipeline(getPipeline(app21)))));
+    }
+
+    @Test
     public void userGetAPipelineWithBoutiques() throws Exception {
         String appName = "testBoutiquesApp", groupName = "testGroup", versionName = "v42";
         AppVersion appVersion = configureBoutiquesTestApp(appName, groupName, versionName);
@@ -99,7 +124,6 @@ public class PipelineControllerIT extends BaseRestApiSpringIT {
 
     @Test
     public void shouldReturnPipelines() throws Exception {
-        setAdminContext();
         createGroup("group1");
         createGroup("group2");
         createGroup("group3");
