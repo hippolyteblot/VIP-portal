@@ -210,6 +210,7 @@ public class ApplicationBusiness extends CommonBusiness {
         }
     }
 
+    @VIPExternalSafe
     public List<Application> getPublicApplications() throws VipException {
         List<Group> publicAppGroups = groupBusiness.getPublic()
             .stream()
