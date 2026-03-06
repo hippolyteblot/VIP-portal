@@ -1,0 +1,410 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "OpenAPI definition",
+    "version" : "v0"
+  },
+  "servers" : [ {
+    "url" : "http://localhost/internal",
+    "description" : "Generated server url"
+  } ],
+  "paths" : {
+    "/applications/{id}" : {
+      "get" : {
+        "tags" : [ "application-controller" ],
+        "operationId" : "getApplication",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Application"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "application-controller" ],
+        "operationId" : "createOrUpdateApplication",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Application"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Application"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "application-controller" ],
+        "operationId" : "deleteApplication",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/session" : {
+      "get" : {
+        "tags" : [ "session-controller" ],
+        "operationId" : "getSession",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Session"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "session-controller" ],
+        "operationId" : "createSession",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AuthenticationCredentials"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Session"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "session-controller" ],
+        "operationId" : "deleteSession",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
+    "/applications" : {
+      "get" : {
+        "tags" : [ "application-controller" ],
+        "operationId" : "listApplications",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "name" : "quantity",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "exclusiveMinimum" : 0,
+            "maximum" : 50
+          }
+        }, {
+          "name" : "group",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PrecisePageApplication"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "application-controller" ],
+        "operationId" : "createApplication",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Application"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Application"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ErrorCodeAndMessage" : {
+        "type" : "object",
+        "properties" : {
+          "errorCode" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "errorCode", "errorMessage" ]
+      },
+      "Application" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "citation" : {
+            "type" : "string"
+          },
+          "owner" : {
+            "type" : "string"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "groups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Group"
+            },
+            "uniqueItems" : true
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "groupsNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
+      "Group" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "publicGroup" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "APPLICATION", "RESOURCE" ]
+          },
+          "auto" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "AuthenticationCredentials" : {
+        "type" : "object",
+        "properties" : {
+          "username" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ]
+      },
+      "Session" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "userlevel" : {
+            "type" : "string",
+            "enum" : [ "Beginner", "Advanced", "Developer", "Administrator" ]
+          }
+        }
+      },
+      "PrecisePageApplication" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Application"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      }
+    }
+  }
+}
