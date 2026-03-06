@@ -2,9 +2,8 @@ package fr.insalyon.creatis.vip.application.server.controller;
 
 import java.util.Optional;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,8 +35,10 @@ public class ApplicationController {
     }
 
     @GetMapping
-    public PrecisePage<Application> listApplications(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
-            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity, @RequestParam Optional<String> group) throws VipException {
+    public PrecisePage<Application> listApplications(
+            @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
+            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity,
+            @RequestParam Optional<String> group) throws VipException {
         return applicationBusiness.get(offset, quantity, group.orElse(null));
     }
 
