@@ -1,5 +1,6 @@
 package fr.insalyon.creatis.vip.core.server.business.base;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,7 +52,7 @@ public class CorePermissions {
         }
     }
 
-    public Set<Group> filterOnlyUserGroups(List<Group> toFilter) {
+    public Set<Group> filterOnlyUserGroups(Set<Group> toFilter) {
         User user = uSupplier.get();
         Set<Group> result;
         Set<Group> userGroups = (user == null) ? null : user.getGroups();
@@ -63,6 +64,13 @@ public class CorePermissions {
         } else {
             result = toFilter.stream().filter( g -> userGroups.contains(g)).collect(Collectors.toSet());
         }
+        return result;
+    }
+
+    public <T> List<T> filterOnlySame(List<T> a, List<T> b) {
+        List<T> result = new ArrayList<>(a);
+
+        result.retainAll(b);
         return result;
     }
 
