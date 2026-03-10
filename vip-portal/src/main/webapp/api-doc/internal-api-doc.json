@@ -9,6 +9,113 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/resources/{id}" : {
+      "get" : {
+        "tags" : [ "resource-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "resource-controller" ],
+        "operationId" : "createOrUpdate",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Resource"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "resource-controller" ],
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/applications/{id}" : {
       "get" : {
         "tags" : [ "application-controller" ],
@@ -199,6 +306,99 @@
         }
       }
     },
+    "/resources" : {
+      "get" : {
+        "tags" : [ "resource-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "name" : "quantity",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "exclusiveMinimum" : 0,
+            "maximum" : 50
+          }
+        }, {
+          "name" : "group",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PrecisePageResource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "resource-controller" ],
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Resource"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Resource"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/applications" : {
       "get" : {
         "tags" : [ "application-controller" ],
@@ -308,6 +508,62 @@
         },
         "required" : [ "errorCode", "errorMessage" ]
       },
+      "Group" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "publicGroup" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "APPLICATION", "RESOURCE" ]
+          },
+          "auto" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "Resource" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "LOCAL", "BATCH", "KUBERNETES", "DIRAC" ]
+          },
+          "configuration" : {
+            "type" : "string"
+          },
+          "engines" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "groups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Group"
+            },
+            "uniqueItems" : true
+          },
+          "groupsNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
       "Application" : {
         "type" : "object",
         "properties" : {
@@ -342,24 +598,6 @@
           }
         }
       },
-      "Group" : {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "publicGroup" : {
-            "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "APPLICATION", "RESOURCE" ]
-          },
-          "auto" : {
-            "type" : "boolean"
-          }
-        }
-      },
       "AuthenticationCredentials" : {
         "type" : "object",
         "properties" : {
@@ -387,6 +625,21 @@
           "userlevel" : {
             "type" : "string",
             "enum" : [ "Beginner", "Advanced", "Developer", "Administrator" ]
+          }
+        }
+      },
+      "PrecisePageResource" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Resource"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
