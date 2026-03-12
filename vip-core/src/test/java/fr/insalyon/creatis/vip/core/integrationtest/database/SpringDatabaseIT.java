@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -29,6 +30,7 @@ import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
 
 /**
  * Integration tests that verify the spring database/transactions configuration
@@ -37,7 +39,9 @@ import fr.insalyon.creatis.vip.core.models.Group;
  * These tests are ordered as this is needed for the last ones.
  */
 @TestMethodOrder(OrderAnnotation.class)
-public class SpringDatabaseIT extends BaseSpringIT{
+public class SpringDatabaseIT extends BaseSpringIT {
+
+    @Autowired private TermsOfUseBusiness termsOfUseBusiness;
     
     /*
         verify database init and that only one connection is shared in a test
@@ -124,7 +128,7 @@ public class SpringDatabaseIT extends BaseSpringIT{
 
         Exception exceptionCatched = null;
         try {
-            configurationBusiness.removeUser(testEmail, true);
+            userBusiness.removeUser(testEmail, true);
         } catch (Exception ex) {
             exceptionCatched = ex;
         }
@@ -133,7 +137,7 @@ public class SpringDatabaseIT extends BaseSpringIT{
         assertEquals(shouldRollback ? 2 : 1, countUser.get());
         if (shouldRollback) {
             // clean if necessary
-            configurationBusiness.removeUser(testEmail, false);
+            userBusiness.removeUser(testEmail, false);
         }
         assertEquals(1, countUser.get());
     }
@@ -146,7 +150,7 @@ public class SpringDatabaseIT extends BaseSpringIT{
         // and not when the connection is obtained through spring and so errors cause SqlException
         // and not spring DataAccessException, so vip is able to catch them and transform them in VipException
         Mockito.doThrow(SQLException.class).when(dataSource).getConnection();
-        assertThrows(VipException.class, () -> configurationBusiness.addTermsUse());
+        assertThrows(VipException.class, () -> termsOfUseBusiness.add());
         Mockito.reset(dataSource);
     }
 

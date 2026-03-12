@@ -47,10 +47,12 @@ import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
+import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.GroupDAO;
 import fr.insalyon.creatis.vip.core.server.inter.CheckedRunnable;
 import fr.insalyon.creatis.vip.core.server.security.common.SpringPrincipalUser;
@@ -89,6 +91,7 @@ public abstract class BaseSpringIT {
     @Autowired @Qualifier("db-datasource") protected DataSource dataSource; // this is a mockito spy wrapping the h2 memory datasource
     @Autowired protected ApplicationContext applicationContext;
     @Autowired protected ConfigurationBusiness configurationBusiness;
+    @Autowired protected UserBusiness userBusiness;
     @Autowired protected ApplicationContext appContext;
     @Autowired protected DataSource lazyDataSource;
     @Autowired protected Server server;
@@ -97,6 +100,7 @@ public abstract class BaseSpringIT {
     @Autowired protected GroupBusiness groupBusiness;
     @Autowired protected GroupDAO groupDAO;
     @Autowired protected List<TestConfigurer> testConfigurers;
+    @Autowired protected AuthenticationBusiness authenticationBusiness;
 
     protected ObjectMapper mapper;
 
@@ -138,8 +142,8 @@ public abstract class BaseSpringIT {
     protected User createUser(String email, UserLevel level) throws GRIDAClientException, VipException {
         User u = createUser(email, UUID.randomUUID().toString().substring(0, 4));
 
-        configurationBusiness.updateUser(u.getEmail(), level, u.getCountryCode(), u.getMaxRunningSimulations(), false);
-        return configurationBusiness.getUser(email);
+        userBusiness.updateUser(u.getEmail(), level, u.getCountryCode(), u.getMaxRunningSimulations(), false);
+        return userBusiness.getUser(email);
     }
 
     protected User createUser(String testEmail) throws GRIDAClientException, VipException {
@@ -160,7 +164,7 @@ public abstract class BaseSpringIT {
                 password, CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        configurationBusiness.signup(newUser, "", (Group) null);
+        authenticationBusiness.signup(newUser, "", (Group) null);
         return newUser;
     }
 
@@ -186,7 +190,7 @@ public abstract class BaseSpringIT {
 
     public void setAdminContext() throws VipException, GRIDAClientException {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
-        User adminUser = configurationBusiness.getUserWithGroups(adminEmail);
+        User adminUser = userBusiness.getUserWithGroups(adminEmail);
 
         SecurityContextHolder.getContext().setAuthentication(provider.createAuthenticationFromUser(adminUser));
     }
@@ -216,8 +220,8 @@ public abstract class BaseSpringIT {
         for (String groupName : groupNames) {
             groups.add(groupBusiness.get(groupName));
         }
-        configurationBusiness.signup(newUser, "", false, true, groups);
-        return configurationBusiness.getUserWithGroups(userEmail);
+        authenticationBusiness.signup(newUser, "", false, true, groups);
+        return userBusiness.getUserWithGroups(userEmail);
     }
 
     protected Date getNextSecondDate() {

@@ -46,8 +46,6 @@ public class FileUtil {
         Path workflowsPath = Paths.get(server.getWorkflowsPath()).normalize().toAbsolutePath();
         Path requestedPath = Paths.get(server.getWorkflowsPath(), filepath).normalize().toAbsolutePath(); // do not use resolve as filepath could be absolute
 
-        System.err.println(workflowsPath);
-        System.err.println(requestedPath);
         if ( ! requestedPath.startsWith(workflowsPath)) {
             logger.warn("(" + user.getEmail() + ") Attempt to access file outside workflows path: '" + filepath + "'.");
             return null;

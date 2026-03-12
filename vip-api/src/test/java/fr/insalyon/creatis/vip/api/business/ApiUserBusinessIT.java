@@ -44,26 +44,26 @@ public class ApiUserBusinessIT extends BaseSpringIT {
 
     @Test
     public void testInitialization() throws VipException {
-        Assertions.assertEquals(2, configurationBusiness.getUsers().size(), "Incorrect number of users"); // admin + user1
+        Assertions.assertEquals(2, userBusiness.getUsers().size(), "Incorrect number of users"); // admin + user1
     }
 
     @Test
     public void testSignup() throws VipException {
         User user2 = new User("firstName2", "lastName2", "email2@test.fr", "test3@test.fr", "institution", "password", false, "code", "folder", "session", now, now, Beginner, CountryCode.fr, 1, now, now, 0, false, null);
         apiUserBusiness.signup(user2, "comment");
-        Assertions.assertEquals(3, configurationBusiness.getUsers().size(), "Incorrect number of users");
+        Assertions.assertEquals(3, userBusiness.getUsers().size(), "Incorrect number of users");
     }
 
     @Test
     public void testResetPassword() throws VipException {
-        apiUserBusiness.resetPassword("email1@test.fr", configurationBusiness.getUser("email1@test.fr").getCode(), "test new password");
+        apiUserBusiness.resetPassword("email1@test.fr", userBusiness.getUser("email1@test.fr").getCode(), "test new password");
     }
 
     @Test
     public void testResetCode() throws VipException {
-        String oldCode = configurationBusiness.getUser("email1@test.fr").getCode();
+        String oldCode = userBusiness.getUser("email1@test.fr").getCode();
         apiUserBusiness.sendResetCode("email1@test.fr");
-        String newCode = configurationBusiness.getUser("email1@test.fr").getCode();
+        String newCode = userBusiness.getUser("email1@test.fr").getCode();
         Assertions.assertFalse(oldCode.equals(newCode));
     }
 

@@ -46,10 +46,13 @@ import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
+import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticationProvider;
 
@@ -80,6 +83,8 @@ import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticatio
 public class SpringJndiIT {
 
     @Autowired private ConfigurationBusiness configurationBusiness;
+    @Autowired private UserBusiness userBusiness;
+    @Autowired private TermsOfUseBusiness termsOfUseBusiness;
     @Autowired private DataSource dataSource;
     @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private DataSource lazyDataSource;
@@ -87,10 +92,11 @@ public class SpringJndiIT {
     @Autowired private GRIDAClient gridaClient;
     @Autowired private GroupBusiness groupBusiness;
     @Autowired private Server server;
+    @Autowired private AuthenticationBusiness authenticationBusiness;
 
     public void setAdminContext() throws VipException, GRIDAClientException {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
-        User adminUser = configurationBusiness.getUserWithGroups(server.getAdminEmail());
+        User adminUser = userBusiness.getUserWithGroups(server.getAdminEmail());
 
         SecurityContextHolder.getContext().setAuthentication(provider.createAuthenticationFromUser(adminUser));
     }
@@ -197,7 +203,7 @@ public class SpringJndiIT {
 
         Exception exceptionCatched = null;
         try {
-            configurationBusiness.removeUser(testEmail, true);
+            userBusiness.removeUser(testEmail, true);
         } catch (Exception ex) {
             exceptionCatched = ex;
         }
@@ -206,7 +212,7 @@ public class SpringJndiIT {
         assertEquals(shouldRollback ? 2:1, countUser.get());
         if (shouldRollback) {
             // clean if necessary
-            configurationBusiness.removeUser(testEmail, false);
+            userBusiness.removeUser(testEmail, false);
         }
         assertEquals(1, countUser.get());
     }
@@ -217,7 +223,7 @@ public class SpringJndiIT {
                 "testPassword", CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        configurationBusiness.signup(newUser, "", (Group) null);
+        authenticationBusiness.signup(newUser, "", (Group) null);
     }
 
     @Test
@@ -229,7 +235,7 @@ public class SpringJndiIT {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         // close the datasource to make the next request fail
         try { jdbcTemplate.execute("SHUTDOWN"); } catch (Exception e) {e.printStackTrace();}
-        assertThrows(VipException.class, () -> configurationBusiness.addTermsUse());
+        assertThrows(VipException.class, () -> termsOfUseBusiness.add());
     }
 
     @Test

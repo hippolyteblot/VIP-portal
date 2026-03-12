@@ -108,7 +108,7 @@ public class PublicationsIT extends BaseSpringIT {
     public void testSetAttributesUpdatePublication() throws VipException, DAOException {
         Publication publication = publicationBusiness.getPublication(idPublicationCreated);
 
-        configurationBusiness.getOrCreateUser("test1@test.fr", "institution", null);
+        authenticationBusiness.getOrCreateUser("test1@test.fr", "institution", null);
         publication.setAuthors("author2, author3");
         publication.setId(idPublicationCreated);
         publication.setDate("22/06/2023");
@@ -220,7 +220,6 @@ public class PublicationsIT extends BaseSpringIT {
         VipException businessException = assertThrows(VipException.class,
                 () -> publicationBusiness.addPublication(publication3));
 
-        System.out.println(businessException.getMessage());
         Assertions.assertTrue(businessException.getMessage().startsWith("Non-valid characters : [‑‑❤]"));
     }
 

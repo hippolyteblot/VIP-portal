@@ -31,8 +31,8 @@ import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Pair;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.rpc.AbstractRemoteServiceServlet;
 import jakarta.servlet.ServletException;
 
@@ -44,12 +44,12 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
     private AppVersionBusiness appVersionBusiness;
     private EngineBusiness engineBusiness;
     private BoutiquesBusiness boutiquesBusiness;
-    private ConfigurationBusiness configurationBusiness;
     private WorkflowBusiness workflowBusiness;
     private SimulationBusiness simulationBusiness;
     private ResourceBusiness resourceBusiness;
     private TagBusiness tagBusiness;
     private GroupBusiness groupBusiness;
+    private UserBusiness userBusiness;
 
     @Override
     public void init() throws ServletException {
@@ -58,32 +58,32 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
                 getBean(ApplicationBusiness.class),
                 getBean(EngineBusiness.class),
                 getBean(BoutiquesBusiness.class),
-                getBean(ConfigurationBusiness.class),
                 getBean(WorkflowBusiness.class),
                 getBean(SimulationBusiness.class),
                 getBean(ResourceBusiness.class),
                 getBean(TagBusiness.class),
                 getBean(AppVersionBusiness.class),
-                getBean(GroupBusiness.class)
+                getBean(GroupBusiness.class),
+                getBean(UserBusiness.class)
         );
     }
 
     public void setBeans(
             ApplicationBusiness applicationBusiness, EngineBusiness engineBusiness,
-            BoutiquesBusiness boutiquesBusiness, ConfigurationBusiness configurationBusiness,
+            BoutiquesBusiness boutiquesBusiness,
             WorkflowBusiness workflowBusiness, SimulationBusiness simulationBusiness, 
             ResourceBusiness resourceBusiness, TagBusiness tagBusiness,
-            AppVersionBusiness appVersionBusiness, GroupBusiness groupBusiness) {
+            AppVersionBusiness appVersionBusiness, GroupBusiness groupBusiness, UserBusiness userBusiness) {
         this.applicationBusiness = applicationBusiness;
         this.engineBusiness = engineBusiness;
         this.boutiquesBusiness = boutiquesBusiness;
-        this.configurationBusiness = configurationBusiness;
         this.workflowBusiness = workflowBusiness;
         this.simulationBusiness = simulationBusiness;
         this.resourceBusiness = resourceBusiness;
         this.tagBusiness = tagBusiness;
         this.appVersionBusiness = appVersionBusiness;
         this.groupBusiness = groupBusiness;
+        this.userBusiness = userBusiness;
     }
 
     @Override
@@ -221,7 +221,7 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
         User user = getSessionUser();
         if (isSystemAdministrator()) {
             return new List[] {
-                    configurationBusiness.getAllUserNames(),
+                    userBusiness.getAllUserNames(),
                     applicationBusiness.getApplicationNames(),
             };
         } else {

@@ -59,14 +59,14 @@ public class AppVersionControllerIT extends BaseInternalApiSpringIT {
             group2 = groupBusiness.get("group2");
         });
 
-        configurationBusiness.addUserToGroup(basicUser.getEmail(), group.getName());
-        configurationBusiness.addUserToGroup(developperUser.getEmail(), group.getName());
-        configurationBusiness.addUserToGroup(developperUser2.getEmail(), group2.getName());
+        userBusiness.addUserToGroup(basicUser.getEmail(), group.getName());
+        userBusiness.addUserToGroup(developperUser.getEmail(), group.getName());
+        userBusiness.addUserToGroup(developperUser2.getEmail(), group2.getName());
 
-        adminUser = configurationBusiness.getUserWithGroups(adminUser.getEmail());
-        developperUser = configurationBusiness.getUserWithGroups(developperUser.getEmail());
-        developperUser2 = configurationBusiness.getUserWithGroups(developperUser2.getEmail());
-        basicUser = configurationBusiness.getUserWithGroups(basicUser.getEmail());
+        adminUser = userBusiness.getUserWithGroups(adminUser.getEmail());
+        developperUser = userBusiness.getUserWithGroups(developperUser.getEmail());
+        developperUser2 = userBusiness.getUserWithGroups(developperUser2.getEmail());
+        basicUser = userBusiness.getUserWithGroups(basicUser.getEmail());
     }
 
     private Application createApplication(String name, Set<Group> groups) throws Exception {

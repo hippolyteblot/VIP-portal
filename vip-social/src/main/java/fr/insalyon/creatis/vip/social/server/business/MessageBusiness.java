@@ -11,10 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
-import fr.insalyon.creatis.vip.core.server.dao.UsersGroupsDAO;
 import fr.insalyon.creatis.vip.social.client.SocialConstants;
 import fr.insalyon.creatis.vip.social.models.GroupMessage;
 import fr.insalyon.creatis.vip.social.models.Message;
@@ -25,21 +24,19 @@ import fr.insalyon.creatis.vip.social.server.dao.MessageDAO;
 @Transactional
 public class MessageBusiness {
 
-    private MessageDAO messageDAO;
-    private GroupMessageDAO groupMessageDAO;
-    private UsersGroupsDAO usersGroupsDAO;
-    private ConfigurationBusiness configurationBusiness;
-    private EmailBusiness emailBusiness;
+    private final MessageDAO messageDAO;
+    private final GroupMessageDAO groupMessageDAO;
+    private final EmailBusiness emailBusiness;
+    private final UserBusiness userBusiness;
 
     @Autowired
     public MessageBusiness(
             MessageDAO messageDAO, GroupMessageDAO groupMessageDAO,
-            UsersGroupsDAO usersGroupsDAO, ConfigurationBusiness configurationBusiness, EmailBusiness emailBusiness) {
+            EmailBusiness emailBusiness, UserBusiness userBusiness) {
         this.messageDAO = messageDAO;
         this.groupMessageDAO = groupMessageDAO;
-        this.usersGroupsDAO = usersGroupsDAO;
-        this.configurationBusiness = configurationBusiness;
         this.emailBusiness = emailBusiness;
+        this.userBusiness = userBusiness;
     }
 
     public List<Message> getMessagesByUser(String email, Date startDate)
@@ -115,7 +112,7 @@ public class MessageBusiness {
         try {
             if (recipients[0].equals("All")) {
                 List<String> users = new ArrayList<>();
-                for (User u : configurationBusiness.getUsers()) {
+                for (User u : userBusiness.getUsers()) {
                     // Dont send mail to locked users
                     if (!u.isAccountLocked()) {
                         users.add(u.getEmail());

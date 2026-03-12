@@ -35,7 +35,7 @@ import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.CarminProperties;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 
 @Service
 public class ExecutionBusiness {
@@ -50,21 +50,20 @@ public class ExecutionBusiness {
     private final SimulationBusiness simulationBusiness;
     private final WorkflowBusiness workflowBusiness;
     private final PipelineBusiness pipelineBusiness;
-    private final ConfigurationBusiness configurationBusiness;
+    private final UserBusiness userBusiness;
 
     @Autowired
     public ExecutionBusiness(Supplier<User> currentUserProvider,
                              SimulationBusiness simulationBusiness,
                              WorkflowBusiness workflowBusiness,
-                             ConfigurationBusiness configurationBusiness,
                              PipelineBusiness pipelineBusiness,
-                             DataApiBusiness dataApiBusiness) {
+                             DataApiBusiness dataApiBusiness, UserBusiness userBusiness) {
         this.currentUserProvider = currentUserProvider;
         this.simulationBusiness = simulationBusiness;
         this.workflowBusiness = workflowBusiness;
-        this.configurationBusiness = configurationBusiness;
         this.pipelineBusiness = pipelineBusiness;
         this.dataApiBusiness = dataApiBusiness;
+        this.userBusiness = userBusiness;
     }
 
     public String getLog(String executionId, String type) throws VipException {
@@ -414,7 +413,7 @@ public class ExecutionBusiness {
 
         // Get user groups
         List<String> groupNames = new ArrayList<>();
-        for (Group g : configurationBusiness
+        for (Group g : userBusiness
                 .getUserGroups(currentUserProvider.get().getEmail())
                 .keySet()) {
             groupNames.add(g.getName());

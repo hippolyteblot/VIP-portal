@@ -72,8 +72,8 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
                     .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()))
                     .andExpect(status().is4xxClientError());
 
-        configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
-        developperUser = configurationBusiness.getUserWithGroups(emailUser2);
+        userBusiness.addUserToGroup(emailUser2, nameGroup1);
+        developperUser = userBusiness.getUserWithGroups(emailUser2);
 
         // developer in the private group
         mockMvc.perform(post("/internal/applications")
@@ -115,8 +115,8 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
                     .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()))
                     .andExpect(status().is4xxClientError());
 
-        configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
-        developperUser = configurationBusiness.getUserWithGroups(emailUser2);
+        userBusiness.addUserToGroup(emailUser2, nameGroup1);
+        developperUser = userBusiness.getUserWithGroups(emailUser2);
 
         // developer/admin in the private group can do that
         mockMvc.perform(delete("/internal/applications/" + app.getName())
@@ -136,8 +136,8 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
         Application app = new Application("super_app", "les applications sont vraiment belles");
         app.setGroups(Set.of(group));
 
-        configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
-        developperUser = configurationBusiness.getUserWithGroups(emailUser2);
+        userBusiness.addUserToGroup(emailUser2, nameGroup1);
+        developperUser = userBusiness.getUserWithGroups(emailUser2);
 
         // create app
         mockMvc.perform(post("/internal/applications")
@@ -205,8 +205,8 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
         Application app3 = new Application("app3", "wow super app3");
 
         app3.setGroups(Set.of(group, group2));
-        configurationBusiness.addUserToGroup(emailUser2, nameGroup1);
-        developperUser = configurationBusiness.getUserWithGroups(emailUser2);
+        userBusiness.addUserToGroup(emailUser2, nameGroup1);
+        developperUser = userBusiness.getUserWithGroups(emailUser2);
 
 
         // create apps
