@@ -6,36 +6,39 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
-
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 public class User implements IsSerializable {
 
-    private String firstName;
-    private String lastName;
-    private String email;
+    @JsonView(DataViews.Admin.class) private boolean confirmed;
+    @JsonView(DataViews.Admin.class) private boolean accountLocked;
+
+    @JsonView(DataViews.User.class) private String firstName;
+    @JsonView(DataViews.User.class) private String lastName;
+    @JsonView(DataViews.User.class) private String email;
+    @JsonView(DataViews.User.class) private String institution;
+    @JsonView(DataViews.User.class) private Timestamp registration;
+    @JsonView(DataViews.User.class) private Timestamp lastLogin;
+    @JsonView(DataViews.User.class) private UserLevel level;
+    @JsonView(DataViews.User.class) private int maxRunningSimulations;
+    @JsonView(DataViews.User.class) private CountryCode countryCode;
+    @JsonView(DataViews.User.class) private Timestamp termsOfUse;
+    @JsonView(DataViews.User.class) private Timestamp lastUpdatePublications;
+    @JsonView(DataViews.User.class) private Map<Group, GROUP_ROLE> groups;
+    @JsonView(DataViews.User.class) private String apiKey;
+
     private String nextEmail;
-    private String institution;
-    private String password;
-    private boolean confirmed;
     private String code;
     private String folder;
     private String session;
-    private Timestamp registration;
-    private Timestamp lastLogin;
-    private UserLevel level;
-    private int maxRunningSimulations;
-    private CountryCode countryCode;
-    private Map<Group, GROUP_ROLE> groups;
-    private Timestamp termsOfUse;
-    private Timestamp lastUpdatePublications;
+    private String password;
     private int failedAuthentications;
-    private boolean accountLocked;
-    private String apiKey;
 
     public User() {
     }
