@@ -48,7 +48,6 @@ import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
@@ -90,7 +89,6 @@ public abstract class BaseSpringIT {
     
     @Autowired @Qualifier("db-datasource") protected DataSource dataSource; // this is a mockito spy wrapping the h2 memory datasource
     @Autowired protected ApplicationContext applicationContext;
-    @Autowired protected ConfigurationBusiness configurationBusiness;
     @Autowired protected UserBusiness userBusiness;
     @Autowired protected ApplicationContext appContext;
     @Autowired protected DataSource lazyDataSource;

@@ -15,12 +15,10 @@ import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 
 public class ApiUserBusinessIT extends BaseSpringIT {
 
     @Autowired private ApiUserBusiness apiUserBusiness;
-    @Autowired private ConfigurationBusiness configurationBusiness;
 
     private Group group1;
     private User user1;

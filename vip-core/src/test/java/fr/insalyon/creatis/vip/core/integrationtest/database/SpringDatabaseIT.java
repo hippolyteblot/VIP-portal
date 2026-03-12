@@ -30,6 +30,7 @@ import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
 
 /**
@@ -41,6 +42,7 @@ import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
 @TestMethodOrder(OrderAnnotation.class)
 public class SpringDatabaseIT extends BaseSpringIT {
 
+    @Autowired private ConfigurationBusiness configurationBusiness;
     @Autowired private TermsOfUseBusiness termsOfUseBusiness;
     
     /*
