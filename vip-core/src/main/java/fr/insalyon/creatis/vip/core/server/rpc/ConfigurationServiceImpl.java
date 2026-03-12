@@ -1,9 +1,5 @@
 package fr.insalyon.creatis.vip.core.server.rpc;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +19,7 @@ import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.UsageStats;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.ProxyBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.PasswordBusiness;
@@ -34,13 +30,12 @@ import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import fr.insalyon.creatis.vip.core.server.inter.GroupInterface;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
 
 public class ConfigurationServiceImpl extends AbstractRemoteServiceServlet implements ConfigurationService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private ConfigurationBusiness configurationBusiness;
+    private ProxyBusiness configurationBusiness;
     private UserBusiness userBusiness;
     private GroupBusiness groupBusiness;
     private UserDAO userDAO;
@@ -54,7 +49,7 @@ public class ConfigurationServiceImpl extends AbstractRemoteServiceServlet imple
     @Override
     public void init() throws ServletException {
         super.init();
-        configurationBusiness = getBean(ConfigurationBusiness.class);
+        configurationBusiness = getBean(ProxyBusiness.class);
         userDAO = getBean(UserDAO.class);
         groupBusiness = getBean(GroupBusiness.class);
         groupInterface = getBean(GroupInterface.class);

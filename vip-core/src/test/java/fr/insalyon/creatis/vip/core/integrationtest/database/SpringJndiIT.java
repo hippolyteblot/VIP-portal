@@ -41,13 +41,12 @@ import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
-import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.ProxyBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
@@ -82,7 +81,7 @@ import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticatio
 @ActiveProfiles({"jndi-db", "test"}) // to use default jndi datasource but avoid default server config
 public class SpringJndiIT {
 
-    @Autowired private ConfigurationBusiness configurationBusiness;
+    @Autowired private ProxyBusiness configurationBusiness;
     @Autowired private UserBusiness userBusiness;
     @Autowired private TermsOfUseBusiness termsOfUseBusiness;
     @Autowired private DataSource dataSource;
