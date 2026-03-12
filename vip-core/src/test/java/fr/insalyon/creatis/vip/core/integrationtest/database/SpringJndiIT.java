@@ -237,15 +237,4 @@ public class SpringJndiIT {
         try { jdbcTemplate.execute("SHUTDOWN"); } catch (Exception e) {e.printStackTrace();}
         assertThrows(VipException.class, () -> termsOfUseBusiness.add());
     }
-
-    @Test
-    @Order(8)
-    public void connectionShouldBeLazyInTransaction() throws SQLException, MalformedURLException, URISyntaxException {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
-        // close the datasource to make the next request fail
-        try { jdbcTemplate.execute("SHUTDOWN"); } catch (Exception e) {e.printStackTrace();}
-        // getConnection throw an exception but should not be called as 'getLoginUrlCas' do not need db access
-        String res = configurationBusiness.getLoginUrlCas(new URI("file:/plop").toURL());
-        assertEquals(ServerMockConfig.TEST_CAS_URL + "/login?service=file:/plop", res);
-    }
 }

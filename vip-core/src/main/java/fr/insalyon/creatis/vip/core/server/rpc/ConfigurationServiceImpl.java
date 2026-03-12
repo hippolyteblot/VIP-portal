@@ -498,33 +498,6 @@ public class ConfigurationServiceImpl extends AbstractRemoteServiceServlet imple
     }
 
     @Override
-    public String getCASLoginPageUrl() throws CoreException {
-        URL url;
-        try {
-            url = getBaseURL();
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new CoreException(e);
-        }
-        return configurationBusiness.getLoginUrlCas(url);
-    }
-
-    private URL getBaseURL() throws MalformedURLException, URISyntaxException {
-        URL url;
-        HttpServletRequest request = this.getThreadLocalRequest();
-        if ((request.getServerPort() == 80)
-                || (request.getServerPort() == 443)) {
-            url = new URI(request.getScheme() + "://"
-                    + request.getServerName()
-                    + request.getContextPath()).toURL();
-        } else {
-            url = new URI(request.getScheme() + "://"
-                    + request.getServerName() + ":" + request.getServerPort()
-                    + request.getContextPath()).toURL();
-        }
-        return url;
-    }
-
-    @Override
     public UsageStats getUsageStats() throws CoreException {
         try {
             Integer users = userDAO.getNUsers();

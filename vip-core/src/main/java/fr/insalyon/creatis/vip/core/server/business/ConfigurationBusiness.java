@@ -37,8 +37,4 @@ public class ConfigurationBusiness extends CommonBusiness {
             logger.info("Proxy not needed and not validated !");
         }
     }
-
-    public String getLoginUrlCas(URL serviceURL) {
-        return server.getCasURL() + "/login?service=" + serviceURL;
-    }
 }
