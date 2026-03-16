@@ -11,6 +11,7 @@ import org.springframework.util.Assert;
 import fr.insalyon.creatis.vip.api.SpringRestApiConfig;
 import fr.insalyon.creatis.vip.api.controller.PlatformController;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.integrationtest.utils.JndiTestConfigLoader;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 
 /**
@@ -28,6 +29,7 @@ public class DefaultSpringConfigurationIT {
 
     @BeforeAll
     static void configureHomePath() throws Exception {
+        JndiTestConfigLoader.load();
         String fakeHomePath = Paths.get(ClassLoader.getSystemResource("TestHome").toURI())
                 .toAbsolutePath().toString();
         System.setProperty("user.home", fakeHomePath);
@@ -38,5 +40,4 @@ public class DefaultSpringConfigurationIT {
         // test that the platform properties generation does not throw any exception
         Assert.notNull(platformController.getPlatformProperties(), "platform properties should be present");
     }
-
 }

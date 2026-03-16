@@ -57,7 +57,7 @@ public class GeneralSecurityConfig {
                             .authorizationRequestRepository(new HttpSessionOAuth2AuthorizationRequestRepository()))
                     .tokenEndpoint((token)->token
                             .accessTokenResponseClient(new DefaultAuthorizationCodeTokenResponseClient()))
-                    .defaultSuccessUrl("/rest/loginOIDC")
+                    .defaultSuccessUrl("/rest/loginOIDC", true)
                     .failureUrl("/loginFailure"));
         }
         return http.build();

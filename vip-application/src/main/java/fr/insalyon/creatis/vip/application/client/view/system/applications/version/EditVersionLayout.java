@@ -3,8 +3,10 @@ package fr.insalyon.creatis.vip.application.client.view.system.applications.vers
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gwt.user.client.Window;
@@ -145,8 +147,8 @@ public class EditVersionLayout extends AbstractFormLayout {
                             descriptorField.getValueAsString(), settingsToMap(), isVisibleField.getValueAsBoolean(),
                             sourceField.getValueAsString(), noteField.getValueAsString().trim());
 
-                    toSave.setResources(resourcesToList(Arrays.asList(resourcesList.getValues())));
-                    toSave.setTags(tagsToList(toSave.getApplicationName(), toSave.getVersion()));
+                    toSave.setResources(resourcesToSet(Arrays.asList(resourcesList.getValues())));
+                    toSave.setTags(tagsToSet(toSave.getApplicationName(), toSave.getVersion()));
                     save(toSave);
                 }
             }
@@ -348,8 +350,8 @@ public class EditVersionLayout extends AbstractFormLayout {
         });
     }
 
-    private List<Tag> tagsToList(String application, String version) {
-        List<Tag> result = new ArrayList<>();
+    private Set<Tag> tagsToSet(String application, String version) {
+        Set<Tag> result = new HashSet<>();
 
         for (ListGridRecord record : tagsGrid.getRecords()) {
             result.add(new Tag(
@@ -384,13 +386,8 @@ public class EditVersionLayout extends AbstractFormLayout {
         return record;
     }
 
-    private List<Resource> resourcesToList(List<String> resources) {
-        List<Resource> result = new ArrayList<>();
-
-        for (String rsrc : resources) {
-            result.add(new Resource(rsrc));
-        }
-        return result;
+    private Set<Resource> resourcesToSet(List<String> resources) {
+        return resources.stream().map(Resource::new).collect(Collectors.toSet());
     }
 
     private void fetchData() {

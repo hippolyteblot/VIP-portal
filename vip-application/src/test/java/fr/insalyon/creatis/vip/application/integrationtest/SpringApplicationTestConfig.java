@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.application.integrationtest;
 
 import java.util.HashSet;
 
+import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import org.hibernate.SessionFactory;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,7 @@ public class SpringApplicationTestConfig {
         @Autowired protected WorkflowDAO workflowDAO;
         @Autowired protected OutputDAO outputDAO;
         @Autowired protected InputDAO inputDAO;
+        @Autowired protected ApplicationDAO applicationDAO;
         @Autowired protected WorkflowEngineInstantiator webServiceEngine;
         @Autowired protected ApplicationBusiness applicationBusiness;
         @Autowired protected EngineBusiness engineBusiness;
@@ -60,11 +62,15 @@ public class SpringApplicationTestConfig {
         public void createAnApplication(String appName, String groupname) throws VipException {
             Application app = new Application(appName, "test citation", "test note", new HashSet<>());
 
-            applicationBusiness.add(app);
+            applicationDAO.add(app);
 
             if (groupname != null) {
-                putApplicationInGroup(appName, groupname);
+                putApplicationInGroup(app, groupBusiness.get(groupname));
             }
+        }
+
+        public void putApplicationInGroup(Application app, Group group) throws VipException {
+            applicationDAO.associate(app, group);
         }
 
         public void putApplicationInGroup(String appName, String groupname) throws VipException {

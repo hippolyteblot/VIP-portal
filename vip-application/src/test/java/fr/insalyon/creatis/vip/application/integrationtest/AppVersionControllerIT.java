@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -143,7 +142,7 @@ public class AppVersionControllerIT extends BaseInternalApiSpringIT {
 
         // developer try to edit resources (=forbidden)
         AppVersion copy = new AppVersion(app.getName(), "v1", "", true);
-        copy.setResources(List.of(new Resource("super_resource")));
+        copy.setResources(Set.of(new Resource("super_resource")));
 
         mockMvc.perform(put("/internal/applications/" + app.getName() + "/versions/" + version.getVersion())
                 .with(getUserSecurityMock(developperUser2))

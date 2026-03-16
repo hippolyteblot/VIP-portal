@@ -2,9 +2,8 @@ package fr.insalyon.creatis.vip.application.server.controller;
 
 import java.util.Optional;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
