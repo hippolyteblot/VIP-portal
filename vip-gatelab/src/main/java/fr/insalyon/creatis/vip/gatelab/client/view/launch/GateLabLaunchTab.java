@@ -16,6 +16,7 @@ import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesApplic
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesApplicationExtensions;
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesInput;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
+import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
 import fr.insalyon.creatis.vip.core.client.view.util.WidgetUtil;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 
