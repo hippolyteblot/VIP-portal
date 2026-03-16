@@ -35,30 +35,31 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     @Override
     public void add(User user) throws DAOException {
         String query =  "INSERT INTO VIPUsers("
-        +               "email, pass, first_name, last_name, institution, "
+        +               "id, email, pass, first_name, last_name, institution, "
         +               "code, confirmed, folder, registration, last_login, level, "
         +               "country_code, max_simulations, termsUse,lastUpdatePublications,"
         +               "failed_authentications, account_locked) "
-        +               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        +               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
-            ps.setString(1, user.getEmail());
-            ps.setString(2, user.getPassword());
-            ps.setString(3, user.getFirstName());
-            ps.setString(4, user.getLastName());
-            ps.setString(5, user.getInstitution());
-            ps.setString(6, user.getCode());
-            ps.setBoolean(7, user.isConfirmed());
-            ps.setString(8, user.getFolder());
-            ps.setTimestamp(9, new Timestamp(user.getRegistration().getTime()));
-            ps.setTimestamp(10, new Timestamp(user.getLastLogin().getTime()));
-            ps.setString(11, user.getLevel().name());
-            ps.setString(12, user.getCountryCode().name());
-            ps.setInt(13, user.getMaxRunningSimulations());
-            ps.setTimestamp(14, user.getTermsOfUse());
-            ps.setTimestamp(15, user.getLastUpdatePublications());
-            ps.setInt(16, 0);
-            ps.setBoolean(17, false);
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPassword());
+            ps.setString(4, user.getFirstName());
+            ps.setString(5, user.getLastName());
+            ps.setString(6, user.getInstitution());
+            ps.setString(7, user.getCode());
+            ps.setBoolean(8, user.isConfirmed());
+            ps.setString(9, user.getFolder());
+            ps.setTimestamp(10, new Timestamp(user.getRegistration().getTime()));
+            ps.setTimestamp(11, new Timestamp(user.getLastLogin().getTime()));
+            ps.setString(12, user.getLevel().name());
+            ps.setString(13, user.getCountryCode().name());
+            ps.setInt(14, user.getMaxRunningSimulations());
+            ps.setTimestamp(15, user.getTermsOfUse());
+            ps.setTimestamp(16, user.getLastUpdatePublications());
+            ps.setInt(17, 0);
+            ps.setBoolean(18, false);
 
             ps.execute();
 
@@ -134,7 +135,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     @Override
     public User get(String email) throws DAOException {
         String query =  "SELECT "
-        +               "email, next_email, first_name, last_name, institution, "
+        +               "id, email, next_email, first_name, last_name, institution, "
         +               "code, confirmed, folder, session, registration, "
         +               "last_login, level, country_code, max_simulations, "
         +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
@@ -159,7 +160,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     @Override
     public List<User> getUsers() throws DAOException {
         String query =  "SELECT "
-        +               "email, next_email, first_name, last_name, institution, "
+        +               "id, email, next_email, first_name, last_name, institution, "
         +               "code, confirmed, folder, session, registration, "
         +               "last_login, level, country_code, max_simulations, "
         +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
@@ -183,7 +184,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     @Override
     public List<User> searchUsers(UserSearchCriteria searchCriteria) throws DAOException {
         StringBuilder query =  new StringBuilder("SELECT "
-        +               "email, next_email, first_name, last_name, institution, "
+        +               "id, email, next_email, first_name, last_name, institution, "
         +               "code, confirmed, folder, session, registration, "
         +               "last_login, level, country_code, max_simulations, "
         +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
@@ -492,7 +493,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     @Override
     public User getUserBySession(String session) throws DAOException {
         String query =  "SELECT "
-        +               "email, next_email, first_name, last_name, institution, "
+        +               "id, email, next_email, first_name, last_name, institution, "
         +               "code, confirmed, folder, session, registration, "
         +               "last_login, level, country_code, max_simulations, "
         +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
@@ -515,7 +516,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     @Override
     public List<User> getAdministrators() throws DAOException {
         String query =  "SELECT "
-        +               "email, next_email, first_name, last_name, institution, "
+        +               "id, email, next_email, first_name, last_name, institution, "
         +               "code, confirmed, folder, session, registration, "
         +               "last_login, level, country_code, max_simulations, "
         +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
@@ -857,6 +858,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     private User userFromRs(ResultSet rs) throws SQLException {
         return new User(
+                rs.getString("id"),
                 rs.getString("first_name"), rs.getString("last_name"),
                 rs.getString("email"), rs.getString("next_email"),
                 rs.getString("institution"),

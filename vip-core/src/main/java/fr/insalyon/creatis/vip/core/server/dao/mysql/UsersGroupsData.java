@@ -233,7 +233,7 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
 
         try {
             PreparedStatement ps = getConnection().prepareStatement("SELECT "
-                    + "us.email AS uemail, next_email, first_name, last_name, institution, "
+                    + "id, us.email AS uemail, next_email, first_name, last_name, institution, "
                     + "code, confirmed, folder, registration, last_login, "
                     + "level, country_code, max_simulations, termsUse, lastUpdatePublications, "
                     + "failed_authentications, account_locked, apikey "
@@ -247,7 +247,7 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
             List<User> users = new ArrayList<User>();
 
             while (rs.next()) {
-                users.add(new User(
+                users.add(new User(rs.getString("id"),
                         rs.getString("first_name"), rs.getString("last_name"),
                         rs.getString("uemail"), rs.getString("next_email"),
                         rs.getString("institution"),

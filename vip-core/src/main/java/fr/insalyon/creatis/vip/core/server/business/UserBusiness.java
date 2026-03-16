@@ -185,6 +185,7 @@ public class UserBusiness extends CommonBusiness {
         }
 
         return new User(
+                CoreUtil.createUUID(),
                 firstName.trim(),
                 lastName.trim(),
                 email.trim(),

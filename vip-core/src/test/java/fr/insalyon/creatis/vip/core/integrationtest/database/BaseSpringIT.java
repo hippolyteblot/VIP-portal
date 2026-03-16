@@ -48,6 +48,7 @@ import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
@@ -116,7 +117,7 @@ public abstract class BaseSpringIT {
     protected User admin;
     protected Group group1;
     protected Group group2;
-    protected User nonExistentUser = new User("test firstName suffix0",
+    protected User nonExistentUser = new User(CoreUtil.createUUID(), "test firstName suffix0",
             "test lastName suffix0", "unexisting_user@test.fr", "institution",
             "testPassword", CountryCode.fr,
             null);
@@ -157,7 +158,7 @@ public abstract class BaseSpringIT {
     }
 
     protected User createUser(String testEmail, String nameSuffix, String password) throws GRIDAClientException, VipException {
-        User newUser = new User("test firstName " + nameSuffix,
+        User newUser = new User(CoreUtil.createUUID(), "test firstName " + nameSuffix,
                 "test lastName " + nameSuffix, testEmail, "test institution",
                 password, CountryCode.fr,
                 null);
@@ -209,7 +210,7 @@ public abstract class BaseSpringIT {
     }
 
     protected User createUserInGroups(String userEmail, String nameSuffix, String... groupNames) throws VipException, GRIDAClientException {
-        User newUser = new User("test firstName " + nameSuffix,
+        User newUser = new User(CoreUtil.createUUID(), "test firstName " + nameSuffix,
                 "test lastName " + nameSuffix, userEmail, "test institution",
                 "testPassword", CountryCode.fr,
                 null);

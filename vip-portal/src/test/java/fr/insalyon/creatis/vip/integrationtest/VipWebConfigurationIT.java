@@ -11,6 +11,7 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 import fr.insalyon.creatis.vip.api.SpringRestApiConfig;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 
 import org.hamcrest.Matchers;
@@ -70,7 +71,7 @@ public class VipWebConfigurationIT {
     @Test
     public void testGetPipelines() throws Exception {
         Mockito.doReturn(new String[]{"test@admin.test"}).when(emailBusiness).getAdministratorsEmails();
-        User newUser = new User("firstName",
+        User newUser = new User(CoreUtil.createUUID(), "firstName",
                 "LastName", "testEmail@test.tst", "Test institution",
                 "testPassword", CountryCode.fr,
                 null);

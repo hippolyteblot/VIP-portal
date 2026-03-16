@@ -16,6 +16,7 @@ import fr.insalyon.creatis.vip.api.business.ApiUserBusiness;
 import fr.insalyon.creatis.vip.api.model.SignUpUserDTO;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import jakarta.validation.Valid;
 
 @RestController
@@ -44,7 +45,8 @@ public class RegisterUserController extends ApiController {
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<?> signup(@RequestBody @Valid SignUpUserDTO signUpUser) throws VipException {
         logMethodInvocation(logger,"signup", signUpUser.getEmail());
-        User user = new User(signUpUser.getFirstName(),
+        User user = new User(CoreUtil.createUUID(), 
+                signUpUser.getFirstName(),
                 signUpUser.getLastName(),
                 signUpUser.getEmail(),
                 signUpUser.getInstitution(),

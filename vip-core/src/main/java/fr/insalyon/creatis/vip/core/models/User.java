@@ -19,6 +19,7 @@ public class User implements IsSerializable {
     @JsonView(DataViews.Admin.class) private boolean confirmed;
     @JsonView(DataViews.Admin.class) private boolean accountLocked;
 
+    @JsonView(DataViews.User.class) private String id;
     @JsonView(DataViews.User.class) private String firstName;
     @JsonView(DataViews.User.class) private String lastName;
     @JsonView(DataViews.User.class) private String email;
@@ -40,34 +41,28 @@ public class User implements IsSerializable {
     private String password;
     private int failedAuthentications;
 
-    public User() {
+    public User() { }
+
+    public User(String id, String firstName, String lastName, String email, String institution, UserLevel level, CountryCode countryCode) {
+        this(id, firstName, lastName, email, null, institution, "", false, "", "",
+                "", null, null, level, countryCode, 1,null,null,0,false, null);
     }
 
-    public User(String firstName, String lastName, String email, String institution, String password, UserLevel level, CountryCode countryCode, String applications) {
-    }
-
-    public User(String firstName, String lastName, String email, String institution, UserLevel level, CountryCode countryCode) {
-
-        this(firstName, lastName, email, null, institution, "", false, "", "",
+    public User(String id, String firstName, String lastName, String email, String institution, String password, UserLevel level, CountryCode countryCode) {
+        this(id, firstName, lastName, email, null, institution, password, false, "", "",
                 "", null, null, level, countryCode, 1,null,null,0,false, null);
 
     }
 
-    public User(String firstName, String lastName, String email, String institution, String password, UserLevel level, CountryCode countryCode) {
-
-        this(firstName, lastName, email, null, institution, password, false, "", "",
-                "", null, null, level, countryCode, 1,null,null,0,false, null);
-
-    }
-
-    public User(String firstName, String lastName, String email, String institution,
+    public User(String id, String firstName, String lastName, String email, String institution,
             String password, CountryCode countryCode,Timestamp lastUpdatePublications) {
 
-        this(firstName, lastName, email, null, institution, password, false,
+        this(id, firstName, lastName, email, null, institution, password, false,
                 "", "", "", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1,null,lastUpdatePublications,0,false, null);
     }
 
     public User(
+            String id,
             String firstName,
             String lastName,
             String email,
@@ -89,7 +84,7 @@ public class User implements IsSerializable {
             boolean locked,
             String apiKey
     ) {
-
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -111,6 +106,10 @@ public class User implements IsSerializable {
         this.accountLocked = locked;
         this.groups = new HashMap<>();
         this.apiKey = apiKey;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public boolean isConfirmed() {

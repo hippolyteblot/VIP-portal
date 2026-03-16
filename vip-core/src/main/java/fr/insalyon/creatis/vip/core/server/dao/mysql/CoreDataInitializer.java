@@ -18,10 +18,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.devtools.MD5;
+import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.models.TermsOfUse;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.TermsUseDAO;
@@ -61,7 +63,8 @@ public class CoreDataInitializer extends JdbcDaoSupport {
 
     private void initializeUserTables() {
         if (tableInitializer.createTable("VIPUsers",
-                "email VARCHAR(255), "
+                          "id VARCHAR(" + CoreConstants.UUID_SIZE + "), "
+                        + "email VARCHAR(255), "
                         + "next_email VARCHAR(255), "
                         + "pass VARCHAR(40), "
                         + "first_name VARCHAR(255), "
@@ -92,7 +95,8 @@ public class CoreDataInitializer extends JdbcDaoSupport {
                 final Timestamp now = new Timestamp(System.currentTimeMillis());
 
                 userDAO.add(
-                        new User(server.getAdminFirstName(),
+                        new User(CoreUtil.createUUID(),
+                                server.getAdminFirstName(),
                                 server.getAdminLastName(),
                                 server.getAdminEmail(),
                                 null,

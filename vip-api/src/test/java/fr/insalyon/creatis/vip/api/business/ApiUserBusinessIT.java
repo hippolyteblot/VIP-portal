@@ -1,7 +1,5 @@
 package fr.insalyon.creatis.vip.api.business;
 
-import static fr.insalyon.creatis.vip.core.client.view.user.UserLevel.Beginner;
-
 import java.sql.Timestamp;
 
 import org.junit.jupiter.api.Assertions;
@@ -10,11 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 public class ApiUserBusinessIT extends BaseSpringIT {
 
@@ -35,7 +35,9 @@ public class ApiUserBusinessIT extends BaseSpringIT {
         });
 
         // Create test users
-        user1 = new User("firstName", "lastName", "email1@test.fr", "test1@test.fr", "institution", "password", false, "code", "folder", "session", now, now, Beginner, CountryCode.fr, 1, now, now, 0, false, null);
+        user1 = new User(CoreUtil.createUUID(), "firstName", "lastName", emailUser1, "institution", UserLevel.Beginner, CountryCode.fr);
+        user1.setRegistration(now);
+        user1.setLastLogin(now);
         apiUserBusiness.signup(user1, "comment");
 
     }
@@ -47,21 +49,24 @@ public class ApiUserBusinessIT extends BaseSpringIT {
 
     @Test
     public void testSignup() throws VipException {
-        User user2 = new User("firstName2", "lastName2", "email2@test.fr", "test3@test.fr", "institution", "password", false, "code", "folder", "session", now, now, Beginner, CountryCode.fr, 1, now, now, 0, false, null);
+        User user2 = new User(CoreUtil.createUUID(), "firstName2", "lastName2", emailUser2, "institution", UserLevel.Beginner, CountryCode.fr);
+        user2.setRegistration(now);
+        user2.setLastLogin(now);
         apiUserBusiness.signup(user2, "comment");
+
         Assertions.assertEquals(3, userBusiness.getUsers().size(), "Incorrect number of users");
     }
 
     @Test
     public void testResetPassword() throws VipException {
-        apiUserBusiness.resetPassword("email1@test.fr", userBusiness.getUser("email1@test.fr").getCode(), "test new password");
+        apiUserBusiness.resetPassword(emailUser1, userBusiness.getUser(emailUser1).getCode(), "test new password");
     }
 
     @Test
     public void testResetCode() throws VipException {
-        String oldCode = userBusiness.getUser("email1@test.fr").getCode();
-        apiUserBusiness.sendResetCode("email1@test.fr");
-        String newCode = userBusiness.getUser("email1@test.fr").getCode();
+        String oldCode = userBusiness.getUser(emailUser1).getCode();
+        apiUserBusiness.sendResetCode(emailUser1);
+        String newCode = userBusiness.getUser(emailUser1).getCode();
         Assertions.assertFalse(oldCode.equals(newCode));
     }
 
