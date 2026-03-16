@@ -8,13 +8,15 @@ import java.util.Optional;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 import fr.insalyon.creatis.vip.application.client.view.launch.LaunchFormLayout;
 import fr.insalyon.creatis.vip.application.client.view.launch.LaunchTab;
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesApplication;
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesApplicationExtensions;
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesInput;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
+import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
 import fr.insalyon.creatis.vip.core.client.view.util.WidgetUtil;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 
@@ -32,14 +34,31 @@ public class GateLabLaunchTab extends LaunchTab {
     public static final String NB_JOBS_INPUT_ID = "numberOfJobs";
     public static final String MACFILE_INPUT_ID = "macfileName";
 
+    private static GateLabLaunchTab activeInstance;
+    public static GateLabLaunchTab findActive() {
+        return activeInstance;
+    }
     public GateLabLaunchTab(String applicationName, String applicationVersion, String applicationClass) {
         super(applicationName, applicationVersion, applicationClass);
+        addTabSelectedHandler(new TabSelectedHandler() {
+            @Override
+            public void onTabSelected(TabSelectedEvent event) {
+                activeInstance = GateLabLaunchTab.this;
+            }
+        });
     }
 
     public GateLabLaunchTab(String applicationName, String applicationVersion, String applicationClass,
             String simulationName, Map<String, String> inputs) {
         super(applicationName, applicationVersion, applicationClass, simulationName, inputs);
+        addTabSelectedHandler(new TabSelectedHandler() {
+            @Override
+            public void onTabSelected(TabSelectedEvent event) {
+                activeInstance = GateLabLaunchTab.this;
+            }
+        });
     }
+
 
     @Override
     protected void init() {
@@ -50,7 +69,7 @@ public class GateLabLaunchTab extends LaunchTab {
 
         if (this.inputs == null) {
             // if inputs is null, it is NOT a relaunch and only the launch mac button must be shown first
-            initComplete(this);
+            initComplete();
             configureLoadMacButton();
         }
     }
@@ -61,8 +80,12 @@ public class GateLabLaunchTab extends LaunchTab {
                 new ClickHandler() {
                     @Override
                     public void onClick(ClickEvent event) {
-                        loadMacWindow = new LoadMacWindow(modal, baseDir);
-                        loadMacWindow.show();
+                        if (launchFormLayout.getSimulationName() != null) {
+                            loadMacWindow = new LoadMacWindow(modal, baseDir);
+                            loadMacWindow.show();
+                        } else {
+                            Layout.getInstance().setWarningMessage("Please first fill in execution name.");
+                        }
                     }
                 });
         loadMacButton.setWidth(150);
@@ -128,15 +151,15 @@ public class GateLabLaunchTab extends LaunchTab {
     @Override
     protected void onLaunchFormReady() {
         super.onLaunchFormReady();
-        if (this.inputs != null) {
+        if ((simulationName != null) && (this.inputs != null)) {
             customizeGateForm();
         }
     }
 
     //Bug #2368
-    private native void initComplete(GateLabLaunchTab uploadMac) /*-{
+    private native void initComplete() /*-{
      $wnd.uploadMacComplete = function (inputList) {
-     uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::uploadMacComplete(Ljava/lang/String;)(inputList);
+           @fr.insalyon.creatis.vip.gatelab.client.view.launch.MacUploadBridge::notifyUploadComplete(Ljava/lang/String;)(inputList);
      };
      $wnd.close = function () {
      uploadMac.@fr.insalyon.creatis.vip.gatelab.client.view.launch.GateLabLaunchTab::close()();
@@ -165,9 +188,12 @@ public class GateLabLaunchTab extends LaunchTab {
             super.createButtons(); // override "load mac button" with "launch button"
             launchFormLayout.showInputs();
             launchFormLayout.enableErrorsAndWarnings();
-            launchFormLayout.loadInputs(launchFormLayout.getSimulationName(), valuesMap, false);
-
-            customizeGateForm();
+            if (launchFormLayout.getSimulationName() != null) {
+                launchFormLayout.loadInputs(launchFormLayout.getSimulationName(), valuesMap, false);
+                customizeGateForm();
+            } else {
+                Layout.getInstance().setWarningMessage("Missing execution name. Please fill it in and start over.");
+            }
         }
     }
 
