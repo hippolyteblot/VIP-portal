@@ -26,7 +26,7 @@
 
         <!-- 3rd party dependencies version -->
         <junit.version>5.11.3</junit.version>
-        <spring-framework.version>6.1.14</spring-framework.version>
+        <spring-framework.version>6.2.10</spring-framework.version>
         <springsecurity.version>6.3.4</springsecurity.version>
         <springoauth.version>6.3.4</springoauth.version>
         <jackson.version>2.18.0</jackson.version>
@@ -101,12 +101,12 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
-                <version>1.7.30</version>
+                <version>2.0.17</version>
             </dependency>
             <dependency>
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
-                <version>1.2.3</version>
+                <version>1.5.18</version>
             </dependency>
             <!-- make sure we pick a version of commons-io recent enough for
               commons-fileupload2-jakarta-servlet6 in vip-datamanagement,

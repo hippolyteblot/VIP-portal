@@ -27,7 +27,7 @@ public class PermissionChain {
 
     // perform chain filtering (like ResponsabilityChain pattern)
     // if user do not enter in any filter, it will be rejected
-    public void fitler() throws VipException {
+    public void filter() throws VipException {
         for (PermissionChain.Scope scope : items) {
             if (userLevel.equals(scope.level)) {
                 if (scope.runnable != null) {

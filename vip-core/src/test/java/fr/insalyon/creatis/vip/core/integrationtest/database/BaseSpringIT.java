@@ -184,6 +184,11 @@ public abstract class BaseSpringIT {
         groupBusiness.add(new Group(groupName, isPublic, type));
     }
 
+
+    public void clearContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     public void setAdminContext() throws VipException, GRIDAClientException {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
         User adminUser = configurationBusiness.getUserWithGroups(adminEmail);

@@ -1,5 +1,7 @@
 package fr.insalyon.creatis.vip.application.models;
 
+import java.util.Objects;
+
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 public class Tag implements IsSerializable {
@@ -59,6 +61,12 @@ public class Tag implements IsSerializable {
             version.equals(tag.getVersion()) &&
             visible == tag.isVisible() &&
             boutiques == tag.isBoutiques();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                key, value, type, application, version, visible, boutiques);
     }
 
     @Override

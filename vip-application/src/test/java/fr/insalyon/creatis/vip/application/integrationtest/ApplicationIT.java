@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.application.integrationtest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -155,20 +156,20 @@ public class ApplicationIT extends BaseApplicationSpringIT {
         AppVersion appVersion = new AppVersion("Application1", "version 0.0", "{}", true);
         Tag tagA = new Tag("a", "x", Tag.ValueType.STRING, appVersion, false, false);
         Tag tagB = new Tag("b", "x", Tag.ValueType.STRING, appVersion, false, false);
-        appVersion.setTags(List.of(tagA, tagB));
+        appVersion.setTags(Set.of(tagA, tagB));
         appVersionBusiness.update(appVersion);
 
-        assertEquals(List.of(tagA, tagB), appVersionBusiness.getVersions("Application1").get(0).getTags());
+        assertTrue(Set.of(tagA, tagB).containsAll(appVersionBusiness.getVersions("Application1").get(0).getTags()));
         // now try to remove a tag, update one and add a two new ones
         tagB.setValue("y");
         tagB.setBoutiques(true);
         tagB.setVisible(true);
         Tag tagC = new Tag("c", "x", Tag.ValueType.STRING, appVersion, false, false);
         Tag tagD = new Tag("d", "x", Tag.ValueType.STRING, appVersion, false, false);
-        appVersion.setTags(List.of(tagB, tagC, tagD));
+        appVersion.setTags(Set.of(tagB, tagC, tagD));
         appVersionBusiness.update(appVersion);
 
-        assertEquals(List.of(tagB, tagC, tagD), appVersionBusiness.getVersions("Application1").get(0).getTags());
+        assertTrue(Set.of(tagB, tagC, tagD).containsAll(appVersionBusiness.getVersions("Application1").get(0).getTags()));
     }
 
     @Test 

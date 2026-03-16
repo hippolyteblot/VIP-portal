@@ -1,10 +1,11 @@
 package fr.insalyon.creatis.vip.application.models;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
@@ -16,8 +17,8 @@ public class AppVersion implements IsSerializable {
     private String descriptor;
     private String doi;
     private boolean visible;
-    private List<Resource> resources;
-    private List<Tag> tags;
+    private Set<Resource> resources;
+    private Set<Tag> tags;
     private Map<String, String> settings;
     private String source;
     private String note;
@@ -33,8 +34,8 @@ public class AppVersion implements IsSerializable {
         this.visible = visible;
         this.source = source;
         this.note = note;
-        this.resources = new ArrayList<>();
-        this.tags = new ArrayList<>();
+        this.resources = new HashSet<>();
+        this.tags = new HashSet<>();
         this.settings = settings;
     }
 
@@ -49,7 +50,7 @@ public class AppVersion implements IsSerializable {
     }
 
     public AppVersion(String applicationName, String version, String descriptor,
-                      String doi, boolean visible, String source, String note, List<Resource> resources, List<Tag> tags) {
+                      String doi, boolean visible, String source, String note, Set<Resource> resources, Set<Tag> tags) {
         this(applicationName, version, descriptor, new HashMap<>(), visible, source, note);
         this.doi = doi;
         this.resources = resources;
@@ -93,7 +94,7 @@ public class AppVersion implements IsSerializable {
         return source;
     }
 
-    public List<Resource> getResources() {
+    public Set<Resource> getResources() {
         return resources;
     }
 
@@ -101,15 +102,15 @@ public class AppVersion implements IsSerializable {
         return resources.stream().map(Resource::getName).collect(Collectors.toList());
     }
 
-    public List<Tag> getTags() {
+    public Set<Tag> getTags() {
         return tags;
     }
 
-    public void setResources(List<Resource> resources) {
+    public void setResources(Set<Resource> resources) {
         this.resources = resources;
     }
 
-    public void setTags(List<Tag> tags) {
+    public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 

@@ -2,9 +2,11 @@ package fr.insalyon.creatis.vip.core.server.rpc;
 
 import java.util.Map;
 
+import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import com.google.gwt.user.server.rpc.jakarta.RemoteServiceServlet;
@@ -32,6 +34,7 @@ public abstract class AbstractRemoteServiceServlet extends RemoteServiceServlet 
     protected Server server;
     private ApplicationContext applicationContext;
     private VipSessionBusiness vipSessionBusiness;
+    private SessionAuthenticationProvider sessionAuthenticationProvider;
 
     @Override
     public void init() throws ServletException {
@@ -40,6 +43,7 @@ public abstract class AbstractRemoteServiceServlet extends RemoteServiceServlet 
                 WebApplicationContextUtils.findWebApplicationContext(getServletContext());
         server = applicationContext.getBean(Server.class);
         vipSessionBusiness = getBean(VipSessionBusiness.class);
+        sessionAuthenticationProvider = getBean(SessionAuthenticationProvider.class);
     }
 
     /*
@@ -89,6 +93,13 @@ public abstract class AbstractRemoteServiceServlet extends RemoteServiceServlet 
 
     protected User setUserInSession(User user) throws CoreException {
         return vipSessionBusiness.setUserInSession(user, getSession());
+    }
+
+    // To set up the user in spring security to make it accessible through the Supplier<User> used in updated business's
+    // Necessary from GWT context, as spring security is not activated there
+    protected void putUserInSpringSecurityContext() throws CoreException {
+        SecurityContextHolder.getContext().setAuthentication(
+                sessionAuthenticationProvider.createAuthenticationFromUser(getSessionUser()));
     }
 
     protected void authenticateSystemAdministrator(Logger logger) throws CoreException {

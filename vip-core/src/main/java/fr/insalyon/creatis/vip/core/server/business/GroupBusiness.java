@@ -130,7 +130,7 @@ public class GroupBusiness extends CommonBusiness {
     }
 
     public List<Group> getPublic() throws VipException {
-        return get().stream()
+        return groupDAO.get().stream()
             .filter((g) -> g.isPublicGroup())
             .collect(Collectors.toList());
     }

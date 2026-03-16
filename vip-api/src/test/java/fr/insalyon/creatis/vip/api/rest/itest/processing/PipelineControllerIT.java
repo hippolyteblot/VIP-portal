@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import fr.insalyon.creatis.vip.core.models.GroupType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -61,6 +62,32 @@ public class PipelineControllerIT extends BaseRestApiSpringIT {
     }
 
     @Test
+    public void shouldReturnPublicApps() throws Exception {
+        setAdminContext();
+        createGroup("group1");
+        createAnApplication("app1", "group1");
+        AppVersion app11 = createAVersion("app1", "v1", true);
+        AppVersion app12 = createAVersion("app1", "v2", true);
+        createAnApplication("app2", "group1");
+        AppVersion app21 = createAVersion("app2", "v1", true);
+        createGroup("group2", GroupType.APPLICATION, false);
+        createAnApplication("app3", "group2");
+        AppVersion app31 = createAVersion("app3", "v1", true);
+        clearContext();
+
+        // public URL, not authenticated
+        mockMvc.perform(get("/rest/pipelines?public"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$[*]", hasSize(3)))
+                .andExpect(jsonPath("$[*]", containsInAnyOrder(
+                        jsonCorrespondsToPipeline(getPipeline(app11)),
+                        jsonCorrespondsToPipeline(getPipeline(app12)),
+                        jsonCorrespondsToPipeline(getPipeline(app21)))));
+    }
+
+    @Test
     public void userGetAPipelineWithBoutiques() throws Exception {
         String appName = "testBoutiquesApp", groupName = "testGroup", versionName = "v42";
         AppVersion appVersion = configureBoutiquesTestApp(appName, groupName, versionName);
@@ -80,11 +107,13 @@ public class PipelineControllerIT extends BaseRestApiSpringIT {
 
     @Test
     public void userGetBoutiquesDescriptor() throws Exception {
+        setAdminContext();
         String appName = "testBoutiquesApp", groupName = "testGroup", versionName = "v42";
         configureBoutiquesTestApp(appName, groupName, versionName);
         String pipelineId = appName + "/" + versionName;
 
         baseUser1 = createUserInGroup(baseUser1.getEmail(), groupName);
+        clearContext();
 
         mockMvc.perform(get("/rest/pipelines/" + pipelineId).param("format", "boutiques").with(baseUser1()))
                 .andDo(print())
@@ -128,6 +157,7 @@ public class PipelineControllerIT extends BaseRestApiSpringIT {
         baseUser2 = createUserInGroup(baseUser2.getEmail(), "test2", "group2");
         baseUser3 = createUserInGroup(baseUser3.getEmail(), "test3", "group3");
         baseUser4 = createUserInGroups(baseUser4.getEmail(), "test4", "group1", "group2");
+        clearContext();
 
         // temp trailing slash for shanoir, see fr.insalyon.creatis.vip.api.SpringRestApiConfig::configurePathMatch
         mockMvc.perform(get("/rest/pipelines/").with(baseUser1()))

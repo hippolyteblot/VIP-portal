@@ -2,7 +2,9 @@ package fr.insalyon.creatis.vip.application.server.business;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,7 +87,7 @@ public class AppVersionBusiness extends CommonBusiness {
         }));
         try {
             List<String> beforeResourceNames = existingVersion.getResourcesNames();
-            List<Tag> editedTags = existingVersion.getTags();
+            Set<Tag> editedTags = existingVersion.getTags();
             editedTags.removeAll(version.getTags());
 
             applicationDAO.updateVersion(version);
@@ -142,8 +144,8 @@ public class AppVersionBusiness extends CommonBusiness {
             List<AppVersion> versions = applicationDAO.getVersions(applicationName);
 
             for (AppVersion version : versions) {
-                version.setResources(resourceBusiness.getByAppVersion(version));
-                version.setTags(tagBusiness.getTags(version));
+                version.setResources(new HashSet<>(resourceBusiness.getByAppVersion(version)));
+                version.setTags(new HashSet<>(tagBusiness.getTags(version)));
             }
             return versions;
         } catch (DAOException ex) {
@@ -177,8 +179,8 @@ public class AppVersionBusiness extends CommonBusiness {
             AppVersion version = applicationDAO.getVersion(applicationName, applicationVersion);
 
             if (version != null) {
-                version.setResources(resourceBusiness.getByAppVersion(version));
-                version.setTags(tagBusiness.getTags(version));
+                version.setResources(new HashSet<>(resourceBusiness.getByAppVersion(version)));
+                version.setTags(new HashSet<>(tagBusiness.getTags(version)));
             }
 
             return version;
@@ -195,10 +197,10 @@ public class AppVersionBusiness extends CommonBusiness {
 
             if (appVersion != null) {
                 // to avoid permissions leaks
-                appVersion.setResources(permissions.filterOnlySame(
+                appVersion.setResources(new HashSet<>(permissions.filterOnlySame(
                         resourceBusiness.getByAppVersion(appVersion),
-                        resourceBusiness.getUserContextResources()));
-                appVersion.setTags(tagBusiness.getTags(appVersion));
+                        resourceBusiness.getUserContextResources())));
+                appVersion.setTags(new HashSet<>(tagBusiness.getTags(appVersion)));
             }
 
             return appVersion;
@@ -216,13 +218,13 @@ public class AppVersionBusiness extends CommonBusiness {
 
             for (AppVersion v : versions) {
                 // to avoid permissions leaks
-                v.setResources(permissions.filterOnlySame(
+                v.setResources(new HashSet<>(permissions.filterOnlySame(
                         resourceBusiness.getByAppVersion(v),
-                        userResources));
-                v.setTags(tagBusiness.getTags(v));
+                        userResources)));
+                v.setTags(new HashSet<>(tagBusiness.getTags(v)));
             }
 
-            return pageBuilder.doPrecise(offset, quantity, versions);
+            return pageBuilder.doPrecise(offset, quantity, new ArrayList<>(versions));
         } catch (DAOException e) {
             throw new VipException(e);
         }
