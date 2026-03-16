@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
+import fr.insalyon.creatis.vip.core.server.business.EmailTemplateUtils;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.social.client.SocialConstants;
@@ -28,15 +29,17 @@ public class MessageBusiness {
     private final GroupMessageDAO groupMessageDAO;
     private final EmailBusiness emailBusiness;
     private final UserBusiness userBusiness;
+    private final EmailTemplateUtils emailTemplateUtils;
 
     @Autowired
     public MessageBusiness(
             MessageDAO messageDAO, GroupMessageDAO groupMessageDAO,
-            EmailBusiness emailBusiness, UserBusiness userBusiness) {
+            EmailBusiness emailBusiness, UserBusiness userBusiness, EmailTemplateUtils emailTemplateUtils) {
         this.messageDAO = messageDAO;
         this.groupMessageDAO = groupMessageDAO;
         this.emailBusiness = emailBusiness;
         this.userBusiness = userBusiness;
+        this.emailTemplateUtils = emailTemplateUtils;
     }
 
     public List<Message> getMessagesByUser(String email, Date startDate)
@@ -121,18 +124,7 @@ public class MessageBusiness {
                 recipients = users.toArray(new String[]{});
             }
 
-            String emailContent = "<html>"
-                    + "<head></head>"
-                    + "<body>"
-                    + "<p>Hello,</p>"
-                    + "<p><b>" + user.getFullName() + "</b> sent you a message on VIP:</p>"
-                    + "<div style=\"background-color: #F2F2F2\">"
-                    + "<br /><b>Subject:</b> " + subject + "<br />"
-                    + "<em>" + message + "</em><br /></div>"
-                    + "<p>Best Regards,</p>"
-                    + "<p>VIP Team</p>"
-                    + "</body>"
-                    + "</html>";
+            String emailContent = emailTemplateUtils.sendMessage(user, subject, message);
 
             for (String email : recipients) {
                 emailBusiness.sendEmail("VIP Message: " + subject + " (" + user.getFullName() + ")",
@@ -153,16 +145,7 @@ public class MessageBusiness {
             User sender, String[] recipients, String subject, String message)
             throws VipException {
 
-        String emailContent = "<html>"
-                + "<head></head>"
-                + "<body>"
-                + "<p><b>" + sender.getFullName() + "</b> sent a message to <b>"
-                + Arrays.asList(recipients) + "</b> on VIP:</p>"
-                + "<div style=\"background-color: #F2F2F2\">"
-                + "<br /><b>Subject:</b> " + subject + "<br />"
-                + "<em>" + message + "</em><br /></div>"
-                + "</body>"
-                + "</html>";
+        String emailContent = emailTemplateUtils.vipSupportCopy(sender, Arrays.asList(recipients), subject, message);
 
         // if there is only one receiver, name it in subject, otherwise name the sender
         String subjectInfo = recipients.length == 1 ?
@@ -177,17 +160,7 @@ public class MessageBusiness {
             User user, String subject, String message, List<String> workflowIDs,
             List<String> simulationNames) throws VipException {
 
-        String emailContent = "<html>"
-                + "<head></head>"
-                + "<body>"
-                + "<p><b>" + user.getFullName() + "</b> sent you a message on VIP:</p>"
-                + "<div style=\"background-color: #F2F2F2\">"
-                + "<br /><b>Subject:</b> " + subject + "<br />"
-                + "<em>" + message + "</em><br /></div>"
-                + "<p>Workflow ID " + workflowIDs + "</p>"
-                + "<p>Simulation Name " + simulationNames + "</p>"
-                + "</body>"
-                + "</html>";
+        String emailContent = emailTemplateUtils.sendMessageToVipSupport(user, subject, message, workflowIDs, simulationNames);
 
         emailBusiness.sendEmailToAdmins(
             "[VIP Contact] " + subject + " (" + user.getFullName() + ")",
@@ -201,19 +174,7 @@ public class MessageBusiness {
         try {
             groupMessageDAO.add(user.getEmail(), groupName, subject, message);
 
-            String emailContent = "<html>"
-                    + "<head></head>"
-                    + "<body>"
-                    + "<p>Hello,</p>"
-                    + "<p><b>" + user.getFullName() + "</b> sent a message to "
-                    + "the group '" + groupName + "' on VIP:</p>"
-                    + "<p style=\"background-color: #F2F2F2\"><br />"
-                    + "<b>Subject:</b> " + subject + "<br />"
-                    + "<em>" + message + "</em><br /></p>"
-                    + "<p>Best Regards,</p>"
-                    + "<p>VIP Team</p>"
-                    + "</body>"
-                    + "</html>";
+            String emailContent = emailTemplateUtils.sendGroupMessage(user, groupName, subject, message);
 
             for (User u : users) {
                 // Dont send mail to locked users and to itself

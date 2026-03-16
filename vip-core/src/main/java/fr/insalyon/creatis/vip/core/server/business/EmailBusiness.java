@@ -27,12 +27,14 @@ public class EmailBusiness {
     private final Server server;
     private final SMAClient smaClient;
     private final UserDAO userDAO;
+    private final EmailTemplateUtils emailTemplateUtils;
 
     @Autowired
-    public EmailBusiness(Server server, SMAClient smaClient, UserDAO userDAO) {
+    public EmailBusiness(Server server, SMAClient smaClient, UserDAO userDAO, EmailTemplateUtils emailTemplateUtils) {
         this.server = server;
         this.smaClient = smaClient;
         this.userDAO = userDAO;
+        this.emailTemplateUtils = emailTemplateUtils;
     }
 
     public void sendEmail(String subject, String content, String[] recipients,
@@ -151,20 +153,7 @@ public class EmailBusiness {
     }
 
     public void sendContactMail(User user, String category, String subject, String comment) throws VipException {
-        String emailContent = "<html>"
-                + "<head></head>"
-                + "<body>"
-                + "<p><b>VIP Contact</b></p>"
-                + "<p><b>User:</b> " + user.getFullName() + "</p>"
-                + "<p><b>Email:</b> <a href=\"mailto:" + user.getEmail() + "\">" + user.getEmail() + "</a></p>"
-                + "<p>&nbsp;</p>"
-                + "<p><b>Category:</b> " + category + "</p>"
-                + "<p><b>Subject:</b> " + subject + "</p>"
-                + "<p>&nbsp;</p>"
-                + "<p><b>Comments:</b></p>"
-                + "<p>" + comment + "</p>"
-                + "</body>"
-                + "</html>";
+        String emailContent = emailTemplateUtils.sendContactMail(user, category, subject, comment);
 
         sendEmailToAdmins("[VIP Contact] " + category, emailContent,
                 true, user.getEmail());
@@ -179,17 +168,7 @@ public class EmailBusiness {
                 throw new VipException("User is locked.");
             }
 
-            String emailContent = "<html>"
-                    + "<head></head>"
-                    + "<body>"
-                    + "<p>Dear " + user.getFullName() + ",</p>"
-                    + "<p>You requested us to send you your personal activation code.</p>"
-                    + "<p>Please use the following code to activate your account:</p>"
-                    + "<p><b>" + user.getCode() + "</b></p>"
-                    + "<p>Best Regards,</p>"
-                    + "<p>VIP Team</p>"
-                    + "</body>"
-                    + "</html>";
+            String emailContent = emailTemplateUtils.sendActivationCode(user);
 
             sendEmail("VIP activation code (reminder)", emailContent,
                     new String[] { user.getEmail() }, true, user.getEmail());
@@ -211,17 +190,7 @@ public class EmailBusiness {
             String code = UUID.randomUUID().toString();
             userDAO.updateCode(email, code);
 
-            String emailContent = "<html>"
-                    + "<head></head>"
-                    + "<body>"
-                    + "<p>Dear " + user.getFullName() + ",</p>"
-                    + "<p>You recently requested a new password to sign in to your VIP account.</p>"
-                    + "<p>Please use the following code to reset your password:</p>"
-                    + "<p><b>" + code + "</b></p>"
-                    + "<p>Best Regards,</p>"
-                    + "<p>VIP Team</p>"
-                    + "</body>"
-                    + "</html>";
+            String emailContent = emailTemplateUtils.sendResetCode(user, code);
 
             sendEmail("Code to reset your VIP password", emailContent,
                     new String[] { user.getEmail() }, true, user.getEmail());
@@ -239,20 +208,7 @@ public class EmailBusiness {
             userDAO.updateCode(user.getEmail(), code);
             userDAO.updateNextEmail(user.getEmail(), newEmail);
 
-            String emailContent = "<html>"
-                    + "<head></head>"
-                    + "<body>"
-                    + "<p>Dear " + user.getFullName() + ",</p>"
-                    + "<p>You requested to link your VIP account to this email address.</p>"
-                    + "<p>Please use the following code to activate it in your VIP account page:</p>"
-                    + "<p><b>" + code + "</b></p>"
-                    + "<p>You will have to refresh your VIP web page if you have not done it since you requested the change.</p>"
-                    + "<p>Please note that your login email is still "
-                    + user.getEmail() + " until you validate it.</p>"
-                    + "<p>Best Regards,</p>"
-                    + "<p>VIP Team</p>"
-                    + "</body>"
-                    + "</html>";
+            String emailContent = emailTemplateUtils.requestNewEmail(user, code);
 
             sendEmail("Code to confirm your VIP email address", emailContent,
                     new String[] { newEmail }, true, newEmail);
