@@ -181,7 +181,7 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
     @Override
     public List<Application> getPublicApplications() throws VipException {
-        return applicationBusiness.getPublicApplications();
+        return appVersionBusiness.getPublicApplications();
     }
 
     @Override

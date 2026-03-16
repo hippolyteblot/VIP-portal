@@ -41,6 +41,7 @@ public class AppVersionController extends ApiController {
         logMethodInvocation(logger, "listAppVersions");
         List<Application> apps = applicationBusiness.getApplications();
         List<AppVersion> appVersions = new ArrayList<>();
+
         for (Application app : apps) {
             appVersions.addAll(appVersionBusiness.getVersions(app.getName()));
         }
@@ -73,6 +74,7 @@ public class AppVersionController extends ApiController {
         logMethodInvocation(logger, "getAppVersion", appVersionId);
         AppVersionStrings input = parseAppVersionId(appVersionId);
         AppVersion appVersion = appVersionBusiness.getVersion(input.appName, input.version);
+
         if (appVersion == null) {
             throw new VipException(ApiError.INVALID_PIPELINE_IDENTIFIER, appVersionId);
         }

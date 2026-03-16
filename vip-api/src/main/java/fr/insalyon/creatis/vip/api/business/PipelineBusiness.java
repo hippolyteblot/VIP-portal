@@ -134,7 +134,7 @@ public class PipelineBusiness {
     // Specific stuff that return in 'Application' class format and not 'Pipeline'
     // used for the VIP landing page
     public List<Pipeline> listPublicPipelines() throws VipException {
-        List<Application> applications = applicationBusiness.getPublicApplications();
+        List<Application> applications = appVersionBusiness.getPublicApplications();
         return appsToPipelines(applications);
     }
 

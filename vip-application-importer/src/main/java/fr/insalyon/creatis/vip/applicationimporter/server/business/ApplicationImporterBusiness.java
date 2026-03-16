@@ -2,17 +2,7 @@ package fr.insalyon.creatis.vip.applicationimporter.server.business;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Scanner;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.io.File;
-import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 
@@ -87,8 +77,8 @@ public class ApplicationImporterBusiness {
         Application app = applicationBusiness.getApplication(vipApplicationName);
         AppVersion newVersion = new AppVersion(vipApplicationName, vipVersion, descriptor, true);
 
-        newVersion.setResources(resources.stream().map(Resource::new).toList());
-        newVersion.setTags(tags);
+        newVersion.setResources(new HashSet<>(resources.stream().map(Resource::new).toList()));
+        newVersion.setTags(new HashSet<>(tags));
         if (app == null) {
             // If application doesn't exist, create it.
             // New applications are not associated with any class (admins may add classes independently).

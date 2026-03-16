@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -12,29 +13,23 @@ import org.springframework.stereotype.Service;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 
 @Service
 public class CorePermissions {
-
-    private Supplier<User> uSupplier;
+    private final Supplier<User> uSupplier;
 
     @Autowired
     public CorePermissions(Supplier<User> uSupplier) {
         this.uSupplier = uSupplier;
     }
 
-    public void checkLevel(UserLevel... authorizedLevels) throws VipException {
-        User user = uSupplier.get();
+    public void filter(Consumer<PermissionChain> conditions) throws VipException {
+        PermissionChain chain = new PermissionChain(uSupplier.get().getLevel());
 
-        for (UserLevel level: authorizedLevels) {
-            if (level.equals(user.getLevel())) {
-                return;
-            }
-        }
-        throw new VipException(DefaultError.ACCESS_DENIED);
+        conditions.accept(chain);
+        chain.filter();
     }
 
     public void checkOnlyUserPrivateGroups(Set<Group> groupsToCheck) throws VipException {
@@ -83,6 +78,14 @@ public class CorePermissions {
     public <T> void checkUnchanged(T a, T b) throws VipException {
         if (!a.equals(b)) {
             throw new VipException(DefaultError.ACCESS_DENIED); 
+        }
+    }
+
+    public <T> T shouldExist(T a) throws VipException {
+        if (a == null) {
+            throw new VipException(DefaultError.NOT_FOUND);
+        } else {
+            return a;
         }
     }
 }

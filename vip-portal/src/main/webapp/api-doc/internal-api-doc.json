@@ -223,6 +223,134 @@
         }
       }
     },
+    "/applications/{appId}/versions/{id}" : {
+      "get" : {
+        "tags" : [ "app-version-controller" ],
+        "operationId" : "get_2",
+        "parameters" : [ {
+          "name" : "appId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppVersion"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "app-version-controller" ],
+        "operationId" : "createOrUpdate_2",
+        "parameters" : [ {
+          "name" : "appId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppVersion"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppVersion"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "app-version-controller" ],
+        "operationId" : "deleteVersion",
+        "parameters" : [ {
+          "name" : "appId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/session" : {
       "get" : {
         "tags" : [ "session-controller" ],
@@ -492,10 +620,111 @@
         }
       }
     },
+    "/applications/{appId}/versions" : {
+      "get" : {
+        "tags" : [ "app-version-controller" ],
+        "operationId" : "list_2",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "name" : "quantity",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "exclusiveMinimum" : 0,
+            "maximum" : 50
+          }
+        }, {
+          "name" : "appId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PrecisePageAppVersion"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "app-version-controller" ],
+        "operationId" : "create_2",
+        "parameters" : [ {
+          "name" : "appId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AppVersion"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AppVersion"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tags" : {
       "get" : {
         "tags" : [ "tag-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -648,6 +877,88 @@
           }
         }
       },
+      "AppVersion" : {
+        "type" : "object",
+        "properties" : {
+          "applicationName" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "descriptor" : {
+            "type" : "string"
+          },
+          "doi" : {
+            "type" : "string"
+          },
+          "visible" : {
+            "type" : "boolean"
+          },
+          "resources" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Resource"
+            },
+            "uniqueItems" : true
+          },
+          "tags" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Tag"
+            },
+            "uniqueItems" : true
+          },
+          "settings" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "type" : "string"
+            }
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          },
+          "resourcesNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "descriptorFilename" : {
+            "type" : "string"
+          }
+        }
+      },
+      "Tag" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "STRING", "BOOLEAN" ]
+          },
+          "application" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "visible" : {
+            "type" : "boolean"
+          },
+          "boutiques" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "AuthenticationCredentials" : {
         "type" : "object",
         "properties" : {
@@ -693,33 +1004,6 @@
           }
         }
       },
-      "Tag" : {
-        "type" : "object",
-        "properties" : {
-          "key" : {
-            "type" : "string"
-          },
-          "value" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string",
-            "enum" : [ "STRING", "BOOLEAN" ]
-          },
-          "application" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          },
-          "visible" : {
-            "type" : "boolean"
-          },
-          "boutiques" : {
-            "type" : "boolean"
-          }
-        }
-      },
       "PrecisePageResource" : {
         "type" : "object",
         "properties" : {
@@ -742,6 +1026,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Application"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PrecisePageAppVersion" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AppVersion"
             }
           },
           "total" : {

@@ -4,21 +4,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.Tag;
-import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
-import fr.insalyon.creatis.vip.application.server.business.ApplicationBusiness;
-import fr.insalyon.creatis.vip.application.server.business.TagBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
 
 public class TagIT extends BaseApplicationSpringIT {
 
@@ -96,7 +91,7 @@ public class TagIT extends BaseApplicationSpringIT {
         Tag bis2 = new Tag("bleu", "uelb", Tag.ValueType.STRING, appVersion1, true, true);
         Tag bis3 = new Tag("blui", "iulb", Tag.ValueType.STRING, appVersion2, false, true);
 
-        appVersion1.setTags(Arrays.asList(bis, bis2));
+        appVersion1.setTags(Set.of(bis, bis2));
 
         appBusiness.add(app1);
         appBusiness.add(app2);

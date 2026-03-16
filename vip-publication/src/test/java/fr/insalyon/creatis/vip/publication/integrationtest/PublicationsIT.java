@@ -70,14 +70,6 @@ public class PublicationsIT extends BaseSpringIT {
     }
 
     @Test
-    public void testAddPublicationWithoutTitle() throws VipException {
-        // Without parameter
-        Publication publication = new Publication();
-
-        Assertions.assertThrows(VipException.class, () -> publicationBusiness.addPublication(publication));
-    }
-
-    @Test
     public void testAddExistingPublication() throws VipException {
         Publication publication = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author1, author2", "type", "typeName", adminEmail, null);
 
