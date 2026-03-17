@@ -32,6 +32,7 @@ import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import fr.insalyon.creatis.vip.core.server.dao.UsersGroupsDAO;
 import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
+import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 
 @Service
 @Transactional
@@ -353,6 +354,8 @@ public class UserBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public User get(String id) throws VipException {
+        // becareful sensitive fields are only removed when processing
+        // the json response, before that, all users objects ARE NOT safe
         if ( ! getUserLevel().equals(UserLevel.Administrator) && ! getUser().getId().equals(id)) {
             throw new VipException(DefaultError.ACCESS_DENIED);
         } else {
@@ -364,5 +367,19 @@ public class UserBusiness extends CommonBusiness {
 
             return user;
         }
+    }
+
+    @VIPExternalSafe
+    public PrecisePage<User> getAll(int offset, int quantity) throws VipException {
+        // becareful sensitive fields are only removed when processing
+        // the json response, before that, all users objects ARE NOT safe
+
+        List<User> users = getUsers();
+
+        for (User u: users) {
+            u.setGroups(usersGroupsDAO.getUserGroups(u.getEmail()));
+        }
+
+        return pageBuilder.doPrecise(offset, quantity, users);
     }
 }

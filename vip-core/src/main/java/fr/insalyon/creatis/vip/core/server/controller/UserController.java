@@ -40,8 +40,8 @@ public class UserController {
 
     @GetMapping
     public PrecisePage<User> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
-            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity, @RequestParam Optional<String> group) throws VipException {
-        return null;
+            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
+        return userBusiness.getAll(offset, quantity);
     }
 
     @GetMapping(value = "{id}")
