@@ -15,12 +15,12 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 @RestControllerAdvice
-public class DataViewsHandler extends AbstractMappingJacksonResponseBodyAdvice {
+public class DataViewsResponseHandler extends AbstractMappingJacksonResponseBodyAdvice {
 
     private final Supplier<User> supplier;
 
     @Autowired
-    public DataViewsHandler(Supplier<User> supplier) {
+    public DataViewsResponseHandler(Supplier<User> supplier) {
         this.supplier = supplier;
     }
 
