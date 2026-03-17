@@ -1,6 +1,6 @@
 package fr.insalyon.creatis.vip.api.business;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class ApiUserBusiness {
                 comments,
                 false,
                 true,
-                new ArrayList<>());
+                new HashSet<>());
         logger.info("Signing up with the " + user.getEmail());
     }
 

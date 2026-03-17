@@ -233,7 +233,7 @@ public class ConfigurationServiceImpl extends AbstractRemoteServiceServlet imple
                 authenticateSystemAdministrator(logger);
             }
             trace(logger, "Removing user '" + user.getEmail() + "'.");
-            userBusiness.removeUser(user.getEmail(), true);
+            userBusiness.remove(user.getId(), true);
 
             return user;
         } catch (VipException ex) {
@@ -346,7 +346,7 @@ public class ConfigurationServiceImpl extends AbstractRemoteServiceServlet imple
     public User updateUser(User user) throws CoreException {
         try {
             trace(logger, "Updating user data '" + user.getEmail() + "'.");
-            user = userBusiness.updateUser(user);
+            user = userBusiness.update(user);
             return setUserInSession(user);
         } catch (VipException ex) {
             throw new CoreException(ex);

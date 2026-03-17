@@ -112,6 +112,10 @@ public class User implements IsSerializable {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public boolean isConfirmed() {
         return confirmed;
     }

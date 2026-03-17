@@ -856,6 +856,31 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
+    @Override
+    public User getById(String id) throws DAOException {
+        String query =  "SELECT "
+        +               "id, email, next_email, first_name, last_name, institution, "
+        +               "code, confirmed, folder, session, registration, "
+        +               "last_login, level, country_code, max_simulations, "
+        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        +               "FROM VIPUsers WHERE id=?";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)){
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return userFromRs(rs);
+            }
+
+            logger.error("There is no user registered with the id {}", id);
+            throw new DAOException("There is no user registered with the id: " + id);
+
+        } catch (SQLException ex) {
+            logger.error("Error getting user with id {}", id, ex);
+            throw new DAOException(ex);
+        }
+    }
+
     private User userFromRs(ResultSet rs) throws SQLException {
         return new User(
                 rs.getString("id"),

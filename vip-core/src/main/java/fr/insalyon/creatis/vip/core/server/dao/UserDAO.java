@@ -94,4 +94,6 @@ public interface UserDAO {
      * or if there is already a user with this key
      */
     void updateUserApikey(String email, String newApikey) throws DAOException;
+
+    User getById(String id) throws DAOException;
 }

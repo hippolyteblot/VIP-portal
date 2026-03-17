@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.ProxyBusiness;
 import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
 
@@ -107,13 +108,15 @@ public class SpringDatabaseIT extends BaseSpringIT {
 
     private void testRollbackInTransaction(
             Exception exception, boolean shouldRollback) throws VipException, GRIDAClientException {
+        setAdminContext();
+
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         Supplier<Integer> countUser =
                 () -> JdbcTestUtils.countRowsInTable(jdbcTemplate, "VIPUsers");
 
         String testEmail = "test@email.fr";
         assertEquals(1, countUser.get());
-        createUser(testEmail);
+        User user = createUser(testEmail);
         // verify initial user + new one are there
         assertEquals(2, countUser.get());
         // Now we will remove an user, and throw an exception when an email is sent at the end
@@ -126,7 +129,7 @@ public class SpringDatabaseIT extends BaseSpringIT {
 
         Exception exceptionCatched = null;
         try {
-            userBusiness.removeUser(testEmail, true);
+            userBusiness.remove(user.getId(), true);
         } catch (Exception ex) {
             exceptionCatched = ex;
         }
@@ -135,7 +138,7 @@ public class SpringDatabaseIT extends BaseSpringIT {
         assertEquals(shouldRollback ? 2 : 1, countUser.get());
         if (shouldRollback) {
             // clean if necessary
-            userBusiness.removeUser(testEmail, false);
+            userBusiness.remove(user.getId(), false);
         }
         assertEquals(1, countUser.get());
     }

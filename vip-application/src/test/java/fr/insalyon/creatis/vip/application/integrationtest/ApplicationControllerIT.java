@@ -131,7 +131,7 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
     public void update() throws Exception {
         // set group public
         group.setPublicGroup(true);
-        groupBusiness.update(nameGroup1, group);
+        asAdminContext(() -> { groupBusiness.update(nameGroup1, group); });
 
         Application app = new Application("super_app", "les applications sont vraiment belles");
         app.setGroups(Set.of(group));
@@ -207,7 +207,6 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
         app3.setGroups(Set.of(group, group2));
         userBusiness.addUserToGroup(emailUser2, nameGroup1);
         developperUser = userBusiness.getUserWithGroups(emailUser2);
-
 
         // create apps
         mockMvc.perform(post("/internal/applications")

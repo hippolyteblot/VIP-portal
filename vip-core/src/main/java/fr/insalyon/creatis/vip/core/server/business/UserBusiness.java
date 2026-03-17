@@ -6,8 +6,10 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
@@ -28,6 +31,7 @@ import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import fr.insalyon.creatis.vip.core.server.dao.UsersGroupsDAO;
+import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
 
 @Service
 @Transactional
@@ -38,15 +42,17 @@ public class UserBusiness extends CommonBusiness {
     private final EmailBusiness emailBusiness;
     private final GRIDAPoolClient gridaPoolClient;
     private final Server server;
+    private final EmailTemplateUtils emailTemplateUtils;
 
     @Autowired
     public UserBusiness(UserDAO userDAO, UsersGroupsDAO usersGroupsDAO, EmailBusiness emailBusiness,
-            GRIDAPoolClient gridaPoolClient, Server server) {
+            GRIDAPoolClient gridaPoolClient, Server server, EmailTemplateUtils emailTemplateUtils) {
         this.userDAO = userDAO;
         this.usersGroupsDAO = usersGroupsDAO;
         this.emailBusiness = emailBusiness;
         this.gridaPoolClient = gridaPoolClient;
         this.server = server;
+        this.emailTemplateUtils = emailTemplateUtils;
     }
 
     public void updateUserEmail(String oldEmail, String newEmail)
@@ -70,7 +76,26 @@ public class UserBusiness extends CommonBusiness {
         }
     }
 
-    public User updateUser(User user) throws VipException {
+    @VIPExternalSafe
+    public User update(User user) throws VipException {
+        // we use JsonView to protect "sensitive"
+        // fields from being edited (see @User.class)
+        // not all can be handled like that, especially for groups
+        if ( ! getUserLevel().equals(UserLevel.Administrator)) {
+            if (user.getId() != getUser().getId()) {
+                // only admin can edit others accounts
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+            Set<Group> diff = new HashSet<>(user.getGroups());
+            diff.retainAll(getUser().getGroups()); // only examine modifications
+
+            // here user try to join private group (forbidden)
+            // but it's okay if the user try to leave a private group
+            if ( ! diff.stream().allMatch(Group::isPublicGroup)) {
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+        }
+
         try {
             userDAO.update(user);
             return user;
@@ -121,43 +146,30 @@ public class UserBusiness extends CommonBusiness {
         }
     }
 
-    public void removeUser(String email, boolean sendNotificationEmail)
+    @VIPExternalSafe
+    public void remove(String id, boolean sendNotificationEmail)
             throws VipException {
 
         try {
-            User user = getUser(email);
+            User user = get(id);
 
-            gridaPoolClient.removeOperationsByUser(email);
+            gridaPoolClient.removeOperationsByUser(user.getEmail());
 
             gridaPoolClient.delete(server.getDataManagerUsersHome() + "/"
                     + user.getFolder(), user.getEmail());
             gridaPoolClient.delete(server.getDataManagerUsersHome() + "/"
                     + user.getFolder() + "_" + CoreConstants.FOLDER_TRASH, user.getEmail());
 
-            userDAO.remove(email);
+            userDAO.remove(user.getEmail());
 
             if (sendNotificationEmail) {
 
-                String adminsEmailContents = "<html>"
-                        + "<head></head>"
-                        + "<body>"
-                        + "<p>Dear Administrators,</p>"
-                        + "<p>The following user removed her/his account:</p>"
-                        + "<p><b>First Name:</b> " + user.getFirstName() + "</p>"
-                        + "<p><b>Last Name:</b> " + user.getLastName() + "</p>"
-                        + "<p><b>Email:</b> " + user.getEmail() + "</p>"
-                        + "<p><b>Institution:</b> " + user.getInstitution() + "</p>"
-                        + "<p>&nbsp;</p>"
-                        + "<p>Best Regards,</p>"
-                        + "<p>VIP Team</p>"
-                        + "</body>"
-                        + "</html>";
-
+                String adminsEmailContents = emailTemplateUtils.removeAccount(user);
                 emailBusiness.sendEmailToAdmins("[VIP Admin] Account Removed", adminsEmailContents,
                         true, user.getEmail());
             }
         } catch (GRIDAClientException ex) {
-            logger.error("Error removing user {}", email, ex);
+            logger.error("Error removing user id {}", id, ex);
             throw new VipException(ex);
         } catch (DAOException ex) {
             throw new VipException(ex);
@@ -336,6 +348,21 @@ public class UserBusiness extends CommonBusiness {
 
         } catch (DAOException ex) {
             throw new VipException(ex);
+        }
+    }
+
+    @VIPExternalSafe
+    public User get(String id) throws VipException {
+        if ( ! getUserLevel().equals(UserLevel.Administrator) && ! getUser().getId().equals(id)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        } else {
+            User user = userDAO.getById(id);
+
+            if (user != null) {
+                user.setGroups(usersGroupsDAO.getUserGroups(user.getEmail()));
+            }
+
+            return user;
         }
     }
 }

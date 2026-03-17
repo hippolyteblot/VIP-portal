@@ -3,12 +3,13 @@ package fr.insalyon.creatis.vip.core.integrationtest.database;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.ErrorManager;
 
 import javax.sql.DataSource;
 
@@ -163,7 +164,10 @@ public abstract class BaseSpringIT {
                 password, CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        authenticationBusiness.signup(newUser, "", (Group) null);
+
+        asAdminContext(() -> {
+            authenticationBusiness.signup(newUser, "", (Group) null);
+        });
         return newUser;
     }
 
@@ -196,10 +200,14 @@ public abstract class BaseSpringIT {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
         User adminUser = userBusiness.getUserWithGroups(adminEmail);
 
-        SecurityContextHolder.getContext().setAuthentication(provider.createAuthenticationFromUser(adminUser));
+        // we need to create a different context object since SecurityContextHolder hold a reference
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(provider.createAuthenticationFromUser(adminUser));
+
+        SecurityContextHolder.setContext(context);
     }
 
-    protected <E extends Exception> void asAdminContext(CheckedRunnable<E> action) throws Exception {
+    protected <E extends Exception> void asAdminContext(CheckedRunnable<E> action) throws E, VipException, GRIDAClientException {
         SecurityContext original = SecurityContextHolder.getContext();
 
         try {
@@ -220,11 +228,14 @@ public abstract class BaseSpringIT {
                 "testPassword", CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        List<Group> groups = new ArrayList<>();
+        Set<Group> groups = new HashSet<>();
         for (String groupName : groupNames) {
             groups.add(groupBusiness.get(groupName));
         }
-        authenticationBusiness.signup(newUser, "", false, true, groups);
+
+        asAdminContext(() -> {
+            authenticationBusiness.signup(newUser, "", false, true, groups);
+        });
         return userBusiness.getUserWithGroups(userEmail);
     }
 

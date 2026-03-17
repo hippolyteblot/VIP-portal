@@ -187,6 +187,7 @@ public class SpringJndiIT {
 
     private void testRollbackInTransaction(
             Exception exception, boolean shouldRollback) throws VipException, GRIDAClientException, DAOException {
+        setAdminContext();
 
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         Supplier<Integer> countUser = () -> JdbcTestUtils.countRowsInTable(jdbcTemplate, "VIPUsers");        
@@ -194,7 +195,7 @@ public class SpringJndiIT {
 
         String testEmail = "test@email.fr";
         assertEquals(1, countUser.get());
-        createUser(testEmail);
+        User user = createUser(testEmail);
         // verify initial user + new one are there
         assertEquals(2, countUser.get());
         // Now we will remove an user, and throw an exception when an email is sent at the end
@@ -207,7 +208,7 @@ public class SpringJndiIT {
 
         Exception exceptionCatched = null;
         try {
-            userBusiness.removeUser(testEmail, true);
+            userBusiness.remove(user.getId(), true);
         } catch (Exception ex) {
             exceptionCatched = ex;
         }
@@ -216,18 +217,19 @@ public class SpringJndiIT {
         assertEquals(shouldRollback ? 2:1, countUser.get());
         if (shouldRollback) {
             // clean if necessary
-            userBusiness.removeUser(testEmail, false);
+            userBusiness.remove(user.getId(), false);
         }
         assertEquals(1, countUser.get());
     }
 
-    private void createUser(String testEmail) throws GRIDAClientException, VipException {
+    private User createUser(String testEmail) throws GRIDAClientException, VipException {
         User newUser = new User(CoreUtil.createUUID(), "firstName", "LastName",
                 testEmail, "Test institution",
                 "testPassword", CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
         authenticationBusiness.signup(newUser, "", (Group) null);
+        return newUser;
     }
 
     @Test

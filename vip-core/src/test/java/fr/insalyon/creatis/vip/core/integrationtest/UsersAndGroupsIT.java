@@ -297,7 +297,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
     @Test
     public void testCatchRemoveUser() throws VipException {
-        userBusiness.removeUser(emailUser1, false);
+        userBusiness.remove(user1.getId(), false);
         assertRowsNbInTable("VIPUsers", 5);
     }
 
@@ -305,11 +305,11 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     public void testCatchRemoveNonExistentUser() {
         Exception exception = assertThrows(
                 VipException.class, () ->
-                        userBusiness.removeUser("nonExistent user", false)
+                        userBusiness.remove("nonExistent user", false)
 
         );
         // getUser is called and had an exception before the beginning of the internship
-        assertTrue(StringUtils.contains(exception.getMessage(), "There is no user registered with the e-mail: nonExistent user"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "There is no user registered with the id: nonExistent user"));
     }
 
     /* ********************************************************************************************************************************************** */
@@ -694,7 +694,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     public void testUpdateUser() throws VipException {
         User user = userBusiness.getUser(emailUser1);
         user.setFolder("folder_updated");
-        userBusiness.updateUser(user);
+        userBusiness.update(user);
         User userUpdated = userBusiness.getUser(emailUser1);
         Assertions.assertEquals("folder_updated", userUpdated.getFolder(), "Incorrect user folder");
     }

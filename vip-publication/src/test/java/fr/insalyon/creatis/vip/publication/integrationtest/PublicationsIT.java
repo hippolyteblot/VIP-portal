@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
@@ -105,10 +106,12 @@ public class PublicationsIT extends BaseSpringIT {
     }
 
     @Test
-    public void testSetAttributesUpdatePublication() throws VipException, DAOException {
+    public void testSetAttributesUpdatePublication() throws VipException, DAOException, GRIDAClientException {
         Publication publication = publicationBusiness.getPublication(idPublicationCreated);
 
-        authenticationBusiness.getOrCreateUser("test1@test.fr", "institution", null);
+        asAdminContext(() -> {
+            authenticationBusiness.getOrCreateUser("test1@test.fr", "institution", null);
+        });
         publication.setAuthors("author2, author3");
         publication.setId(idPublicationCreated);
         publication.setDate("22/06/2023");

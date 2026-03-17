@@ -3,10 +3,10 @@ package fr.insalyon.creatis.vip.core.server.business;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import fr.insalyon.creatis.devtools.MD5;
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
@@ -25,6 +26,7 @@ import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import fr.insalyon.creatis.vip.core.server.dao.UsersGroupsDAO;
+import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
 
 @Service
 public class AuthenticationBusiness extends CommonBusiness {
@@ -36,9 +38,10 @@ public class AuthenticationBusiness extends CommonBusiness {
     private final UsersGroupsDAO usersGroupsDAO;
     private final UserBusiness userBusiness;
     private final GroupBusiness groupBusiness;
+    private final EmailTemplateUtils emailTemplateUtils;
 
     @Autowired
-    public AuthenticationBusiness(UserDAO userDAO, EmailBusiness emailBusiness, Server server, GRIDAClient gridaClient, UsersGroupsDAO usersGroupsDAO, UserBusiness userBusiness, GroupBusiness groupBusiness) {
+    public AuthenticationBusiness(UserDAO userDAO, EmailBusiness emailBusiness, Server server, GRIDAClient gridaClient, UsersGroupsDAO usersGroupsDAO, UserBusiness userBusiness, GroupBusiness groupBusiness, EmailTemplateUtils emailTemplateUtils) {
         this.userDAO = userDAO;
         this.emailBusiness = emailBusiness;
         this.server = server;
@@ -46,6 +49,7 @@ public class AuthenticationBusiness extends CommonBusiness {
         this.usersGroupsDAO = usersGroupsDAO;
         this.userBusiness = userBusiness;
         this.groupBusiness = groupBusiness;
+        this.emailTemplateUtils = emailTemplateUtils;
     }
 
     public void signup(User user, String comments, Group group) throws VipException {
@@ -55,13 +59,15 @@ public class AuthenticationBusiness extends CommonBusiness {
     public void signup(User user, String comments, boolean automaticCreation, boolean mapPrivateGroups, Group group)
             throws VipException {
         this.signup(user, comments, automaticCreation, mapPrivateGroups,
-                group == null ? new ArrayList<>() : Arrays.asList(group));
+                group == null ? new HashSet<>() : new HashSet<>(Collections.singleton(group)));
     }
 
-    public void signup(User user, String comments, boolean automaticCreation, boolean mapPrivateGroups,
-            List<Group> groups)
+    @VIPExternalSafe
+    public User signup(User user, String comments, boolean automaticCreation, boolean mapPrivateGroups, Set<Group> groups)
             throws VipException {
-
+        if ( ! user.getGroups().stream().allMatch(Group::isPublicGroup)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
         emailBusiness.verifyEmail(user.getEmail());
 
         // Build log message
@@ -112,12 +118,12 @@ public class AuthenticationBusiness extends CommonBusiness {
 
             user.setFolder(folder);
             user.setLevel(UserLevel.Beginner);
-
+            user.setId(CoreUtil.createUUID());
             userDAO.add(user);
 
             // Adding user to groups
             if (groups == null) {
-                groups = new ArrayList<>();
+                groups = new HashSet<>();
             }
             StringBuilder groupsString = new StringBuilder();
             for (Group group : groups) {
@@ -130,72 +136,22 @@ public class AuthenticationBusiness extends CommonBusiness {
             }
 
             if (!automaticCreation) {
-                String emailContent = "<html>"
-                        + "<head></head>"
-                        + "<body>"
-                        + "<p>Dear " + user.getFirstName() + " " + user.getLastName() + ",</p>"
-                        + "<p>We have successfully received your membership registration "
-                        + "and your personal profile has been created.</p>"
-                        + "<p>Please confirm your registration using the following activation "
-                        + "code on your first login:</p>"
-                        + "<p><b>" + user.getCode() + "</b></p>"
-                        + "<p>Best Regards,</p>"
-                        + "<p>VIP Team</p>"
-                        + "</body>"
-                        + "</html>";
-
+                String emailContent = emailTemplateUtils.registrationUserEmail(user);
                 logger.info("Sending confirmation email to '" + user.getEmail() + "'.");
                 emailBusiness.sendEmail("VIP account details", emailContent,
                         new String[] { user.getEmail() }, true, user.getEmail());
 
-                String adminsEmailContents = "<html>"
-                        + "<head></head>"
-                        + "<body>"
-                        + "<p>Dear Administrator,</p>"
-                        + "<p>A new user requested an account:</p>"
-                        + "<p><b>First Name:</b> " + user.getFirstName() + "</p>"
-                        + "<p><b>Last Name:</b> " + user.getLastName() + "</p>"
-                        + "<p><b>Email:</b> " + user.getEmail() + "</p>"
-                        + "<p><b>Institution:</b> " + user.getInstitution() + "</p>"
-                        + "<p><b>Country:</b> " + user.getCountryCode().getCountryName() + "</p>"
-                        + "<p><b>Groups:</b> " + groupsString + "</p>"
-                        + "<p><b>Comments:</b><br />" + comments + "</p>"
-                        + "<p>&nbsp;</p>"
-                        + "<p>Best Regards,</p>"
-                        + "<p>VIP Team</p>"
-                        + "</body>"
-                        + "</html>";
+                String adminsEmailContents = emailTemplateUtils.registrationAdminEmail(user, groupsString.toString(), comments);
                 emailBusiness.sendEmailToAdmins("[VIP Admin] Account Requested", adminsEmailContents,
                         true, user.getEmail());
             } else {
-                StringBuilder groupNames = new StringBuilder();
-                for (Group group : groups) {
-                    if (groupNames.length() > 0) {
-                        groupNames.append(", ");
-                    }
-                    groupNames.append(group.getName());
-                }
-                String adminsEmailContents = "<html>"
-                        + "<head></head>"
-                        + "<body>"
-                        + "<p>Dear Administrators,</p>"
-                        + "<p>The following account was automatically created:</p>"
-                        + "<p><b>First Name:</b> " + user.getFirstName() + "</p>"
-                        + "<p><b>Last Name:</b> " + user.getLastName() + "</p>"
-                        + "<p><b>Email:</b> " + user.getEmail() + "</p>"
-                        + "<p><b>Institution:</b> " + user.getInstitution() + "</p>"
-                        + "<p><b>Country:</b> " + user.getCountryCode().getCountryName() + "</p>"
-                        + "<p><b>Groups:</b> " + groupNames + "</p>"
-                        + "<p><b>Comments:</b><br />" + comments + "</p>"
-                        + "<p>&nbsp;</p>"
-                        + "<p>Best Regards,</p>"
-                        + "<p>VIP Team</p>"
-                        + "</body>"
-                        + "</html>";
+                String adminsEmailContents = emailTemplateUtils.registrationAdminEmailAutomatic(user, groupsString.toString(), comments);
 
                 emailBusiness.sendEmailToAdmins("[VIP Admin] Automatic Account Creation", adminsEmailContents,
                         false, user.getEmail());
             }
+
+            return user;
         } catch (GRIDAClientException | UnsupportedEncodingException | NoSuchAlgorithmException ex) {
             logger.error("Error signing up user {}", user.getEmail(), ex);
             throw new VipException(ex);
