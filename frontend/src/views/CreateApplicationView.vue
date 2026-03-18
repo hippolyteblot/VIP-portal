@@ -8,15 +8,10 @@ import { appVersionsApi } from '@/api/appVersions.api'
 import { applicationsApi } from '@/api/applications.api'
 import { tagsApi } from '@/api/tags.api'
 import { boutiquesApi } from '@/api/boutiques.api'
-<<<<<<< HEAD
 import { useNotificationsStore } from '@/stores/notifications.store'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
-=======
-
-const router = useRouter()
->>>>>>> dd9e68302137a90ccbad13273653de8f65dd9aef
 
 type ResourceInput = {
   name: string
@@ -297,11 +292,7 @@ async function onSubmit() {
         </AppButton>
 
         <div v-if="descriptorCheckErrors.length" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-<<<<<<< HEAD
           <p class="font-semibold">Validation failed</p>
-=======
-          <p class="font-semibold">Validation échouée</p>
->>>>>>> dd9e68302137a90ccbad13273653de8f65dd9aef
           <ul class="mt-2 list-disc pl-5">
             <li v-for="err in descriptorCheckErrors" :key="err">{{ err }}</li>
           </ul>
