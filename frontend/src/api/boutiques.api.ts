@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import { backendClient } from './client'
 
+=======
+>>>>>>> dd9e68302137a90ccbad13273653de8f65dd9aef
 export interface BoutiquesCheckResult {
   valid: boolean
   errors: string[]
