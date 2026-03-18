@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.boutiques.model.BoutiquesDescriptor;
 import fr.insalyon.creatis.boutiques.model.Custom;
+import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -98,7 +99,7 @@ public class BoutiquesBusiness {
         return doi;
     }
 
-    public void validateBoutiqueFile(String localPath) throws VipException {
+    public void validateBoutiquesFile(String localPath) throws VipException {
         // check file size, 100 kiB max
         try {
             if (Files.size(Paths.get(localPath)) >= 100 * 1024) {
@@ -116,7 +117,7 @@ public class BoutiquesBusiness {
             // if there's an error, only keep the first line because the output can be very long
             // and the first line contains the json validation error message
             String firstLine = e.getCout().isEmpty() ? "< No Information> " : e.getCout().get(0);
-            throw new VipException("Boutiques file not valid : " + firstLine);
+            throw new VipException(ApplicationError.BOUTIQUES_FILE_NOT_VALID, firstLine);
         }
     }
 
