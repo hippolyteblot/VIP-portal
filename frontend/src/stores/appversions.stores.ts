@@ -37,11 +37,17 @@ export const useAppVersionsStore = defineStore('appversions', () => {
     return appversions.value
   }
 
+  async function fetchAppVersion(appName: string, version: string): Promise<AppVersion> {
+    const backend = await appVersionsApi.getByVersion(appName, version)
+    return toAppVersion(backend)
+  }
+
   return {
     appversions,
     totalCount,
     isLoading,
     searchQuery,
     fetchAppVersions,
+    fetchAppVersion,
   }
 })

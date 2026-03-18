@@ -37,6 +37,13 @@ export const appVersionsApi = {
       .then((r) => r.data)
   },
 
+  getByVersion: (applicationId: string, version: string) =>
+    backendClient
+      .get<BackendAppVersion>(
+        `/internal/applications/${encodeURIComponent(applicationId)}/versions/${encodeURIComponent(version)}`,
+      )
+      .then((r) => r.data),
+
   exists: async (applicationName: string, version: string) => {
     const page = await appVersionsApi.getAll(applicationName)
     console.log(`Checking existence of version '${version}' for application '${applicationName}' among ${page.total} versions.`)

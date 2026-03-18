@@ -22,6 +22,8 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: string | number]
 }>()
+
+console.log("Required:", props.required)
 </script>
 
 <template>

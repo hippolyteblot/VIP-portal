@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
 import AppCard from '@/components/ui/AppCard.vue'
@@ -9,6 +9,8 @@ import { useAppVersionsStore } from '@/stores/appversions.stores'
 import { useApplicationsStore } from '@/stores/applications.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
+import { parseDescriptorInputs } from '@/utils/boutiquesDescriptor'
+import semver from 'semver'
 
 const route = useRoute()
 const applicationsStore = useApplicationsStore()
@@ -16,12 +18,91 @@ const appversionsStore = useAppVersionsStore()
 
 const application = ref<Application | null>(null)
 const versions = ref<AppVersion[]>([])
+const selectedVersionName = ref('')
+const selectedVersion = ref<AppVersion | null>(null)
+const isVersionLoading = ref(false)
+const versionLoadError = ref('')
 
 const appName = computed(() => route.params.name as string)
 
+const inputParams = computed(() => parseDescriptorInputs(selectedVersion.value?.descriptor ?? null))
+
+const launchRoute = computed(() => ({
+  name: 'application-launch',
+  params: {
+    name: appName.value,
+    version: selectedVersionName.value || undefined,
+  },
+}))
+
+function normalizeVersion(version: string): string {
+  if (semver.valid(version)) return version
+
+  const parts = version.split('.')
+
+  if (parts.length === 2 && /^\d+$/.test(parts[0]!) && /^\d+$/.test(parts[1]!)) {
+    return `${parts[0]}.${parts[1]}.0`
+  }
+
+  if (parts.length === 1 && /^\d+$/.test(parts[0]!)) {
+    return `${parts[0]}.0.0`
+  }
+
+  return version
+}
+
+function sortVersions(versions: AppVersion[]): AppVersion[] {
+  return [...versions].sort((a, b) => {
+    const va = normalizeVersion(a.version)
+    const vb = normalizeVersion(b.version)
+
+    const validA = semver.valid(va)
+    const validB = semver.valid(vb)
+
+    if (validA && validB) {
+      return semver.compare(validA, validB)
+    }
+
+    return a.version.localeCompare(b.version)
+  })
+}
+
+async function loadSelectedVersion(versionName: string) {
+  if (!versionName) {
+    selectedVersion.value = null
+    versionLoadError.value = ''
+    return
+  }
+
+  isVersionLoading.value = true
+  versionLoadError.value = ''
+
+  try {
+    selectedVersion.value = await appversionsStore.fetchAppVersion(appName.value, versionName)
+  } catch {
+    const fallback = versions.value.find((v) => v.version === versionName) ?? null
+    selectedVersion.value = fallback
+    if (!fallback) {
+      versionLoadError.value = 'Impossible de charger les details de cette version.'
+    }
+  } finally {
+    isVersionLoading.value = false
+  }
+}
+
 onMounted(async () => {
   application.value = await applicationsStore.getApplication(appName.value)
-  versions.value = await appversionsStore.fetchAppVersions(appName.value)
+  versions.value = sortVersions(await appversionsStore.fetchAppVersions(appName.value)).reverse()
+
+  const [firstVersion] = versions.value
+  if (firstVersion) {
+    selectedVersionName.value = firstVersion.version
+    await loadSelectedVersion(selectedVersionName.value)
+  }
+})
+
+watch(selectedVersionName, async (versionName) => {
+  await loadSelectedVersion(versionName)
 })
 </script>
 
@@ -40,22 +121,42 @@ onMounted(async () => {
         <h1 class="text-2xl font-bold text-gray-900">
           {{ application.fullName || application.name }}
         </h1>
-        <!-- <AppBadge v-if="application.version" variant="primary">
-          {{ application.version }}
-        </AppBadge> -->
-        <!-- Same but foreach application version, loop and display badge for each version -->
-        <AppBadge
-          v-for="version in versions"
-          :key="version.version"
-          variant="primary"
-        >
-          {{ version.version }}
-        </AppBadge>
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          <AppBadge
+            v-for="version in versions"
+            :key="`badge-${version.version}`"
+            :variant="version.version === selectedVersionName ? 'primary' : 'gray'"
+          >
+            {{ version.version }}
+          </AppBadge>
+        </div>
       </div>
-      <p v-if="application.owner" class="mt-1 text-sm text-gray-500">
-        {{ application.owner }}
-      </p>
+
+      <div v-if="versions.length" class="mt-4 max-w-sm">
+        <label for="version-select" class="block text-sm font-semibold text-gray-700">
+          Selected version
+        </label>
+        <select
+          id="version-select"
+          v-model="selectedVersionName"
+          class="mt-2 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
+        >
+          <option
+            v-for="version in versions"
+            :key="version.version"
+            :value="version.version"
+          >
+            {{ version.version }}
+          </option>
+        </select>
+
+        
+      </div>
+
       <div v-if="application.groups.length" class="mt-3 flex flex-wrap gap-1.5">
+        <h2 class="text-sm font-semibold text-gray-700 w-full">
+          Groups
+        </h2>
         <AppBadge
           v-for="group in application.groups"
           :key="group.name"
@@ -85,30 +186,54 @@ onMounted(async () => {
         </blockquote>
       </div>
 
-      <!--
+      <div v-if="selectedVersion" class="mt-6 space-y-2">
+        <h2 class="text-sm font-semibold text-gray-700">
+          Version details
+        </h2>
+        <p class="text-sm text-gray-600">
+          <span class="font-medium text-gray-700">Version:</span> {{ selectedVersion.version }}
+        </p>
+        <p v-if="selectedVersion.doi" class="text-sm text-gray-600">
+          <span class="font-medium text-gray-700">DOI:</span> {{ selectedVersion.doi }}
+        </p>
+        <p v-if="selectedVersion.source" class="text-sm text-gray-600">
+          <span class="font-medium text-gray-700">Source:</span> {{ selectedVersion.source }}
+        </p>
+        <p v-if="selectedVersion.note" class="text-sm text-gray-600">
+          <span class="font-medium text-gray-700">Note:</span> {{ selectedVersion.note }}
+        </p>
+      </div>
+
+      <p v-if="isVersionLoading" class="mt-4 text-sm text-gray-500">
+        Version loading...
+      </p>
+      <p v-if="versionLoadError" class="mt-4 text-sm text-red-600">
+        {{ versionLoadError }}
+      </p>
+
       <div v-if="inputParams.length > 0" class="mt-8">
         <h2 class="text-sm font-semibold text-gray-700">
-          Paramètres d'entrée
+          Input parameters
         </h2>
-        <AppCard padding>
-          <div class="overflow-x-auto">
+        <AppCard :padding="false">
+          <div class="overflow-x-auto rounded-xl">
             <table class="min-w-full divide-y divide-gray-200">
               <thead>
                 <tr>
                   <th class="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Nom
+                    Name
                   </th>
                   <th class="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Type
                   </th>
                   <th class="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Obligatoire
+                    Required
                   </th>
                   <th class="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Description
                   </th>
                   <th class="bg-gray-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Valeur par défaut
+                    Default Value
                   </th>
                 </tr>
               </thead>
@@ -121,7 +246,7 @@ onMounted(async () => {
                     {{ param.type }}
                   </td>
                   <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
-                    {{ param.required ? 'Oui' : 'Non' }}
+                    {{ param.required ? 'Yes' : 'No' }}
                   </td>
                   <td class="px-4 py-3 text-sm text-gray-600">
                     {{ param.description }}
@@ -134,13 +259,13 @@ onMounted(async () => {
             </table>
           </div>
         </AppCard>
-      </div>-->
+      </div>
 
       <div class="mt-8">
         <RouterLink
-          :to="{ name: 'application-detail', params: {  } }" class="block">
+          :to="launchRoute" class="block">
           <AppButton variant="primary" size="lg">
-            Lancer cette application
+            Launch app
           </AppButton>
         </RouterLink>
       </div>

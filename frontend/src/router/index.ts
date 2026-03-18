@@ -33,6 +33,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Application details' },
     },
     {
+      path: '/applications/:name/launch/:version?',
+      name: 'application-launch',
+      component: () => import('@/views/ApplicationLaunchView.vue'),
+      meta: { requiresAuth: true, title: 'Launch Application' },
+    },
+    {
       path: '/applications/create',
       name: 'application-create',
       component: () => import('@/views/CreateApplicationView.vue'),
