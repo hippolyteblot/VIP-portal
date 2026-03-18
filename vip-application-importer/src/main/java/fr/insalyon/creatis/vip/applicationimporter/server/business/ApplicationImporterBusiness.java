@@ -52,7 +52,7 @@ public class ApplicationImporterBusiness {
         try {
             String localFilePath =
                     dataManagerBusiness.getRemoteFile(user, fileLFN);
-            boutiquesBusiness.validateBoutiqueFile(localFilePath);
+            boutiquesBusiness.validateBoutiquesFile(localFilePath);
             return new Scanner(new File(localFilePath)).useDelimiter("\\Z").next();
         } catch (IOException ex) {
             logger.error("Error validating boutiques file {}", fileLFN, ex);
