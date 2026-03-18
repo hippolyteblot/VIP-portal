@@ -15,32 +15,42 @@ import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
+import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.GroupDAO;
+import fr.insalyon.creatis.vip.core.server.dao.UsersGroupsDAO;
+import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
+import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 
 @Service
 @Transactional
-public class GroupBusiness {
+public class GroupBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private Server server;
-    private GroupDAO groupDAO;
-    private GRIDAClient gridaClient;
-    private GRIDAPoolClient gridaPoolClient;
+    private final Server server;
+    private final GroupDAO groupDAO;
+    private final GRIDAClient gridaClient;
+    private final GRIDAPoolClient gridaPoolClient;
+    private final UsersGroupsDAO usersGroupsDAO;
 
     @Autowired
-    public GroupBusiness(GroupDAO groupDAO, GRIDAClient gridaClient, Server server, 
-            GRIDAPoolClient gridaPoolClient) {
+    public GroupBusiness(GRIDAClient gridaClient, GRIDAPoolClient gridaPoolClient, GroupDAO groupDAO, Server server, UsersGroupsDAO usersGroupsDAO) {
+        this.server = server;
         this.groupDAO = groupDAO;
         this.gridaClient = gridaClient;
-        this.server = server;
         this.gridaPoolClient = gridaPoolClient;
+        this.usersGroupsDAO = usersGroupsDAO;
     }
 
+    @VIPExternalSafe
     public void add(Group group) throws VipException {
+        permissions.filter((chain) -> chain.admin());
+
         try {
             checkAuto(group);
             gridaClient.createFolder(server.getDataManagerGroupsHome(),
@@ -55,11 +65,13 @@ public class GroupBusiness {
         }
     }
 
-    public void remove(String user, String groupName)
-            throws VipException {
+    @VIPExternalSafe
+    public void remove(String groupName) throws VipException {
+        permissions.filter((chain) -> chain.admin());
+
         try {
             gridaPoolClient.delete(server.getDataManagerGroupsHome() + "/"
-                    + groupName.replaceAll(" ", "_"), user);
+                    + groupName.replaceAll(" ", "_"), getUser().getFullName());
             groupDAO.remove(groupName);
         } catch (GRIDAClientException ex) {
             logger.error("Error removing group : {}", groupName, ex);
@@ -69,7 +81,10 @@ public class GroupBusiness {
         }
     }
 
+    @VIPExternalSafe
     public void update(String name, Group group) throws VipException {
+        permissions.filter((chain) -> chain.admin());
+
         try {
             checkAuto(group);
             if ( ! name.equals(group.getName())) {
@@ -86,14 +101,25 @@ public class GroupBusiness {
         }
     }
 
+    @VIPExternalSafe
     public List<Group> get() throws VipException {
         try {
-            return groupDAO.get();
+            if (getUserLevel().equals(UserLevel.Administrator)) {
+                return groupDAO.get();
+            } else {
+                return usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
+            }
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
 
+    @VIPExternalSafe
+    public PrecisePage<Group> get(int offeset, int quantity) throws VipException {
+        return pageBuilder.doPrecise(offeset, quantity, get());
+    }
+
+    @VIPExternalSafe
     public Group get(String groupName) throws VipException {
         if (groupName == null) {
             return null;
@@ -104,7 +130,7 @@ public class GroupBusiness {
     }
 
     public List<Group> getPublic() throws VipException {
-        return get().stream()
+        return groupDAO.get().stream()
             .filter((g) -> g.isPublicGroup())
             .collect(Collectors.toList());
     }
@@ -157,5 +183,12 @@ public class GroupBusiness {
         } else {
             return null;
         }
+    }
+
+    public Set<Group> getOrLoadUserGroups(User user) throws VipException {
+        if (user.getGroups() == null || user.getGroups().isEmpty()) {
+            user.setGroups(usersGroupsDAO.getUserGroups(user.getEmail()));
+        }
+        return user.getGroups();
     }
 }

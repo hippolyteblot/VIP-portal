@@ -33,6 +33,7 @@ public class SocialIT extends BaseSpringIT {
     @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
+        setAdminContext();
 
         // Create test group
         group1 = new Group(nameGroup1, true, GroupType.APPLICATION);

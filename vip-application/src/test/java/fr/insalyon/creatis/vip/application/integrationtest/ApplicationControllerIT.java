@@ -40,10 +40,13 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
         developperUser = createUser(emailUser2, UserLevel.Developer);
         basicUser = createUser(emailUser3, UserLevel.Beginner);
 
-        createGroup(nameGroup1, GroupType.APPLICATION, false);
-        createGroup("group2", GroupType.APPLICATION, false);
-        group = groupBusiness.get(nameGroup1);
-        group2 = groupBusiness.get("group2");
+        asAdminContext(() -> {
+            createGroup(nameGroup1, GroupType.APPLICATION, false);
+            createGroup("group2", GroupType.APPLICATION, false);
+
+            group = groupBusiness.get(nameGroup1);
+            group2 = groupBusiness.get("group2");
+        });
     }
 
     @Test

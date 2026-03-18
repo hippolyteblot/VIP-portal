@@ -32,7 +32,9 @@ public class ApiUserBusinessIT extends BaseSpringIT {
 
         // Create test group
         group1 = new Group("group1", true, GroupType.getDefault());
-        groupBusiness.add(group1);
+        asAdminContext(() -> {
+           groupBusiness.add(group1); 
+        });
 
         // Create test users
         user1 = new User("firstName", "lastName", "email1@test.fr", "test1@test.fr", "institution", "password", false, "code", "folder", "session", new Date(), new Date(), Beginner, CountryCode.fr, 1, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), 0, false);

@@ -169,7 +169,7 @@ public class ApplicationBusiness extends CommonBusiness {
         // if you perform this function as an Admin you will only get
         // applications of groups you belong to.
         // notes: use getApplications() to retrieve everything in DB
-        List<Group> userGroups = configurationBusiness.getOrLoadUserGroups(user)
+        List<Group> userGroups = groupBusiness.getOrLoadUserGroups(user)
             .stream()
             .filter((g) -> g.getType().equals(GroupType.APPLICATION))
             .collect(Collectors.toList());

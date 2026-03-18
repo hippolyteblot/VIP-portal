@@ -45,7 +45,8 @@ public class SpringDatabaseIT extends BaseSpringIT{
 
     @Test
     @Order(1)
-    public void testTestConfig() throws VipException {
+    public void testTestConfig() throws Exception {
+        setAdminContext();
         // verify the vip-support group created on init is present
         assertNotNull(configurationBusiness);
         List<Group> groups = groupBusiness.get();

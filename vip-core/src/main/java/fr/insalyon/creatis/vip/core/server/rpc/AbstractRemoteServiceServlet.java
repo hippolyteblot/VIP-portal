@@ -9,6 +9,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.jakarta.RemoteServiceServlet;
 
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
@@ -70,13 +72,25 @@ public abstract class AbstractRemoteServiceServlet extends RemoteServiceServlet 
 
     @Override
     protected void checkPermutationStrongName() throws SecurityException {
-
         // Content-Type text/x-gwt-rpc; charset=utf-8
         // X-GWT-Permutation F1AEC601C5D8E4490E7096AB58EB
         HttpServletRequest req = this.getThreadLocalRequest();
         if (!req.getContentType().contains("text/x-gwt-rpc")) {
             super.checkPermutationStrongName();
         }
+    }
+
+    @Override
+    public String processCall(RPCRequest rpcRequest) throws SerializationException {
+        try {
+            // To set up the user in spring security to make it accessible through the Supplier<User> used in updated business's
+            // Necessary from GWT context, as spring security is not activated there
+            SecurityContextHolder.getContext().setAuthentication(
+                sessionAuthenticationProvider.createAuthenticationFromUser(getSessionUser()));
+        } catch (CoreException e) {
+            doUnexpectedFailure(e);
+        }
+        return super.processCall(rpcRequest);
     }
 
     protected HttpSession getSession() {
@@ -95,15 +109,7 @@ public abstract class AbstractRemoteServiceServlet extends RemoteServiceServlet 
         return vipSessionBusiness.setUserInSession(user, getSession());
     }
 
-    // To set up the user in spring security to make it accessible through the Supplier<User> used in updated business's
-    // Necessary from GWT context, as spring security is not activated there
-    protected void putUserInSpringSecurityContext() throws CoreException {
-        SecurityContextHolder.getContext().setAuthentication(
-                sessionAuthenticationProvider.createAuthenticationFromUser(getSessionUser()));
-    }
-
     protected void authenticateSystemAdministrator(Logger logger) throws CoreException {
-
         User user = getSessionUser();
         if (!user.isSystemAdministrator()) {
             logger.error("The user has no system administrator rights: " + user.getEmail());
@@ -112,7 +118,6 @@ public abstract class AbstractRemoteServiceServlet extends RemoteServiceServlet 
     }
 
     protected void authenticateDeveloper(Logger logger) throws CoreException {
-
         User user = getSessionUser();
         if (!user.isDeveloper()) {
             logger.error("The user has no system administrator rights: " + user.getEmail());
