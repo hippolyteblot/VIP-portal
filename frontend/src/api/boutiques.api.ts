@@ -29,13 +29,14 @@ export const boutiquesApi = {
       if (!version)
         errors.push("'tool-version' or 'version' is missing or empty in the Boutiques descriptor.")
 
-      await backendClient.post(`/internal/boutiques/check`, {
-        descriptor: text,
-      }).catch((error) =>
-        errors.push(
-          error.response.data.errorMessage || 'An error occurred while validating the descriptor on the server.'
+      await backendClient
+        .post(`/internal/boutiques/check`, parsed)
+        .catch((error: { response?: { data?: { errorMessage?: string } } }) =>
+          errors.push(
+            error.response?.data?.errorMessage ||
+              'An error occurred while validating the descriptor on the server.'
+          )
         )
-      )
       return {
         valid: errors.length === 0,
         errors,
