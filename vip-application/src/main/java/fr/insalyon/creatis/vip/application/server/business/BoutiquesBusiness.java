@@ -99,7 +99,7 @@ public class BoutiquesBusiness {
         return doi;
     }
 
-    public void validateBoutiqueFile(String localPath) throws VipException {
+    public void validateBoutiquesFile(String localPath) throws VipException {
         // check file size, 100 kiB max
         try {
             if (Files.size(Paths.get(localPath)) >= 100 * 1024) {

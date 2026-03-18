@@ -46,7 +46,7 @@ public class BoutiquesController {
             Files.write(tempFile, descriptorContent.getBytes(StandardCharsets.UTF_8));
             tempFile.toFile().deleteOnExit();
             System.out.println("Descriptor content written to temporary file: " + Path.of(tempFile.toString()).toString());
-            boutiquesBusiness.validateBoutiqueFile(Path.of(tempFile.toString()).toString());
+            boutiquesBusiness.validateBoutiquesFile(Path.of(tempFile.toString()).toString());
         } catch (IOException e) {
             throw new VipException("Error while saving descriptor: " + e.getMessage());
         }
