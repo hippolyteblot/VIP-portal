@@ -1,0 +1,464 @@
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AppCard from '@/components/ui/AppCard.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import { appVersionsApi } from '@/api/appVersions.api'
+import { applicationsApi } from '@/api/applications.api'
+import { tagsApi } from '@/api/tags.api'
+import { boutiquesApi } from '@/api/boutiques.api'
+import { useNotificationsStore } from '@/stores/notifications.store'
+
+const router = useRouter()
+const notificationsStore = useNotificationsStore()
+
+type ResourceInput = {
+  name: string
+  configuration: string
+  status: boolean
+}
+
+const form = reactive({
+  descriptorFile: null as File | null,
+  doi: '',
+  visible: true,
+  source: '',
+  note: '',
+})
+
+const step = ref<1 | 2>(1)
+const isSubmitting = ref(false)
+const isChecking = ref(false)
+const errorMessage = ref('')
+const descriptorCheckErrors = ref<string[]>([])
+
+const parsedAppName = ref('')
+const parsedVersion = ref('')
+const descriptorText = ref('')
+const checksDone = ref(false)
+const appExists = ref(false)
+const versionExists = ref(false)
+const shouldOverwrite = ref(false)
+
+const availableTags = ref<string[]>([])
+const selectedTags = ref<string[]>([])
+const customTagInput = ref('')
+
+const groupsInput = ref('')
+const resources = ref<ResourceInput[]>([])
+
+const canProceedToStep2 = computed(
+  () => checksDone.value && (!versionExists.value || shouldOverwrite.value),
+)
+
+const parsedGroups = computed(() => {
+  return groupsInput.value
+    .split(',')
+    .map((g) => g.trim())
+    .filter((g, idx, arr) => g.length > 0 && arr.indexOf(g) === idx)
+})
+
+onMounted(async () => {
+  try {
+    const page = await tagsApi.getAll(0, 200)
+    availableTags.value = page.data.map((t) => t.name)
+  } catch {
+    availableTags.value = []
+  }
+})
+
+function validate(): boolean {
+  errorMessage.value = ''
+  if (!form.descriptorFile) {
+    errorMessage.value = 'Le fichier Boutiques (.json) est requis.'
+    return false
+  }
+  return true
+}
+
+function onFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  form.descriptorFile = file
+  checksDone.value = false
+  descriptorCheckErrors.value = []
+  parsedAppName.value = ''
+  parsedVersion.value = ''
+  descriptorText.value = ''
+  appExists.value = false
+  versionExists.value = false
+  shouldOverwrite.value = false
+  groupsInput.value = ''
+}
+
+function parseBoutiquesIdentity(raw: string): { name: string; version: string } {
+  const parsed = JSON.parse(raw) as Record<string, unknown>
+  const name = typeof parsed.name === 'string' ? parsed.name.trim() : ''
+  const version =
+    typeof parsed['tool-version'] === 'string'
+      ? parsed['tool-version'].trim()
+      : typeof parsed.version === 'string'
+        ? parsed.version.trim()
+        : ''
+  return { name, version }
+}
+
+async function checkDescriptorAndExistence() {
+  if (!validate() || !form.descriptorFile) return
+
+  isChecking.value = true
+  errorMessage.value = ''
+  descriptorCheckErrors.value = []
+  checksDone.value = false
+
+  try {
+    const raw = await form.descriptorFile.text()
+    const identity = parseBoutiquesIdentity(raw)
+    if (!identity.name || !identity.version) {
+      descriptorCheckErrors.value = [
+        "Cannot extract application name and version from the descriptor. Ensure it contains 'name' and 'version' fields.",
+      ]
+      return
+    }
+
+    const checkResult = await boutiquesApi.checkDescriptor(form.descriptorFile)
+    if (!checkResult.valid) {
+      console.error('Descriptor validation errors:', checkResult.errors)
+      descriptorCheckErrors.value = checkResult.errors
+      return
+    }
+
+    parsedAppName.value = identity.name
+    parsedVersion.value = identity.version
+    descriptorText.value = raw
+
+    try {
+      await applicationsApi.getById(identity.name)
+      appExists.value = true
+      groupsInput.value = ''
+    } catch {
+      appExists.value = false
+    }
+
+    try {
+      versionExists.value = await appVersionsApi.exists(identity.name, identity.version)
+    } catch {
+      versionExists.value = false
+    }
+
+    checksDone.value = true
+  } catch {
+    errorMessage.value = 'Impossible de vérifier le fichier Boutiques.'
+  } finally {
+    isChecking.value = false
+  }
+}
+
+function addCustomTag() {
+  const tag = customTagInput.value.trim()
+  if (!tag) return
+  if (!selectedTags.value.includes(tag)) {
+    selectedTags.value.push(tag)
+  }
+  if (!availableTags.value.includes(tag)) {
+    availableTags.value.push(tag)
+  }
+  customTagInput.value = ''
+}
+
+function toggleTag(name: string, checked: boolean) {
+  if (checked && !selectedTags.value.includes(name)) {
+    selectedTags.value.push(name)
+    return
+  }
+  if (!checked) {
+    selectedTags.value = selectedTags.value.filter((t) => t !== name)
+  }
+}
+
+function addResource() {
+  resources.value.push({
+    name: '',
+    configuration: '',
+    status: true,
+  })
+}
+
+function removeResource(index: number) {
+  resources.value.splice(index, 1)
+}
+
+function goToStep2() {
+  if (!canProceedToStep2.value) return
+  step.value = 2
+}
+
+function backToStep1() {
+  step.value = 1
+}
+
+async function onSubmit() {
+  if (!checksDone.value || !parsedAppName.value || !parsedVersion.value) {
+    errorMessage.value = 'First step not completed correctly.'
+    return
+  }
+
+  if (versionExists.value && !shouldOverwrite.value) {
+    errorMessage.value = 'The version already exists: confirm the overwrite to continue.'
+    return
+  }
+
+  isSubmitting.value = true
+  errorMessage.value = ''
+
+  try {
+    if (!appExists.value) {
+      await applicationsApi.createOrUpdate({
+        name: parsedAppName.value,
+        fullName: null,
+        citation: null,
+        note: form.note || null,
+        groups: parsedGroups.value.map((name) => ({
+          name,
+          publicGroup: false,
+          type: 'APPLICATION',
+          auto: false,
+        })),
+      })
+    }
+
+    const payload = {
+      applicationName: parsedAppName.value,
+      version: parsedVersion.value,
+      descriptor: descriptorText.value,
+      doi: form.doi || null,
+      visible: form.visible,
+      source: form.source || null,
+      note: form.note || null,
+      tags: selectedTags.value,
+      resources: resources.value
+        .map((r) => ({
+          name: r.name.trim(),
+          configuration: r.configuration.trim(),
+          status: r.status,
+        }))
+        .filter((r) => r.name.length > 0),
+      settings: {},
+    }
+
+    if (versionExists.value) {
+      await appVersionsApi.createOrUpdate(payload)
+    } else {
+      await appVersionsApi.create(payload)
+    }
+
+    notificationsStore.success("Application / version created successfully.")
+
+    router.push({ name: 'application-detail', params: { name: parsedAppName.value } })
+  } catch {
+    errorMessage.value = "Impossible de créer l'application / version."
+  } finally {
+    isSubmitting.value = false
+  }
+}
+</script>
+
+<template>
+  <div class="mx-auto max-w-3xl space-y-6">
+    <h1 class="text-2xl font-bold text-gray-900">
+      Create a new application
+    </h1>
+    <p class="text-sm text-gray-500">
+      First step: upload your Boutiques descriptor and check its validity and the existence of the application/version. Second step: provide additional metadata and confirm the creation.
+    </p>
+
+    <AppCard v-if="step === 1" padding>
+      <div class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">
+            Boutiques descriptor (.json)
+          </label>
+          <input
+            type="file"
+            accept="application/json,.json"
+            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            @change="onFileChange"
+          />
+        </div>
+
+        <AppButton variant="primary" :loading="isChecking" @click="checkDescriptorAndExistence">
+          Check descriptor & existence
+        </AppButton>
+
+        <div v-if="descriptorCheckErrors.length" class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <p class="font-semibold">Validation failed</p>
+          <ul class="mt-2 list-disc pl-5">
+            <li v-for="err in descriptorCheckErrors" :key="err">{{ err }}</li>
+          </ul>
+        </div>
+
+        <div v-if="checksDone" class="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+          <p><span class="font-semibold">Application:</span> {{ parsedAppName }}</p>
+          <p><span class="font-semibold">Version:</span> {{ parsedVersion }}</p>
+          <p v-if="!appExists" class="text-blue-700">
+            The application does not exist yet: a new application will be created with this version.
+          </p>
+          <p v-else class="text-green-700">
+            The application exists already: the version will be associated with this application.
+          </p>
+          <p v-if="versionExists" class="text-red-700">
+            This version already exists. Confirm the overwrite to continue.
+          </p>
+
+          <label v-if="versionExists" class="flex items-center gap-2 text-sm">
+            <input
+              v-model="shouldOverwrite"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-primary-600"
+            />
+            I accept to overwrite the existing version.
+          </label>
+        </div>
+
+        <p v-if="errorMessage" class="text-sm text-red-600">
+          {{ errorMessage }}
+        </p>
+
+        <div class="flex justify-end">
+          <AppButton variant="primary" :disabled="!canProceedToStep2" @click="goToStep2">
+            Next step
+          </AppButton>
+        </div>
+      </div>
+    </AppCard>
+
+    <AppCard v-else padding>
+      <form class="space-y-5" @submit.prevent="onSubmit">
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+          <p><span class="font-semibold">Application:</span> {{ parsedAppName }}</p>
+          <p><span class="font-semibold">Version:</span> {{ parsedVersion }}</p>
+        </div>
+
+        <AppInput v-model="form.doi" label="DOI (optionnel)" placeholder="10.xxxx/xxxxx" />
+        <AppInput v-model="form.source" label="Source (optionnel)" placeholder="Ex : GitHub, Zenodo..." />
+
+        <div class="flex items-center gap-2">
+          <input
+            id="visible"
+            v-model="form.visible"
+            type="checkbox"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          <label for="visible" class="text-sm text-gray-700">
+            Public application (visible to all users, not only to the creator and specified groups)
+          </label>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Tags</label>
+          <div class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label
+              v-for="tag in availableTags"
+              :key="tag"
+              class="flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+            >
+              <input
+                :checked="selectedTags.includes(tag)"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-300 text-primary-600"
+                @change="toggleTag(tag, ($event.target as HTMLInputElement).checked)"
+              />
+              {{ tag }}
+            </label>
+          </div>
+
+          <div class="mt-3 flex gap-2">
+            <AppInput v-model="customTagInput" placeholder="Ajouter un tag personnalisé" />
+            <AppButton type="button" variant="secondary" @click="addCustomTag">
+              Ajouter
+            </AppButton>
+          </div>
+        </div>
+
+        <div v-if="!appExists">
+          <label class="block text-sm font-medium text-gray-700">
+            Groups
+          </label>
+          <textarea
+            v-model="groupsInput"
+            rows="2"
+            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
+            placeholder="Ex : admins, public, neuro-team"
+          />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-gray-700">Resources</label>
+            <AppButton type="button" variant="secondary" size="sm" @click="addResource">
+              Add Resource
+            </AppButton>
+          </div>
+
+          <div v-if="resources.length" class="mt-3 space-y-3">
+            <div
+              v-for="(resource, index) in resources"
+              :key="index"
+              class="rounded-lg border border-gray-200 p-3"
+            >
+              <div class="grid gap-3 sm:grid-cols-2">
+                <AppInput v-model="resource.name" label="Nom" placeholder="cluster, slurm..." />
+                <AppInput v-model="resource.configuration" label="Configuration" placeholder="gpu=true;queue=short" />
+              </div>
+
+              <div class="mt-3 flex items-center justify-between">
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    v-model="resource.status"
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-gray-300 text-primary-600"
+                  />
+                  Active
+                </label>
+                <AppButton type="button" variant="danger" size="sm" @click="removeResource(index)">
+                  Supprimer
+                </AppButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">
+            Note (optionnelle)
+          </label>
+          <textarea
+            v-model="form.note"
+            rows="3"
+            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
+            placeholder="Informations complémentaires sur cette version"
+          />
+        </div>
+
+        <p v-if="errorMessage" class="text-sm text-red-600">
+          {{ errorMessage }}
+        </p>
+
+        <div class="flex justify-between">
+          <AppButton type="button" variant="ghost" @click="backToStep1">
+            Retour à l'étape 1
+          </AppButton>
+          <AppButton
+            type="submit"
+            variant="primary"
+            :loading="isSubmitting"
+          >
+            Valider la création
+          </AppButton>
+        </div>
+      </form>
+    </AppCard>
+  </div>
+</template>
+
