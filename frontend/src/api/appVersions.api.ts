@@ -1,11 +1,13 @@
 import { backendClient } from './client'
 import type { AppVersion } from '@/types/appversion.types'
+import type { BoutiquesDescriptor } from '@/types/appversion.types'
 import type { PrecisePage } from '@/types/application.types'
 
 export interface BackendAppVersion {
   applicationName: string
   version: string
   descriptor: string | null
+  parsedDescriptor: BoutiquesDescriptor | null
   doi: string | null
   visible: boolean
   resources: { name: string; status: boolean; configuration: string }[]
@@ -13,6 +15,23 @@ export interface BackendAppVersion {
   settings: {}[]
   source: string | null
   note: string | null
+}
+
+function parseDescriptor(descriptor: string | null): BoutiquesDescriptor | null {
+  if (!descriptor) return null
+  try {
+    const parsed = JSON.parse(descriptor)
+    return parsed !== null && typeof parsed === 'object' ? (parsed as BoutiquesDescriptor) : null
+  } catch {
+    return null
+  }
+}
+
+function withParsedDescriptor(version: Omit<BackendAppVersion, 'parsedDescriptor'>): BackendAppVersion {
+  return {
+    ...version,
+    parsedDescriptor: parseDescriptor(version.descriptor),
+  }
 }
 
 export interface CreateAppVersionPayload {
@@ -31,18 +50,21 @@ export interface CreateAppVersionPayload {
 export const appVersionsApi = {
   getAll: (applicationId: string, offset = 0, quantity = 50) => {
     return backendClient
-      .get<PrecisePage<BackendAppVersion>>(
+      .get<PrecisePage<Omit<BackendAppVersion, 'parsedDescriptor'>>>(
         `/internal/applications/${encodeURIComponent(applicationId)}/versions`
       )
-      .then((r) => r.data)
+      .then((r) => ({
+        ...r.data,
+        data: r.data.data.map(withParsedDescriptor),
+      }))
   },
 
   getByVersion: (applicationId: string, version: string) =>
     backendClient
-      .get<BackendAppVersion>(
+      .get<Omit<BackendAppVersion, 'parsedDescriptor'>>(
         `/internal/applications/${encodeURIComponent(applicationId)}/versions/${encodeURIComponent(version)}`,
       )
-      .then((r) => r.data),
+      .then((r) => withParsedDescriptor(r.data)),
 
   exists: async (applicationName: string, version: string) => {
     const page = await appVersionsApi.getAll(applicationName)

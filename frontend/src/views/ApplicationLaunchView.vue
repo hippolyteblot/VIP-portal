@@ -213,7 +213,7 @@ onMounted(async () => {
             </div>
           </div>
 
-        <AppButton type="submit" variant="primary" >
+        <AppButton type="submit" variant="primary" size="lg">
             Launch app
         </AppButton>
         </form>

@@ -175,15 +175,14 @@
         <servlet-name>RestAPI</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
-    <servlet>
-        <servlet-name>NewFrontServlet</servlet-name>
-        <servlet-class>fr.insalyon.creatis.vip.portal.controller.NewFrontServlet</servlet-class>
-        <load-on-startup>2</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>NewFrontServlet</servlet-name>
+    <filter>
+        <filter-name>NewFrontSpaForwardFilter</filter-name>
+        <filter-class>fr.insalyon.creatis.vip.portal.server.NewFrontSpaForwardFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>NewFrontSpaForwardFilter</filter-name>
         <url-pattern>/new_front/*</url-pattern>
-    </servlet-mapping>
+    </filter-mapping>
     <filter>
         <filter-name>springSecurityFilterChain</filter-name>
         <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>

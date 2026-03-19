@@ -8,6 +8,7 @@ function toAppVersion(backend: BackendAppVersion): AppVersion {
     applicationName: backend.applicationName,
     version: backend.version,
     descriptor: backend.descriptor,
+    parsedDescriptor: backend.parsedDescriptor,
     doi: backend.doi,
     visible: backend.visible,
     resources: backend.resources,

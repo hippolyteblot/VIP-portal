@@ -20,7 +20,7 @@ onMounted(() => {
         Applications
       </h1>
       <p class="mt-1 text-sm text-gray-500">
-        Parcourez et lancez les applications d'imagerie médicale disponibles sur la plateforme VIP
+        Explore and launch applications available in the VIP Portal. Use the search to quickly find the application you need, or create a new one if you have the necessary permissions.
       </p>
       <router-link
         to="/applications/create"
@@ -30,7 +30,7 @@ onMounted(() => {
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5
 M4.5 12h15" />
         </svg>
-        Créer une nouvelle application
+        Create a new application
       </router-link>
     </div>
 
@@ -41,7 +41,7 @@ M4.5 12h15" />
       <input
         v-model="applicationsStore.searchQuery"
         type="search"
-        placeholder="Rechercher une application..."
+        placeholder="Search for an application..."
         class="block w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
       />
     </div>
@@ -77,11 +77,11 @@ M4.5 12h15" />
                 {{ group.name }}
               </AppBadge>
             </div>
-            <p v-if="app.owner" class="mt-3 text-xs text-gray-500">
-              {{ app.owner }}
+            <p v-if="app.note" class="mt-3 text-xs text-gray-500">
+              {{ app.note }}
             </p>
             <p class="mt-2 text-sm font-medium text-primary-600 hover:text-primary-700">
-              Voir détails →
+              View details &rarr;
             </p>
           </RouterLink>
         </AppCard>
@@ -92,7 +92,10 @@ M4.5 12h15" />
       v-if="!applicationsStore.isLoading && applicationsStore.filteredApplications.length === 0"
       class="py-12 text-center text-gray-500"
     >
-      Aucune application trouvée
+      No applications found. Try adjusting your search or
+      <RouterLink to="/applications/create" class="font-medium text-primary-600 hover:text-primary-700">
+        create a new one.
+      </RouterLink>
     </p>
   </div>
 </template>

@@ -13,8 +13,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT"
 
-command -v node >/dev/null 2>&1 || die "Node.js not found
-command -v npm >/dev/null 2>&1 || die "npm not found
+command -v node >/dev/null 2>&1 || die "Node.js not found"
+command -v npm >/dev/null 2>&1 || die "npm not found"
 
 cd frontend
 

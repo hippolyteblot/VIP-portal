@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
+import semver from 'semver'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -10,7 +11,6 @@ import { useApplicationsStore } from '@/stores/applications.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
 import { parseDescriptorInputs } from '@/utils/boutiquesDescriptor'
-import semver from 'semver'
 
 const route = useRoute()
 const applicationsStore = useApplicationsStore()
@@ -199,8 +199,8 @@ watch(selectedVersionName, async (versionName) => {
         <p v-if="selectedVersion.source" class="text-sm text-gray-600">
           <span class="font-medium text-gray-700">Source:</span> {{ selectedVersion.source }}
         </p>
-        <p v-if="selectedVersion.note" class="text-sm text-gray-600">
-          <span class="font-medium text-gray-700">Note:</span> {{ selectedVersion.note }}
+        <p v-if="selectedVersion.parsedDescriptor?.description" class="text-sm text-gray-600">
+          <span class="font-medium text-gray-700">Description:</span> {{ selectedVersion.parsedDescriptor?.description }}
         </p>
       </div>
 
