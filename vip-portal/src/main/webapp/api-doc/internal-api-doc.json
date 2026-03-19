@@ -590,13 +590,6 @@
             "exclusiveMinimum" : 0,
             "maximum" : 50
           }
-        }, {
-          "name" : "group",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
         } ],
         "responses" : {
           "500" : {
@@ -1286,9 +1279,6 @@
             "type" : "boolean"
           },
           "developer" : {
-            "type" : "boolean"
-          },
-          "groupAdmin" : {
             "type" : "boolean"
           }
         }

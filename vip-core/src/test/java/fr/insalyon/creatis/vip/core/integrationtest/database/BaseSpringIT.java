@@ -41,6 +41,7 @@ import com.jayway.jsonpath.spi.mapper.MappingProvider;
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.integrationtest.TestConfigurer;
@@ -55,6 +56,7 @@ import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.GroupDAO;
+import fr.insalyon.creatis.vip.core.server.dao.UsersGroupsDAO;
 import fr.insalyon.creatis.vip.core.server.inter.CheckedRunnable;
 import fr.insalyon.creatis.vip.core.server.security.common.SpringPrincipalUser;
 import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticationProvider;
@@ -101,6 +103,7 @@ public abstract class BaseSpringIT {
     @Autowired protected GroupDAO groupDAO;
     @Autowired protected List<TestConfigurer> testConfigurers;
     @Autowired protected AuthenticationBusiness authenticationBusiness;
+    @Autowired private UsersGroupsDAO usersGroupsDAO;
 
     protected ObjectMapper mapper;
 
@@ -165,9 +168,7 @@ public abstract class BaseSpringIT {
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
 
-        asAdminContext(() -> {
-            authenticationBusiness.signup(newUser, "", (Group) null);
-        });
+        authenticationBusiness.signup(newUser, "", (Group) null);
         return newUser;
     }
 
@@ -190,7 +191,6 @@ public abstract class BaseSpringIT {
     public void createGroup(String groupName, GroupType type, Boolean isPublic) throws VipException {
         groupBusiness.add(new Group(groupName, isPublic, type));
     }
-
 
     public void clearContext() {
         SecurityContextHolder.clearContext();
@@ -228,14 +228,14 @@ public abstract class BaseSpringIT {
                 "testPassword", CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        Set<Group> groups = new HashSet<>();
-        for (String groupName : groupNames) {
-            groups.add(groupBusiness.get(groupName));
-        }
+        authenticationBusiness.signup(newUser, "", false, true, new HashSet<>());
 
         asAdminContext(() -> {
-            authenticationBusiness.signup(newUser, "", false, true, groups);
+            for (String groupName : groupNames) {
+                usersGroupsDAO.add(userEmail, groupName, GROUP_ROLE.User);
+            }
         });
+
         return userBusiness.getUserWithGroups(userEmail);
     }
 

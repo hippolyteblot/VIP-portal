@@ -872,8 +872,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
                 return userFromRs(rs);
             }
 
-            logger.error("There is no user registered with the id {}", id);
-            throw new DAOException("There is no user registered with the id: " + id);
+            return null;
 
         } catch (SQLException ex) {
             logger.error("Error getting user with id {}", id, ex);

@@ -65,6 +65,10 @@ public class AuthenticationBusiness extends CommonBusiness {
     @VIPExternalSafe
     public User signup(User user, String comments, boolean automaticCreation, boolean mapPrivateGroups, Set<Group> groups)
             throws VipException {
+        // should be unauthentified or admin (related to internal methods with asAdminContext)
+        if (getUser() != null && ! getUserLevel().equals(UserLevel.Administrator)) { 
+            throw new VipException(DefaultError.UNAUTHENTIFIED_ONLY);
+        }
         if ( ! user.getGroups().stream().allMatch(Group::isPublicGroup)) {
             throw new VipException(DefaultError.ACCESS_DENIED);
         }
@@ -101,6 +105,8 @@ public class AuthenticationBusiness extends CommonBusiness {
             if (!automaticCreation) {
                 user.setTermsOfUse(ts);
             }
+            user.setLastLogin(ts);
+            user.setRegistration(ts);
             user.setLastUpdatePublications(ts);
             user.setCode(UUID.randomUUID().toString());
             if (user.getPassword() == null) {

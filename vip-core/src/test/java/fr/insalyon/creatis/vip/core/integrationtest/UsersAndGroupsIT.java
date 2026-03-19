@@ -26,32 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static fr.insalyon.creatis.vip.core.client.view.user.UserLevel.Beginner;
-import static fr.insalyon.creatis.vip.core.client.view.user.UserLevel.Developer;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang.StringUtils;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -77,25 +52,28 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
-        setAdminContext();
 
         // Create test group
         group1 = new Group("group1", true, GroupType.getDefault());
-        groupBusiness.add(group1);
-
-        // Create test group
         group2 = new Group("group2", false, GroupType.getDefault());
-        groupBusiness.add(group2);
+
+        asAdminContext(() -> {
+            groupBusiness.add(group1);
+            groupBusiness.add(group2);
+        });
 
         // Create test users
         createUserInGroup(emailUser1, "suffix1", "group1");
         createUserInGroup(emailUser2, "suffix2", "group1");
         createUserInGroup(emailUser3, "suffix3", "group1");
         createUserInGroup(emailUser4, "suffix4", "group2");
-        user1 = userBusiness.getUser(emailUser1);
-        user2 = userBusiness.getUser(emailUser2);
-        user3 = userBusiness.getUser(emailUser3);
-        user4 = userBusiness.getUser(emailUser4);
+
+        asAdminContext(() -> {
+            user1 = userBusiness.getUser(emailUser1);
+            user2 = userBusiness.getUser(emailUser2);
+            user3 = userBusiness.getUser(emailUser3);
+            user4 = userBusiness.getUser(emailUser4);
+        });
 
         // Create a very complete test users
         final Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -113,6 +91,8 @@ public class UsersAndGroupsIT extends BaseSpringIT {
         groups.put(group2, CoreConstants.GROUP_ROLE.Admin);
         // Affect groups to user
         user4.setGroups(groups);
+
+        setAdminContext();
     }
 
     @Test
@@ -128,6 +108,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
     @Test
     public void testCreateUser() throws VipException, GRIDAClientException {
+        clearContext();
         // try all the constructors
         User user6 = new User(CoreUtil.createUUID(), "firstName", "lastName", "email9@test.fr", "institution", "password", CountryCode.fr, new Timestamp(System.currentTimeMillis()));
         authenticationBusiness.signup(user6, "", false, true, group2);
@@ -309,7 +290,7 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
         );
         // getUser is called and had an exception before the beginning of the internship
-        assertTrue(StringUtils.contains(exception.getMessage(), "There is no user registered with the id: nonExistent user"));
+        assertTrue(StringUtils.contains(exception.getMessage(), "Item nonExistent user not found (Error code 1000)"));
     }
 
     /* ********************************************************************************************************************************************** */

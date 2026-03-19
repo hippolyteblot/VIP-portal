@@ -83,7 +83,7 @@ public class UserBusiness extends CommonBusiness {
         // fields from being edited (see @User.class)
         // not all can be handled like that, especially for groups
         if ( ! getUserLevel().equals(UserLevel.Administrator)) {
-            if (user.getId() != getUser().getId()) {
+            if ( ! user.getId().equals(getUser().getId())) {
                 // only admin can edit others accounts
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
@@ -93,6 +93,7 @@ public class UserBusiness extends CommonBusiness {
             // here user try to join private group (forbidden)
             // but it's okay if the user try to leave a private group
             if ( ! diff.stream().allMatch(Group::isPublicGroup)) {
+                System.err.println("PAR ICI");
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
         }
@@ -148,12 +149,20 @@ public class UserBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
-    public void remove(String id, boolean sendNotificationEmail)
-            throws VipException {
+    public void remove(String id, boolean sendNotificationEmail) throws VipException {
+        User user = get(id);
 
+        if (user == null) {
+            throw new VipException(DefaultError.NOT_FOUND, id);
+        }
+        if ( ! getUserLevel().equals(UserLevel.Administrator)) {
+            if (user.getId() != getUser().getId()) {
+                // only admin can remove "other" accounts
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+        }
         try {
-            User user = get(id);
-
+    
             gridaPoolClient.removeOperationsByUser(user.getEmail());
 
             gridaPoolClient.delete(server.getDataManagerUsersHome() + "/"
@@ -371,8 +380,7 @@ public class UserBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public PrecisePage<User> getAll(int offset, int quantity) throws VipException {
-        // becareful sensitive fields are only removed when processing
-        // the json response, before that, all users objects ARE NOT safe
+        permissions.filter((c) -> c.admin());
 
         List<User> users = getUsers();
 

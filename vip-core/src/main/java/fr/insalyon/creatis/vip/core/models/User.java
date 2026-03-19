@@ -2,10 +2,12 @@ package fr.insalyon.creatis.vip.core.models;
 
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -31,9 +33,10 @@ public class User implements IsSerializable {
     @JsonView(DataViews.User.class) private CountryCode countryCode;
     @JsonView(DataViews.User.class) private Timestamp termsOfUse;
     @JsonView(DataViews.User.class) private Timestamp lastUpdatePublications;
-    @JsonView(DataViews.User.class) private Map<Group, GROUP_ROLE> groups;
+    @JsonView(DataViews.User.class) private Set<Group> groups;
     @JsonView(DataViews.User.class) private String apiKey;
-
+    
+    private Map<Group, GROUP_ROLE> groupsMap;
     private String nextEmail;
     private String code;
     private String folder;
@@ -104,7 +107,8 @@ public class User implements IsSerializable {
         this.lastUpdatePublications=lastUpdatePublications;
         this.failedAuthentications = failedAuthentications;
         this.accountLocked = locked;
-        this.groups = new HashMap<>();
+        this.groupsMap = new HashMap<>();
+        this.groups = new HashSet<>();
         this.apiKey = apiKey;
     }
 
@@ -220,8 +224,10 @@ public class User implements IsSerializable {
         this.registration = registration;
     }
 
+    @JsonIgnore // this field can't be jsonified (need a string as key of map)
     public void setGroups(Map<Group, GROUP_ROLE> groups) {
-        this.groups = groups;
+        this.groups = groups.keySet();
+        this.groupsMap = groups;
         filterGroups();
     }
 
@@ -241,9 +247,9 @@ public class User implements IsSerializable {
         this.lastUpdatePublications = lastUpdatePublications;
     }
 
+    @JsonIgnore // this field can't be jsonified (need a string as key of map)
     public boolean hasGroupAccess(String groupName) {
-
-        for (Group group : groups.keySet()) {
+        for (Group group : groupsMap.keySet()) {
             if (group.getName().equals(groupName)) {
                 return true;
             }
@@ -252,26 +258,23 @@ public class User implements IsSerializable {
     }
 
     public Set<Group> getGroups() {
-        if (groups == null) {
-            return null;
-        } else {
-            return groups.keySet();
-        }
+        return groups;
     }
 
+    @JsonIgnore // this field can't be jsonified (need a string as key of map)
     private void filterGroups() {
-        Iterator<Group> it = groups.keySet().iterator();
+        Iterator<Group> it = groupsMap.keySet().iterator();
         while (it.hasNext()) {
             Group group = it.next();
-            if (groups.get(group) == GROUP_ROLE.None) {
+            if (groupsMap.get(group) == GROUP_ROLE.None) {
                 it.remove();
             }
         }
     }
 
+    @JsonIgnore // this field can't be jsonified (need a string as key of map)
     public boolean isGroupAdmin() {
-
-        for (GROUP_ROLE role : groups.values()) {
+        for (GROUP_ROLE role : groupsMap.values()) {
             if (role == GROUP_ROLE.Admin) {
                 return true;
             }
@@ -279,11 +282,11 @@ public class User implements IsSerializable {
         return false;
     }
 
+    @JsonIgnore // this field can't be jsonified (need a string as key of map)
     public boolean isGroupAdmin(String groupName) {
-
-        for (Group group : groups.keySet()) {
+        for (Group group : groupsMap.keySet()) {
             if (group.getName().equals(groupName)
-                    && groups.get(group) == GROUP_ROLE.Admin) {
+                    && groupsMap.get(group) == GROUP_ROLE.Admin) {
                 return true;
             }
         }

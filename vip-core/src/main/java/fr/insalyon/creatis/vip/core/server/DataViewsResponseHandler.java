@@ -27,20 +27,21 @@ public class DataViewsResponseHandler extends AbstractMappingJacksonResponseBody
     @Override
     protected void beforeBodyWriteInternal(MappingJacksonValue bodyContainer, MediaType contentType, MethodParameter returnType, ServerHttpRequest request, ServerHttpResponse response) {
         final User currentUser = supplier.get();
+        Class<?> view = DataViews.User.class;
 
         // currentUser can be null if unauthorized context
         if (currentUser != null) {
             switch (currentUser.getLevel()) {
                 case Administrator:
-                    bodyContainer.setSerializationView(DataViews.Admin.class);
+                    view = DataViews.Admin.class;
                     break;
                 case Developer:
-                    bodyContainer.setSerializationView(DataViews.Developer.class);
+                    view = DataViews.Developer.class;
                     break;
                 default:
-                    bodyContainer.setSerializationView(DataViews.User.class);
                     break;
             }
         }
+        bodyContainer.setSerializationView(view);
     }
 }
