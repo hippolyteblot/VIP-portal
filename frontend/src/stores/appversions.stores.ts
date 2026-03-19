@@ -20,22 +20,33 @@ function toAppVersion(backend: BackendAppVersion): AppVersion {
 }
 
 export const useAppVersionsStore = defineStore('appversions', () => {
-  const appversions = ref<AppVersion[]>([])
+  const appVersions = ref<AppVersion[]>([])
   const totalCount = ref(0)
   const isLoading = ref(false)
   const searchQuery = ref('')
 
-
-  async function fetchAppVersions(appName: string): Promise<AppVersion[]> {
+  async function fetchAppVersions(): Promise<AppVersion[]> {
     isLoading.value = true
     try {
-      const page = await appVersionsApi.getAll(appName, 0, 50)
-      appversions.value = page.data.map(toAppVersion)
+      const page = await appVersionsApi.getAll(0, 50)
+      appVersions.value = page.data.map(toAppVersion)
       totalCount.value = page.total
     } finally {
       isLoading.value = false
     }
-    return appversions.value
+    return appVersions.value
+  }
+
+  async function fetchAppVersionsForApplication(appName: string): Promise<AppVersion[]> {
+    isLoading.value = true
+    try {
+      const page = await appVersionsApi.getAllForApplication(appName, 0, 50)
+      appVersions.value = page.data.map(toAppVersion)
+      totalCount.value = page.total
+    } finally {
+      isLoading.value = false
+    }
+    return appVersions.value
   }
 
   async function fetchAppVersion(appName: string, version: string): Promise<AppVersion> {
@@ -44,11 +55,12 @@ export const useAppVersionsStore = defineStore('appversions', () => {
   }
 
   return {
-    appversions,
+    appVersions: appVersions,
     totalCount,
     isLoading,
     searchQuery,
     fetchAppVersions,
+    fetchAppVersionsForApplication,
     fetchAppVersion,
   }
 })

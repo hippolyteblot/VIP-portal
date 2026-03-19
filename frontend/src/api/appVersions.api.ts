@@ -48,7 +48,19 @@ export interface CreateAppVersionPayload {
 }
 
 export const appVersionsApi = {
-  getAll: (applicationId: string, offset = 0, quantity = 50) => {
+
+  getAll: (offset = 0, quantity = 50) => {
+    return backendClient
+      .get<PrecisePage<Omit<BackendAppVersion, 'parsedDescriptor'>>>(
+        `/internal/applications/versions`
+      )
+      .then((r) => ({
+        ...r.data,
+        data: r.data.data.map(withParsedDescriptor),
+      }))
+  },
+    
+  getAllForApplication: (applicationId: string, offset = 0, quantity = 50) => {
     return backendClient
       .get<PrecisePage<Omit<BackendAppVersion, 'parsedDescriptor'>>>(
         `/internal/applications/${encodeURIComponent(applicationId)}/versions`
@@ -67,7 +79,7 @@ export const appVersionsApi = {
       .then((r) => withParsedDescriptor(r.data)),
 
   exists: async (applicationName: string, version: string) => {
-    const page = await appVersionsApi.getAll(applicationName)
+    const page = await appVersionsApi.getAllForApplication(applicationName)
     console.log(`Checking existence of version '${version}' for application '${applicationName}' among ${page.total} versions.`)
     console.log('Versions retrieved:', page.data.map(v => v.version))
     return page.data.some((v) => v.version === version)

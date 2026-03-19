@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
-import semver from 'semver'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -11,6 +10,7 @@ import { useApplicationsStore } from '@/stores/applications.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
 import { parseDescriptorInputs } from '@/utils/boutiquesDescriptor'
+import { sortByVersionDesc } from '@/utils/versionSort'
 
 const route = useRoute()
 const applicationsStore = useApplicationsStore()
@@ -34,38 +34,6 @@ const launchRoute = computed(() => ({
     version: selectedVersionName.value || undefined,
   },
 }))
-
-function normalizeVersion(version: string): string {
-  if (semver.valid(version)) return version
-
-  const parts = version.split('.')
-
-  if (parts.length === 2 && /^\d+$/.test(parts[0]!) && /^\d+$/.test(parts[1]!)) {
-    return `${parts[0]}.${parts[1]}.0`
-  }
-
-  if (parts.length === 1 && /^\d+$/.test(parts[0]!)) {
-    return `${parts[0]}.0.0`
-  }
-
-  return version
-}
-
-function sortVersions(versions: AppVersion[]): AppVersion[] {
-  return [...versions].sort((a, b) => {
-    const va = normalizeVersion(a.version)
-    const vb = normalizeVersion(b.version)
-
-    const validA = semver.valid(va)
-    const validB = semver.valid(vb)
-
-    if (validA && validB) {
-      return semver.compare(validA, validB)
-    }
-
-    return a.version.localeCompare(b.version)
-  })
-}
 
 async function loadSelectedVersion(versionName: string) {
   if (!versionName) {
@@ -92,7 +60,7 @@ async function loadSelectedVersion(versionName: string) {
 
 onMounted(async () => {
   application.value = await applicationsStore.getApplication(appName.value)
-  versions.value = sortVersions(await appversionsStore.fetchAppVersions(appName.value)).reverse()
+  versions.value = sortByVersionDesc(await appversionsStore.fetchAppVersionsForApplication(appName.value))
 
   const [firstVersion] = versions.value
   if (firstVersion) {
@@ -215,7 +183,7 @@ watch(selectedVersionName, async (versionName) => {
         <h2 class="text-sm font-semibold text-gray-700">
           Input parameters
         </h2>
-        <AppCard :padding="false">
+        <AppCard :padding="false" marginTop>
           <div class="overflow-x-auto rounded-xl">
             <table class="min-w-full divide-y divide-gray-200">
               <thead>

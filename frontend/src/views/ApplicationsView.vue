@@ -1,15 +1,46 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Search } from 'lucide-vue-next'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import { useApplicationsStore } from '@/stores/applications.store'
+import { useAppVersionsStore } from '@/stores/appversions.stores'
+import type { AppVersion } from '@/types/appversion.types'
+import type { Application } from '@/types/application.types'
+import { sortByVersionDesc } from '@/utils/versionSort'
 
 const applicationsStore = useApplicationsStore()
+const appversionsStore = useAppVersionsStore()
 
-onMounted(() => {
-  applicationsStore.fetchApplications()
+type ApplicationWithVersions = Application & {
+  versions: AppVersion[]
+  latestVersion: AppVersion | null
+}
+
+const applicationsWithVersions = computed<ApplicationWithVersions[]>(() => {
+  const enrichedApplications = applicationsStore.filteredApplications.map((app) => {
+    const appVersions = appversionsStore.appVersions.filter((version) => version.applicationName === app.name)
+    const sortedVersions = sortByVersionDesc(appVersions)
+
+    return {
+      ...app,
+      versions: sortedVersions,
+      latestVersion: sortedVersions[0] ?? null,
+    }
+  })
+
+  // If no version for an app, remove it from the list
+  return enrichedApplications.filter((app) => app.versions.length > 0)
+})
+
+const isLoading = computed(() => applicationsStore.isLoading || appversionsStore.isLoading)
+
+onMounted(async () => {
+  await Promise.all([
+    applicationsStore.fetchApplications(),
+    appversionsStore.fetchAppVersions(),
+  ])
 })
 </script>
 
@@ -46,8 +77,8 @@ M4.5 12h15" />
       />
     </div>
 
-    <div v-if="applicationsStore.isLoading" class="flex justify-center py-16">
-      <
+    <div v-if="isLoading" class="flex justify-center py-16 text-sm text-gray-500">
+      Loading applications...
     </div>
 
     <div
@@ -55,7 +86,7 @@ M4.5 12h15" />
       class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
     >
       <div
-        v-for="app in applicationsStore.filteredApplications"
+        v-for="app in applicationsWithVersions"
         :key="app.name"
       >
         <AppCard hoverable padding class="h-full">
@@ -64,10 +95,12 @@ M4.5 12h15" />
               <h3 class="text-lg font-bold text-gray-900">
                 {{ app.name }}
               </h3>
+              <div class="flex flex-wrap gap-1.5">
+                <AppBadge v-for="version in app.versions" :key="version.version" :variant="version === app.latestVersion ? 'primary' : 'gray'">
+                  {{ version.version }}
+                </AppBadge>
+              </div>
             </div>
-            <p v-if="app.note" class="mt-2 line-clamp-2 text-sm text-gray-600">
-              {{ app.note }}
-            </p>
             <div v-if="app.groups.length" class="mt-3 flex flex-wrap gap-1.5">
               <AppBadge
                 v-for="group in app.groups"
@@ -77,6 +110,9 @@ M4.5 12h15" />
                 {{ group.name }}
               </AppBadge>
             </div>
+            <p v-if="app.latestVersion?.parsedDescriptor?.description" class="mt-3 line-clamp-2 text-xs text-gray-500">
+              {{ app.latestVersion.parsedDescriptor.description }}
+            </p>
             <p v-if="app.note" class="mt-3 text-xs text-gray-500">
               {{ app.note }}
             </p>
@@ -89,7 +125,7 @@ M4.5 12h15" />
     </div>
 
     <p
-      v-if="!applicationsStore.isLoading && applicationsStore.filteredApplications.length === 0"
+      v-if="!isLoading && applicationsWithVersions.length === 0"
       class="py-12 text-center text-gray-500"
     >
       No applications found. Try adjusting your search or
