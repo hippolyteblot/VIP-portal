@@ -8,7 +8,8 @@ public enum ApplicationError implements VipError {
     USER_MAX_EXECS(2001, "Max number of running executions reached.<br />You already have {} running executions.", 1),
     WRONG_APPLICATION_DESCRIPTOR(2002, "Error getting application descriptor for {}.", 1),
     ENGINE_SATURATED(2003, "Engine is saturated!", 0),
-    LAUNCH_ERROR(2004, "Error launching execution, contact admins!", 0);
+    LAUNCH_ERROR(2004, "Error launching execution, contact admins!", 0),
+    BOUTIQUES_FILE_NOT_VALID(2005, "Boutiques file not valid: {}", 1);
 
     private final String message;
     private final Integer code;

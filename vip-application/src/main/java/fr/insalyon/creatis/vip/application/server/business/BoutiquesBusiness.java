@@ -19,11 +19,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.boutiques.model.BoutiquesDescriptor;
 import fr.insalyon.creatis.boutiques.model.Custom;
+import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -59,7 +61,8 @@ public class BoutiquesBusiness {
         }
 
         // The basename of the file used in bosh publish will be visible on zenodo,
-        // so we want a "clean" name, and a unique location on the filesystem to avoid race conditions.
+        // so we want a "clean" name, and a unique location on the filesystem to avoid
+        // race conditions.
         Path tempDir, tempFile;
         try {
             // create a dedicated unique temporary directory
@@ -98,7 +101,7 @@ public class BoutiquesBusiness {
         return doi;
     }
 
-    public void validateBoutiqueFile(String localPath) throws VipException {
+    public void validateBoutiquesFile(String localPath) throws VipException {
         // check file size, 100 kiB max
         try {
             if (Files.size(Paths.get(localPath)) >= 100 * 1024) {
@@ -110,13 +113,28 @@ public class BoutiquesBusiness {
         // call validate command
         String command = "bosh validate " + localPath;
         try {
-            // if no exception : the command was  successful
+            // if no exception : the command was successful
             runCommand(command);
         } catch (CommandErrorException e) {
-            // if there's an error, only keep the first line because the output can be very long
+            // if there's an error, only keep the first line because the output can be very
+            // long
             // and the first line contains the json validation error message
             String firstLine = e.getCout().isEmpty() ? "< No Information> " : e.getCout().get(0);
-            throw new VipException("Boutiques file not valid : " + firstLine);
+            throw new VipException(ApplicationError.BOUTIQUES_FILE_NOT_VALID, firstLine);
+        }
+    }
+
+    public void validateBoutiquesString(String descriptorJson) throws VipException {
+        try {
+            // Write in a temp file to validate with the descriptor
+            Path tempFile = Files.createTempFile("boutiques", ".json");
+            Files.writeString(tempFile, descriptorJson);
+            tempFile.toFile().deleteOnExit();
+            logger.debug("Validating Boutiques descriptor: {}", tempFile.toString());
+            validateBoutiquesFile(tempFile.toString());
+        } catch (IOException e) {
+            logger.error("Error while writing descriptor to temp file", e);
+            throw new VipException("Error checking descriptor");
         }
     }
 
@@ -170,7 +188,6 @@ public class BoutiquesBusiness {
         }
     }
 
-
     private List<String> runCommandAndFailOnError(String command) throws VipException {
         try {
             return runCommand(command);
@@ -189,7 +206,7 @@ public class BoutiquesBusiness {
             logger.info("Executing command : " + command);
             process = builder.start();
             BufferedReader r = new BufferedReader(
-                new InputStreamReader(process.getInputStream()));
+                    new InputStreamReader(process.getInputStream()));
             String s;
             while ((s = r.readLine()) != null) {
                 cout.add(s);
@@ -214,7 +231,8 @@ public class BoutiquesBusiness {
     }
 
     private void closeProcess(Process process) {
-        if (process == null) return;
+        if (process == null)
+            return;
         close(process.getOutputStream());
         close(process.getInputStream());
         close(process.getErrorStream());
@@ -246,8 +264,8 @@ public class BoutiquesBusiness {
         Map<String, String> result = new HashMap<String, String>();
         Object overriddenInputs = customProperties.get(customKeyName);
         if (overriddenInputs instanceof Map) {
-            Map<String, String> oi = (Map<String,String>)overriddenInputs;
-            for (String key: oi.keySet()) {
+            Map<String, String> oi = (Map<String, String>) overriddenInputs;
+            for (String key : oi.keySet()) {
                 String value = oi.get(key);
                 result.put(key, value);
             }

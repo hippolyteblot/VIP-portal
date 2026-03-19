@@ -61,7 +61,6 @@ public class ApplicationImporterServiceImpl extends fr.insalyon.creatis.vip.core
         try {
             trace(logger, "Creating application");
 
-            putUserInSpringSecurityContext(); // to put user in Spring Security context from GWT
             applicationImporterBusiness.createApplication(
                     bt, overwriteVersion, tags, resources, getSessionUser());
         } catch (VipException ex) {
