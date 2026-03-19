@@ -29,7 +29,7 @@ public class Group implements IsSerializable {
     }
 
     public Group(String name) {
-        this.name = name;
+        this(name, true, GroupType.getDefault(), false);
     }
 
     public String getName() {

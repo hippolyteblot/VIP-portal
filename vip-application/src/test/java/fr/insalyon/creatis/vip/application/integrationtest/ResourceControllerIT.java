@@ -31,6 +31,8 @@ public class ResourceControllerIT extends BaseInternalApiSpringIT {
     private User adminUser;
     private User developperUser;
     private User basicUser;
+    private Group groupPrivate;
+    private Group groupPublic;
 
     @BeforeEach
     @Override
@@ -167,11 +169,13 @@ public class ResourceControllerIT extends BaseInternalApiSpringIT {
 
     @Test
     public void getResource() throws Exception {
-        createGroup("private", GroupType.RESOURCE, false);
-        createGroup("public", GroupType.RESOURCE, true);
+        asAdminContext(() -> {
+            createGroup("private", GroupType.RESOURCE, false);
+            createGroup("public", GroupType.RESOURCE, true);
 
-        Group groupPrivate = groupBusiness.get("private");
-        Group groupPublic = groupBusiness.get("public");
+            groupPrivate = groupBusiness.get("private");
+            groupPublic = groupBusiness.get("public");
+        });
         Resource resource = new Resource("test");
 
         resource.setGroups(Set.of(groupPrivate, groupPublic));
@@ -227,10 +231,12 @@ public class ResourceControllerIT extends BaseInternalApiSpringIT {
         Resource resource1 = new Resource("testA");
         Resource resource2 = new Resource("testB");
         Resource resource3 = new Resource("testC");
-        createGroup("test", GroupType.RESOURCE, true);
 
-        Group group = groupBusiness.get("test");
-        resource1.setGroups(Set.of(group));
+        asAdminContext(() -> {
+            createGroup("test", GroupType.RESOURCE, true);
+            groupPublic = groupBusiness.get("test");
+        });
+        resource1.setGroups(Set.of(groupPublic));
 
         // create resources
         mockMvc.perform(post("/internal/resources")

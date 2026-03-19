@@ -116,10 +116,117 @@
         }
       }
     },
+    "/groups/{id}" : {
+      "get" : {
+        "tags" : [ "group-controller" ],
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Group"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "group-controller" ],
+        "operationId" : "createOrUpdate_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Group"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Group"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "group-controller" ],
+        "operationId" : "deleteVersion",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/applications/{id}" : {
       "get" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -153,7 +260,7 @@
       },
       "put" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "createOrUpdate_1",
+        "operationId" : "createOrUpdate_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -226,7 +333,7 @@
     "/applications/{appId}/versions/{id}" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "appId",
           "in" : "path",
@@ -267,7 +374,7 @@
       },
       "put" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "createOrUpdate_2",
+        "operationId" : "createOrUpdate_3",
         "parameters" : [ {
           "name" : "appId",
           "in" : "path",
@@ -318,7 +425,7 @@
       },
       "delete" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "deleteVersion",
+        "operationId" : "deleteVersion_1",
         "parameters" : [ {
           "name" : "appId",
           "in" : "path",
@@ -527,10 +634,127 @@
         }
       }
     },
+    "/groups" : {
+      "get" : {
+        "tags" : [ "group-controller" ],
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "name" : "quantity",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "exclusiveMinimum" : 0,
+            "maximum" : 50
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PrecisePageGroup"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "group-controller" ],
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Group"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Group"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/boutiques/check" : {
+      "post" : {
+        "tags" : [ "boutiques-controller" ],
+        "operationId" : "check",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "204" : {
+            "description" : "No Content"
+          }
+        }
+      }
+    },
     "/applications" : {
       "get" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -585,7 +809,7 @@
       },
       "post" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -623,7 +847,7 @@
     "/applications/{appId}/versions" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -678,7 +902,7 @@
       },
       "post" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "create_2",
+        "operationId" : "create_3",
         "parameters" : [ {
           "name" : "appId",
           "in" : "path",
@@ -724,7 +948,7 @@
     "/tags" : {
       "get" : {
         "tags" : [ "tag-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -1011,6 +1235,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/Resource"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "PrecisePageGroup" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Group"
             }
           },
           "total" : {

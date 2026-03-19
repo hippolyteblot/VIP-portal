@@ -92,7 +92,6 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
             trace(logger, "Adding application '" + application.getName() + "'.");
             application.setOwner(getSessionUser().getEmail());
 
-            putUserInSpringSecurityContext(); // to put user in Spring Security context from GWT
             applicationBusiness.add(application);
 
             return groupBusiness.getWarningSameVisibility(application.getGroupsNames());
@@ -107,7 +106,6 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
         if (isSystemAdministrator() || isGroupAdministrator() || isDeveloper()) {
             trace(logger, "Updating application '" + application.getName() + "'.");
 
-            putUserInSpringSecurityContext(); // to put user in Spring Security context from GWT
             applicationBusiness.update(application);
 
             return groupBusiness.getWarningSameVisibility(application.getGroupsNames());
@@ -122,9 +120,7 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
         if (isSystemAdministrator()) {
             trace(logger, "Removing application '" + name + "'.");
 
-            putUserInSpringSecurityContext(); // to put user in Spring Security context from GWT
             applicationBusiness.remove(name);
-
         }
         return null;
     }
