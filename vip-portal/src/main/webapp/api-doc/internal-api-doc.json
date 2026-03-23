@@ -994,6 +994,56 @@
           }
         }
       }
+    },
+    "/applications/versions" : {
+      "get" : {
+        "tags" : [ "app-version-controller" ],
+        "operationId" : "list_5",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "name" : "quantity",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "exclusiveMinimum" : 0,
+            "maximum" : 50
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PrecisePageAppVersion"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {

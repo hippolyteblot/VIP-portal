@@ -22,7 +22,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
 @RestController
-@RequestMapping("/applications/{appId}/versions")
+@RequestMapping("/applications")
 public class AppVersionController {
 
     private final AppVersionBusiness appVersionBusiness;
@@ -32,14 +32,14 @@ public class AppVersionController {
         this.appVersionBusiness = appVersionBusiness;
     }
 
-    @GetMapping
+    @GetMapping(value = "{appId}/versions")
     public PrecisePage<AppVersion> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity, @PathVariable String appId)
             throws VipException {
         return appVersionBusiness.get(offset, quantity, appId);
     }
 
-    @GetMapping(value = "{id}")
+    @GetMapping(value = "{appId}/versions/{id}")
     public AppVersion get(@PathVariable String appId, @PathVariable String id) throws VipException {
         AppVersion version = appVersionBusiness.get(appId, id);
 
@@ -50,7 +50,7 @@ public class AppVersionController {
         }
     }
 
-    @DeleteMapping(value = "{id}")
+    @DeleteMapping(value = "{appId}/versions/{id}")
     public void deleteVersion(@PathVariable String appId, @PathVariable String id) throws VipException {
         AppVersion version = appVersionBusiness.get(appId, id);
 
@@ -61,12 +61,14 @@ public class AppVersionController {
         }
     }
 
-    @PutMapping(value = "{id}")
-    public AppVersion createOrUpdate(@PathVariable String appId, @PathVariable String id, @RequestBody @Valid AppVersion version)
+    @PutMapping(value = "{appId}/versions/{id}")
+    public AppVersion createOrUpdate(@PathVariable String appId, @PathVariable String id,
+            @RequestBody @Valid AppVersion version)
             throws VipException {
-        if ( ! appId.equals(version.getApplicationName())) {
+        if (!appId.equals(version.getApplicationName())) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, appId, "AppVersion application do not match!");
-        } if ( ! id.equals(version.getVersion())) {
+        }
+        if (!id.equals(version.getVersion())) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, id, "AppVersion version do not match!");
         } else {
             AppVersion existingVersion = appVersionBusiness.get(appId, id);
@@ -80,8 +82,15 @@ public class AppVersionController {
         }
     }
 
-    @PostMapping()
+    @PostMapping(value = "{appId}/versions")
     public AppVersion create(@PathVariable String appId, @RequestBody @Valid AppVersion version) throws VipException {
         return createOrUpdate(appId, version.getVersion(), version);
     }
+
+    @GetMapping("versions")
+    public PrecisePage<AppVersion> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
+            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
+        return appVersionBusiness.get(offset, quantity, null);
+    }
+
 }
