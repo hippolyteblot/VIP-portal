@@ -212,8 +212,17 @@ public class AppVersionBusiness extends CommonBusiness {
     @VIPExternalSafe
     public PrecisePage<AppVersion> get(int offset, int quantity, String application) throws VipException {
         try {
-            Application app = applicationBusiness.get(application);
-            List<AppVersion> versions = applicationDAO.getVersions(app.getName());
+            List<AppVersion> versions = new ArrayList<>();
+
+            if (application == null) {
+                for (Application app : applicationBusiness.getUserContextApplications()) {
+                    versions.addAll(applicationDAO.getVersions(app.getName()));
+                }
+            } else {
+                Application app = permissions.shouldExist(applicationBusiness.get(application));
+                versions = applicationDAO.getVersions(app.getName());
+            }
+
             List<Resource> userResources = resourceBusiness.getUserContextResources();
 
             for (AppVersion v : versions) {
