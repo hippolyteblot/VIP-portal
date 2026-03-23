@@ -34,7 +34,7 @@ const sizeClasses: Record<string, string> = {
     :type="props.type"
     :disabled="props.disabled || props.loading"
     :class="[
-      'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed',
+      'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50',
       variantClasses[props.variant],
       sizeClasses[props.size],
     ]"

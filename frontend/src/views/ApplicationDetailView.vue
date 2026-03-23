@@ -81,7 +81,7 @@ watch(selectedVersionName, async (versionName) => {
       class="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-primary-600"
     >
       <ArrowLeft class="h-4 w-4" />
-      Retour aux applications
+      Back to applications
     </RouterLink>
 
     <div v-if="application">
