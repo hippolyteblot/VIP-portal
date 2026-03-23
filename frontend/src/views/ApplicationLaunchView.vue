@@ -8,6 +8,7 @@ import AppInput from '@/components/ui/AppInput.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import { useApplicationsStore } from '@/stores/applications.store'
 import { useAppVersionsStore } from '@/stores/appversions.stores'
+import { useNotificationsStore } from '@/stores/notifications.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
 import { rememberRecentApplication } from '@/utils/recentApplications'
@@ -17,6 +18,7 @@ import { useDuplicatedLaunchInputs } from '@/composables/useDuplicatedLaunchInpu
 const route = useRoute()
 const applicationsStore = useApplicationsStore()
 const appversionsStore = useAppVersionsStore()
+const notificationsStore = useNotificationsStore()
 
 const application = ref<Application | null>(null)
 const selectedVersion = ref<AppVersion | null>(null)
@@ -121,6 +123,8 @@ function onLaunchSubmit() {
     fullName: application.value.fullName ?? undefined,
     version: selectedVersion.value.version,
   })
+
+  notificationsStore.success('Application launched', `Your application "${application.value.fullName || application.value.name}" has been launched successfully.`)
 }
 
 onMounted(async () => {
