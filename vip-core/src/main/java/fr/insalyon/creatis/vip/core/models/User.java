@@ -1,6 +1,7 @@
 package fr.insalyon.creatis.vip.core.models;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -226,7 +227,7 @@ public class User implements IsSerializable {
 
     @JsonIgnore // this field can't be jsonified (need a string as key of map)
     public void setGroups(Map<Group, GROUP_ROLE> groups) {
-        this.groups = groups.keySet();
+        this.groups = new HashSet<>(groups.keySet());
         this.groupsMap = groups;
         filterGroups();
     }
