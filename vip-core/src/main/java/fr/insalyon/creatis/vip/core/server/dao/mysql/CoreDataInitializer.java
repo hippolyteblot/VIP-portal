@@ -85,6 +85,7 @@ public class CoreDataInitializer extends JdbcDaoSupport {
                         + "account_locked BOOLEAN,"
                         + "apikey VARCHAR(255),"
                         + "PRIMARY KEY(email),"
+                        + "UNIQUE (id),"
                         + "UNIQUE (first_name,last_name),"
                         + "UNIQUE (apikey)")) {
 
