@@ -1,5 +1,6 @@
 <script setup lang="ts">
 interface Props {
+  // Ethaniel wanted more colors 
   variant?: 'primary' | 'success' | 'warning' | 'danger' | 'gray' | 'info' | 'yellow' | 'cyan' | 'green' | 'blue' | 'purple'
 }
 

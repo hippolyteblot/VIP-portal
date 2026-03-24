@@ -14,9 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!session.value)
 
   /**
-   * Appelé une seule fois au démarrage de l'app (avant la première navigation).
-   * Tente de restaurer la session via GET /internal/session.
-   * Les cookies HttpOnly posés par le backend sont envoyés automatiquement.
+   * Called on app startup to check if there's an existing session. If so, it populates the `session` and `user` state.
    */
   async function initialize() {
     if (initialized.value) return
@@ -41,16 +39,11 @@ export const useAuthStore = defineStore('auth', () => {
       buildUserFromSession(vipSession);
     } catch (error) {
       isLoading.value = false;
-      throw error; // Rejette l'erreur pour qu'elle soit gérée dans le composant
+      throw error; // Throw to be handled by the caller (such as LoginView)
     }
     isLoading.value = false;
   }
 
-  /**
-   * Construit le profil utilisateur à partir de la session.
-   * Les données complémentaires viennent du mock car
-   * l'API GET /users/me n'existe pas encore côté backend.
-   */
   function buildUserFromSession(vipSession: VipSession) {
     user.value = {
       email: vipSession.email
@@ -61,8 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await sessionApi.logout()
     } catch {
-      // Si le DELETE échoue (CSRF, réseau…), on ne peut pas effacer
-      // les cookies HttpOnly côté client. Mais on nettoie le state Pinia.
+      // if logout fails, we still want to clear the local session and user state to ensure the app behaves as logged out
     }
     user.value = null
     session.value = null

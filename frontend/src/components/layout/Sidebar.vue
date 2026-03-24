@@ -141,15 +141,7 @@ function isActive(path: string) {
         >
           <div class="flex h-16 items-center justify-between gap-3 border-b border-gray-100 px-4">
             <div class="flex items-center gap-3">
-<<<<<<< Updated upstream
-              <div
-                class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600 text-white font-bold text-sm"
-              >
-                VIP
-              </div>
-=======
               <!-- logo -->
->>>>>>> Stashed changes
               <div>
                 <p class="text-sm font-semibold text-gray-900">VIP Portal</p>
                 <p class="text-xs text-gray-500">Virtual Imaging Platform</p>
