@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
@@ -112,7 +113,7 @@ public class GroupBusiness extends CommonBusiness {
             }
             if (onlyApplications && onlyResources) {
                 // Both filters requested = error
-                throw new VipException("You can't filter groups by applications and resources at the same time!");
+                throw new VipException(DefaultError.BAD_PARAMETERS, "onlyApplications and onlyResources cannot be both true!");
             }
             if (onlyApplications) {
                 groups = groups.stream().filter((g) -> g.getType().equals(GroupType.APPLICATION)).toList();
