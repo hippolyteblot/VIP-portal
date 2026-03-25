@@ -94,7 +94,7 @@ onMounted(async () => {
   }
 
   try {
-    await groupsStore.fetchGroups(0, 50)
+    await groupsStore.fetchApplicationGroups(0, 50)
   } catch {
     // Keep an empty list if groups cannot be loaded.
   }

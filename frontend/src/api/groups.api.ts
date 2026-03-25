@@ -5,8 +5,8 @@ import type { Group } from '@/types/group.types'
 export type BackendGroup = Group
 
 export const groupsApi = {
-  getAll: (offset = 0, quantity = 50) => {
-    const params: Record<string, number> = { offset, quantity }
+  getAll: (onlyApplications = false, onlyResources = false, offset = 0, quantity = 50) => {
+    const params: Record<string, number | boolean> = { onlyApplications, onlyResources, offset, quantity }
 
     return backendClient
       .get<PrecisePage<BackendGroup>>('/internal/groups', { params })
