@@ -639,6 +639,22 @@
         "tags" : [ "group-controller" ],
         "operationId" : "list_1",
         "parameters" : [ {
+          "name" : "onlyApplications",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "name" : "onlyResources",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
           "name" : "offset",
           "in" : "query",
           "required" : false,

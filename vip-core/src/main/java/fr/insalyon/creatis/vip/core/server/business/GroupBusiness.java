@@ -102,21 +102,39 @@ public class GroupBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
-    public List<Group> get() throws VipException {
+    public List<Group> get(boolean onlyApplications, boolean onlyResources) throws VipException {
         try {
+            List<Group> groups;
             if (getUserLevel().equals(UserLevel.Administrator)) {
-                return groupDAO.get();
+                groups = groupDAO.get();
             } else {
-                return usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
+                groups = usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
             }
+            if (onlyApplications && onlyResources) {
+                // Both filters requested = error
+                throw new VipException("You can't filter groups by applications and resources at the same time!");
+            }
+            if (onlyApplications) {
+                groups = groups.stream().filter((g) -> g.getType().equals(GroupType.APPLICATION)).toList();
+            }
+            if (onlyResources) {
+                groups = groups.stream().filter((g) -> g.getType().equals(GroupType.RESOURCE)).toList();
+            }
+            return groups;
         } catch (DAOException ex) {
+            logger.error("Error retrieving groups", ex);
             throw new VipException(ex);
         }
     }
 
     @VIPExternalSafe
-    public PrecisePage<Group> get(int offeset, int quantity) throws VipException {
-        return pageBuilder.doPrecise(offeset, quantity, get());
+    public List<Group> get() throws VipException {
+        return get(false, false);
+    }
+
+    @VIPExternalSafe
+    public PrecisePage<Group> get(boolean onlyApplications, boolean onlyResources, int offset, int quantity) throws VipException {
+        return pageBuilder.doPrecise(offset, quantity, get(onlyApplications, onlyResources));
     }
 
     @VIPExternalSafe

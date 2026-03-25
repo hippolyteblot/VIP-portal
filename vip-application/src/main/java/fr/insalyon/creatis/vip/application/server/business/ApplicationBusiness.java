@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.application.models.Application;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Group;
@@ -221,6 +222,9 @@ public class ApplicationBusiness extends CommonBusiness {
     public void associate(Application app, String groupName) throws VipException {
         app = getApplication(app.getName());
         Group group = groupBusiness.get(groupName);
+        if (group == null) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, groupName, "Unknown group");
+        }
 
         try {
             applicationDAO.associate(app, group);
@@ -231,6 +235,9 @@ public class ApplicationBusiness extends CommonBusiness {
 
     public void dissociate(Application app, String groupName) throws VipException {
         Group group = groupBusiness.get(groupName);
+        if (group == null) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, groupName, "Unknown group");
+        }
 
         try {
             applicationDAO.dissociate(app, group);
