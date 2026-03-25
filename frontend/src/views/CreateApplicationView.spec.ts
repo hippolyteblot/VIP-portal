@@ -8,6 +8,7 @@ const mocked = vi.hoisted(() => ({
   notifySuccess: vi.fn(),
   tagsGetAll: vi.fn(),
   groupsGetAll: vi.fn(),
+  resourcesGetAll: vi.fn(),
   boutiquesCheckDescriptor: vi.fn(),
   applicationsGetById: vi.fn(),
   applicationsCreateOrUpdate: vi.fn(),
@@ -35,6 +36,12 @@ vi.mock('@/api/tags.api', () => ({
 vi.mock('@/api/groups.api', () => ({
   groupsApi: {
     getAll: mocked.groupsGetAll,
+  },
+}))
+
+vi.mock('@/api/resources.api', () => ({
+  resourcesApi: {
+    getAll: mocked.resourcesGetAll,
   },
 }))
 
@@ -96,6 +103,13 @@ describe('CreateApplicationView', () => {
       ],
       total: 3,
     })
+    mocked.resourcesGetAll.mockResolvedValue({
+      data: [
+        { name: 'cluster-a', status: true, type: 'BATCH', configuration: 'queue=short', engines: [], groups: [] },
+        { name: 'cluster-b', status: false, type: 'BATCH', configuration: 'queue=long', engines: [], groups: [] },
+      ],
+      total: 2,
+    })
     mocked.boutiquesCheckDescriptor.mockResolvedValue({ valid: true, errors: [] })
     mocked.applicationsGetById.mockRejectedValue(new Error('not found'))
     mocked.applicationsCreateOrUpdate.mockResolvedValue({})
@@ -110,6 +124,7 @@ describe('CreateApplicationView', () => {
 
     expect(mocked.tagsGetAll).toHaveBeenCalledWith(0, 50)
     expect(mocked.groupsGetAll).toHaveBeenCalledWith(true, false, 0, 50)
+    expect(mocked.resourcesGetAll).toHaveBeenCalledWith(0, 50, undefined)
     expect(wrapper.text()).toContain('Create a new application')
   })
 
@@ -167,6 +182,17 @@ describe('CreateApplicationView', () => {
     expect(adminsCheckbox).toBeTruthy()
     await adminsCheckbox.setValue(true)
 
+    const resourceLabel = wrapper
+      .findAll('label')
+      .find((node) => node.text().includes('cluster-a'))
+
+    expect(resourceLabel).toBeTruthy()
+
+    const resourceCheckbox = resourceLabel!.find('input[type="checkbox"]')
+
+    expect(resourceCheckbox).toBeTruthy()
+    await resourceCheckbox.setValue(true)
+
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
@@ -181,6 +207,13 @@ describe('CreateApplicationView', () => {
     })
 
     expect(mocked.appVersionsCreate).toHaveBeenCalledTimes(1)
+    expect(mocked.appVersionsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resources: [
+          { name: 'cluster-a', status: true, configuration: 'queue=short' },
+        ],
+      }),
+    )
     expect(mocked.appVersionsCreateOrUpdate).not.toHaveBeenCalled()
     expect(mocked.notifySuccess).toHaveBeenCalledWith('Application / version created successfully.')
     expect(mocked.push).toHaveBeenCalledWith({

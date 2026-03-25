@@ -10,20 +10,22 @@ import { tagsApi } from '@/api/tags.api'
 import { boutiquesApi } from '@/api/boutiques.api'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useGroupsStore } from '@/stores/groups.store'
+import { useResourcesStore } from '@/stores/resources.store'
 import {
   addCustomTag as addCustomTagToLists,
   buildGroupSelectionItems,
+  buildResourceSelectionItems,
   filterSelectableGroupNames,
-  normalizeResources,
   parseBoutiquesIdentity,
+  toAppVersionResourcesPayload,
   toApplicationGroupsPayload,
   toggleItemSelection,
-  type ResourceInput,
 } from '@/utils/createApplication'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
 const groupsStore = useGroupsStore()
+const resourcesStore = useResourcesStore()
 
 const form = reactive({
   descriptorFile: null as File | null,
@@ -52,7 +54,7 @@ const selectedTags = ref<string[]>([])
 const customTagInput = ref('')
 
 const selectedGroupNames = ref<string[]>([])
-const resources = ref<ResourceInput[]>([])
+const selectedResourceNames = ref<string[]>([])
 
 const canProceedToStep2 = computed(
   () => checksDone.value && (!versionExists.value || shouldOverwrite.value),
@@ -64,6 +66,10 @@ const parsedGroups = computed(() => {
 
 const groupSelectionItems = computed(() => {
   return buildGroupSelectionItems(groupsStore.groups)
+})
+
+const resourceSelectionItems = computed(() => {
+  return buildResourceSelectionItems(resourcesStore.resources)
 })
 
 onMounted(async () => {
@@ -78,6 +84,12 @@ onMounted(async () => {
     await groupsStore.fetchApplicationGroups(0, 50)
   } catch {
     // Keep an empty list if groups cannot be loaded.
+  }
+
+  try {
+    await resourcesStore.fetchResources(0, 50)
+  } catch {
+    // Keep an empty list if resources cannot be loaded.
   }
 })
 
@@ -103,6 +115,7 @@ function onFileChange(event: Event) {
   versionExists.value = false
   shouldOverwrite.value = false
   selectedGroupNames.value = []
+  selectedResourceNames.value = []
 }
 
 async function checkDescriptorAndExistence() {
@@ -171,16 +184,8 @@ function toggleGroupSelection(name: string, checked: boolean) {
   selectedGroupNames.value = toggleItemSelection(selectedGroupNames.value, name, checked)
 }
 
-function addResource() {
-  resources.value.push({
-    name: '',
-    configuration: '',
-    status: true,
-  })
-}
-
-function removeResource(index: number) {
-  resources.value.splice(index, 1)
+function toggleResourceSelection(name: string, checked: boolean) {
+  selectedResourceNames.value = toggleItemSelection(selectedResourceNames.value, name, checked)
 }
 
 function goToStep2() {
@@ -226,7 +231,7 @@ async function onSubmit() {
       source: form.source || null,
       note: form.note || null,
       tags: selectedTags.value,
-      resources: normalizeResources(resources.value),
+      resources: toAppVersionResourcesPayload(resourcesStore.resources, selectedResourceNames.value),
       settings: {},
     }
 
@@ -401,39 +406,39 @@ async function onSubmit() {
         </div>
 
         <div>
-          <div class="flex items-center justify-between">
-            <label class="block text-sm font-medium text-gray-700">Resources</label>
-            <AppButton type="button" variant="secondary" size="sm" @click="addResource">
-              Add Resource
-            </AppButton>
-          </div>
+          <label class="block text-sm font-medium text-gray-700">
+            Resources
+          </label>
 
-          <div v-if="resources.length" class="mt-3 space-y-3">
-            <div
-              v-for="(resource, index) in resources"
-              :key="index"
-              class="rounded-lg border border-gray-200 p-3"
+          <div v-if="resourceSelectionItems.length" class="mt-2 space-y-2">
+            <label
+              v-for="resource in resourceSelectionItems"
+              :key="resource.name"
+              class="flex items-center justify-between gap-3 rounded-md border border-gray-200 px-3 py-2"
             >
-              <div class="grid gap-3 sm:grid-cols-2">
-                <AppInput v-model="resource.name" label="Nom" placeholder="cluster, slurm..." />
-                <AppInput v-model="resource.configuration" label="Configuration" placeholder="gpu=true;queue=short" />
-              </div>
+              <span class="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  :checked="selectedResourceNames.includes(resource.name)"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-primary-600"
+                  :disabled="!resource.selectable"
+                  @change="toggleResourceSelection(resource.name, ($event.target as HTMLInputElement).checked)"
+                />
+                <span>{{ resource.name }}</span>
+              </span>
 
-              <div class="mt-3 flex items-center justify-between">
-                <label class="flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    v-model="resource.status"
-                    type="checkbox"
-                    class="h-4 w-4 rounded border-gray-300 text-primary-600"
-                  />
-                  Active
-                </label>
-                <AppButton type="button" variant="danger" size="sm" @click="removeResource(index)">
-                  Supprimer
-                </AppButton>
-              </div>
-            </div>
+              <span
+                v-if="!resource.selectable"
+                class="text-xs font-medium text-gray-500"
+              >
+                {{ resource.disabledReason }}
+              </span>
+            </label>
           </div>
+
+          <p v-else class="mt-2 text-sm text-gray-500">
+            No resources available from API.
+          </p>
         </div>
 
         <div>
