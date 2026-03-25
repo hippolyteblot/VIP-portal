@@ -9,9 +9,11 @@ import { applicationsApi } from '@/api/applications.api'
 import { tagsApi } from '@/api/tags.api'
 import { boutiquesApi } from '@/api/boutiques.api'
 import { useNotificationsStore } from '@/stores/notifications.store'
+import { useGroupsStore } from '@/stores/groups.store'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
+const groupsStore = useGroupsStore()
 
 type ResourceInput = {
   name: string
@@ -45,7 +47,7 @@ const availableTags = ref<string[]>([])
 const selectedTags = ref<string[]>([])
 const customTagInput = ref('')
 
-const groupsInput = ref('')
+const selectedGroupNames = ref<string[]>([])
 const resources = ref<ResourceInput[]>([])
 
 const canProceedToStep2 = computed(
@@ -53,10 +55,34 @@ const canProceedToStep2 = computed(
 )
 
 const parsedGroups = computed(() => {
-  return groupsInput.value
-    .split(',')
-    .map((g) => g.trim())
-    .filter((g, idx, arr) => g.length > 0 && arr.indexOf(g) === idx)
+  const selectableGroupNames = new Set(
+    groupsStore.groups
+      .filter((group) => group.type === 'APPLICATION' && !group.auto)
+      .map((group) => group.name),
+  )
+
+  return selectedGroupNames.value.filter((name) => selectableGroupNames.has(name))
+})
+
+const groupSelectionItems = computed(() => {
+  return [...groupsStore.groups]
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
+    .map((group) => {
+      const isApplicationGroup = group.type === 'APPLICATION'
+      const selectable = isApplicationGroup && !group.auto
+
+      const disabledReason = !isApplicationGroup
+        ? 'Not an application group'
+        : group.auto
+          ? 'Automatic group'
+          : ''
+
+      return {
+        ...group,
+        selectable,
+        disabledReason,
+      }
+    })
 })
 
 onMounted(async () => {
@@ -65,6 +91,12 @@ onMounted(async () => {
     availableTags.value = page.data.map((t) => t.name)
   } catch {
     availableTags.value = []
+  }
+
+  try {
+    await groupsStore.fetchGroups(0, 50)
+  } catch {
+    // Keep an empty list if groups cannot be loaded.
   }
 })
 
@@ -89,7 +121,7 @@ function onFileChange(event: Event) {
   appExists.value = false
   versionExists.value = false
   shouldOverwrite.value = false
-  groupsInput.value = ''
+  selectedGroupNames.value = []
 }
 
 function parseBoutiquesIdentity(raw: string): { name: string; version: string } {
@@ -136,7 +168,7 @@ async function checkDescriptorAndExistence() {
     try {
       await applicationsApi.getById(identity.name)
       appExists.value = true
-      groupsInput.value = ''
+      selectedGroupNames.value = []
     } catch {
       appExists.value = false
     }
@@ -174,6 +206,17 @@ function toggleTag(name: string, checked: boolean) {
   }
   if (!checked) {
     selectedTags.value = selectedTags.value.filter((t) => t !== name)
+  }
+}
+
+function toggleGroupSelection(name: string, checked: boolean) {
+  if (checked && !selectedGroupNames.value.includes(name)) {
+    selectedGroupNames.value.push(name)
+    return
+  }
+
+  if (!checked) {
+    selectedGroupNames.value = selectedGroupNames.value.filter((groupName) => groupName !== name)
   }
 }
 
@@ -385,12 +428,36 @@ async function onSubmit() {
           <label class="block text-sm font-medium text-gray-700">
             Groups
           </label>
-          <textarea
-            v-model="groupsInput"
-            rows="2"
-            class="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
-            placeholder="Ex : admins, public, neuro-team"
-          />
+
+          <div v-if="groupSelectionItems.length" class="mt-2 space-y-2">
+            <label
+              v-for="group in groupSelectionItems"
+              :key="group.name"
+              class="flex items-center justify-between gap-3 rounded-md border border-gray-200 px-3 py-2"
+            >
+              <span class="flex items-center gap-2 text-sm text-gray-700">
+                <input
+                  :checked="selectedGroupNames.includes(group.name)"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-primary-600"
+                  :disabled="!group.selectable"
+                  @change="toggleGroupSelection(group.name, ($event.target as HTMLInputElement).checked)"
+                />
+                <span>{{ group.name }}</span>
+              </span>
+
+              <span
+                v-if="!group.selectable"
+                class="text-xs font-medium text-gray-500"
+              >
+                {{ group.disabledReason }}
+              </span>
+            </label>
+          </div>
+
+          <p v-else class="mt-2 text-sm text-gray-500">
+            No groups available from API.
+          </p>
         </div>
 
         <div>

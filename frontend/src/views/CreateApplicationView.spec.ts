@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import CreateApplicationView from './CreateApplicationView.vue'
 
 const mocked = vi.hoisted(() => ({
   push: vi.fn(),
   notifySuccess: vi.fn(),
   tagsGetAll: vi.fn(),
+  groupsGetAll: vi.fn(),
   boutiquesCheckDescriptor: vi.fn(),
   applicationsGetById: vi.fn(),
   applicationsCreateOrUpdate: vi.fn(),
@@ -27,6 +29,12 @@ vi.mock('@/stores/notifications.store', () => ({
 vi.mock('@/api/tags.api', () => ({
   tagsApi: {
     getAll: mocked.tagsGetAll,
+  },
+}))
+
+vi.mock('@/api/groups.api', () => ({
+  groupsApi: {
+    getAll: mocked.groupsGetAll,
   },
 }))
 
@@ -64,6 +72,14 @@ async function clickButtonByText(wrapper: ReturnType<typeof mount>, text: string
   await button!.trigger('click')
 }
 
+function mountView() {
+  return mount(CreateApplicationView, {
+    global: {
+      plugins: [createPinia()],
+    },
+  })
+}
+
 describe('CreateApplicationView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -71,6 +87,14 @@ describe('CreateApplicationView', () => {
     mocked.tagsGetAll.mockResolvedValue({
       data: [{ name: 'stable' }, { name: 'neuro' }],
       total: 2,
+    })
+    mocked.groupsGetAll.mockResolvedValue({
+      data: [
+        { name: 'admins', publicGroup: false, type: 'APPLICATION', auto: false },
+        { name: 'public', publicGroup: true, type: 'APPLICATION', auto: true },
+        { name: 'resource-team', publicGroup: false, type: 'RESOURCE', auto: false },
+      ],
+      total: 3,
     })
     mocked.boutiquesCheckDescriptor.mockResolvedValue({ valid: true, errors: [] })
     mocked.applicationsGetById.mockRejectedValue(new Error('not found'))
@@ -81,15 +105,16 @@ describe('CreateApplicationView', () => {
   })
 
   it('loads available tags on mount', async () => {
-    const wrapper = mount(CreateApplicationView)
+    const wrapper = mountView()
     await flushPromises()
 
     expect(mocked.tagsGetAll).toHaveBeenCalledWith(0, 200)
+    expect(mocked.groupsGetAll).toHaveBeenCalledWith(0, 200)
     expect(wrapper.text()).toContain('Create a new application')
   })
 
   it('shows validation error when checking descriptor without file', async () => {
-    const wrapper = mount(CreateApplicationView)
+    const wrapper = mountView()
     await flushPromises()
 
     await clickButtonByText(wrapper, 'Check descriptor & existence')
@@ -99,7 +124,7 @@ describe('CreateApplicationView', () => {
   })
 
   it('completes create flow for new application and version', async () => {
-    const wrapper = mount(CreateApplicationView)
+    const wrapper = mountView()
     await flushPromises()
 
     const descriptor = {
@@ -131,8 +156,16 @@ describe('CreateApplicationView', () => {
 
     expect(wrapper.text()).toContain('Valider la création')
 
-    const groupsTextarea = wrapper.get('textarea[placeholder="Ex : admins, public, neuro-team"]')
-    await groupsTextarea.setValue('admins, neuro-team')
+    const adminsLabel = wrapper
+      .findAll('label')
+      .find((node) => node.text().includes('admins'))
+
+    expect(adminsLabel).toBeTruthy()
+
+    const adminsCheckbox = adminsLabel!.find('input[type="checkbox"]')
+
+    expect(adminsCheckbox).toBeTruthy()
+    await adminsCheckbox.setValue(true)
 
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -144,7 +177,6 @@ describe('CreateApplicationView', () => {
       note: null,
       groups: [
         { name: 'admins', publicGroup: false, type: 'APPLICATION', auto: false },
-        { name: 'neuro-team', publicGroup: false, type: 'APPLICATION', auto: false },
       ],
     })
 
@@ -158,7 +190,7 @@ describe('CreateApplicationView', () => {
   })
 
   it('goes back to step 1 from step 2', async () => {
-    const wrapper = mount(CreateApplicationView)
+    const wrapper = mountView()
     await flushPromises()
 
     const file = createDescriptorFile(JSON.stringify({ name: 'demo-app', version: '1.2.0' }))
