@@ -10,16 +10,20 @@ import { tagsApi } from '@/api/tags.api'
 import { boutiquesApi } from '@/api/boutiques.api'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useGroupsStore } from '@/stores/groups.store'
+import {
+  addCustomTag as addCustomTagToLists,
+  buildGroupSelectionItems,
+  filterSelectableGroupNames,
+  normalizeResources,
+  parseBoutiquesIdentity,
+  toApplicationGroupsPayload,
+  toggleItemSelection,
+  type ResourceInput,
+} from '@/utils/createApplication'
 
 const router = useRouter()
 const notificationsStore = useNotificationsStore()
 const groupsStore = useGroupsStore()
-
-type ResourceInput = {
-  name: string
-  configuration: string
-  status: boolean
-}
 
 const form = reactive({
   descriptorFile: null as File | null,
@@ -55,39 +59,16 @@ const canProceedToStep2 = computed(
 )
 
 const parsedGroups = computed(() => {
-  const selectableGroupNames = new Set(
-    groupsStore.groups
-      .filter((group) => group.type === 'APPLICATION' && !group.auto)
-      .map((group) => group.name),
-  )
-
-  return selectedGroupNames.value.filter((name) => selectableGroupNames.has(name))
+  return filterSelectableGroupNames(groupsStore.groups, selectedGroupNames.value)
 })
 
 const groupSelectionItems = computed(() => {
-  return [...groupsStore.groups]
-    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-    .map((group) => {
-      const isApplicationGroup = group.type === 'APPLICATION'
-      const selectable = isApplicationGroup && !group.auto
-
-      const disabledReason = !isApplicationGroup
-        ? 'Not an application group'
-        : group.auto
-          ? 'Automatic group'
-          : ''
-
-      return {
-        ...group,
-        selectable,
-        disabledReason,
-      }
-    })
+  return buildGroupSelectionItems(groupsStore.groups)
 })
 
 onMounted(async () => {
   try {
-    const page = await tagsApi.getAll(0, 200)
+    const page = await tagsApi.getAll(0, 50)
     availableTags.value = page.data.map((t) => t.name)
   } catch {
     availableTags.value = []
@@ -122,18 +103,6 @@ function onFileChange(event: Event) {
   versionExists.value = false
   shouldOverwrite.value = false
   selectedGroupNames.value = []
-}
-
-function parseBoutiquesIdentity(raw: string): { name: string; version: string } {
-  const parsed = JSON.parse(raw) as Record<string, unknown>
-  const name = typeof parsed.name === 'string' ? parsed.name.trim() : ''
-  const version =
-    typeof parsed['tool-version'] === 'string'
-      ? parsed['tool-version'].trim()
-      : typeof parsed.version === 'string'
-        ? parsed.version.trim()
-        : ''
-  return { name, version }
 }
 
 async function checkDescriptorAndExistence() {
@@ -188,36 +157,18 @@ async function checkDescriptorAndExistence() {
 }
 
 function addCustomTag() {
-  const tag = customTagInput.value.trim()
-  if (!tag) return
-  if (!selectedTags.value.includes(tag)) {
-    selectedTags.value.push(tag)
-  }
-  if (!availableTags.value.includes(tag)) {
-    availableTags.value.push(tag)
-  }
-  customTagInput.value = ''
+  const result = addCustomTagToLists(availableTags.value, selectedTags.value, customTagInput.value)
+  availableTags.value = result.availableTags
+  selectedTags.value = result.selectedTags
+  customTagInput.value = result.normalizedInput
 }
 
 function toggleTag(name: string, checked: boolean) {
-  if (checked && !selectedTags.value.includes(name)) {
-    selectedTags.value.push(name)
-    return
-  }
-  if (!checked) {
-    selectedTags.value = selectedTags.value.filter((t) => t !== name)
-  }
+  selectedTags.value = toggleItemSelection(selectedTags.value, name, checked)
 }
 
 function toggleGroupSelection(name: string, checked: boolean) {
-  if (checked && !selectedGroupNames.value.includes(name)) {
-    selectedGroupNames.value.push(name)
-    return
-  }
-
-  if (!checked) {
-    selectedGroupNames.value = selectedGroupNames.value.filter((groupName) => groupName !== name)
-  }
+  selectedGroupNames.value = toggleItemSelection(selectedGroupNames.value, name, checked)
 }
 
 function addResource() {
@@ -262,12 +213,7 @@ async function onSubmit() {
         fullName: null,
         citation: null,
         note: form.note || null,
-        groups: parsedGroups.value.map((name) => ({
-          name,
-          publicGroup: false,
-          type: 'APPLICATION',
-          auto: false,
-        })),
+        groups: toApplicationGroupsPayload(parsedGroups.value),
       })
     }
 
@@ -280,13 +226,7 @@ async function onSubmit() {
       source: form.source || null,
       note: form.note || null,
       tags: selectedTags.value,
-      resources: resources.value
-        .map((r) => ({
-          name: r.name.trim(),
-          configuration: r.configuration.trim(),
-          status: r.status,
-        }))
-        .filter((r) => r.name.length > 0),
+      resources: normalizeResources(resources.value),
       settings: {},
     }
 

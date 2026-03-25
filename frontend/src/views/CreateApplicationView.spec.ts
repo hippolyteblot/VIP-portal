@@ -66,7 +66,7 @@ function createDescriptorFile(content: string): File {
 async function clickButtonByText(wrapper: ReturnType<typeof mount>, text: string) {
   const button = wrapper
     .findAll('button')
-    .find((node) => node.text().trim().includes(text))
+    .find((node: any) => node.text().trim().includes(text))
 
   expect(button).toBeTruthy()
   await button!.trigger('click')
@@ -108,8 +108,8 @@ describe('CreateApplicationView', () => {
     const wrapper = mountView()
     await flushPromises()
 
-    expect(mocked.tagsGetAll).toHaveBeenCalledWith(0, 200)
-    expect(mocked.groupsGetAll).toHaveBeenCalledWith(0, 200)
+    expect(mocked.tagsGetAll).toHaveBeenCalledWith(0, 50)
+    expect(mocked.groupsGetAll).toHaveBeenCalledWith(true, false, 0, 50)
     expect(wrapper.text()).toContain('Create a new application')
   })
 

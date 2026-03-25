@@ -36,6 +36,6 @@ describe('useGroupsStore', () => {
     expect(store.isLoading).toBe(false)
     expect(store.totalCount).toBe(2)
     expect(store.groups).toHaveLength(2)
-    expect(store.groups.map((group) => group.name)).toEqual(['admins'])
+    expect(store.groups.map((group) => group.name)).toEqual(['admins', 'resource-team'])
   })
 })
