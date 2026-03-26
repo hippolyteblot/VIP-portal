@@ -77,6 +77,26 @@ public class UserBusiness extends CommonBusiness {
         }
     }
 
+    public void loadMissingFields(User user) throws VipException {
+        try {
+            User existingUser = userDAO.get(user.getEmail());
+
+            // admin fields
+            user.setConfirmed(user.isConfirmed() != null ? user.isConfirmed() : existingUser.isConfirmed());
+            user.setAccountLocked(user.isAccountLocked() != null ? user.isAccountLocked() : existingUser.isAccountLocked());
+
+            // hidden fields
+            user.setNextEmail(user.getNextEmail() != null ? user.getNextEmail() : existingUser.getNextEmail());
+            user.setCode(user.getCode() != null ? user.getCode() : existingUser.getCode());
+            user.setFolder(user.getFolder() != null ? user.getFolder() : existingUser.getFolder());
+            user.setSession(user.getSession() != null ? user.getSession() : existingUser.getSession());
+            user.setFailedAuthentications(existingUser.getFailedAuthentications());
+
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
+    }
+
     @VIPExternalSafe
     public User update(User user) throws VipException {
         // we use JsonView to protect "sensitive"
@@ -93,11 +113,12 @@ public class UserBusiness extends CommonBusiness {
             // here user try to join private group (forbidden)
             // but it's okay if the user try to leave a private group
             if ( ! diff.stream().allMatch(Group::isPublicGroup)) {
-                System.err.println("PAR ICI");
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
+            // only administrator can define "null" fields
+            // otherwise missing fields will be filled by the exising object 
+            loadMissingFields(user);
         }
-
         try {
             userDAO.update(user);
             return user;

@@ -105,10 +105,13 @@ public class AuthenticationBusiness extends CommonBusiness {
             if (!automaticCreation) {
                 user.setTermsOfUse(ts);
             }
+            user.setConfirmed(automaticCreation);
+            user.setAccountLocked(false);
             user.setLastLogin(ts);
             user.setRegistration(ts);
             user.setLastUpdatePublications(ts);
             user.setCode(UUID.randomUUID().toString());
+            user.setFailedAuthentications(0);
             if (user.getPassword() == null) {
                 user.setPassword(null);
             } else {

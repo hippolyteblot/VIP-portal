@@ -1,7 +1,6 @@
 package fr.insalyon.creatis.vip.core.models;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,8 +18,8 @@ import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 public class User implements IsSerializable {
 
-    @JsonView(DataViews.Admin.class) private boolean confirmed;
-    @JsonView(DataViews.Admin.class) private boolean accountLocked;
+    @JsonView(DataViews.Admin.class) private Boolean confirmed;
+    @JsonView(DataViews.Admin.class) private Boolean accountLocked;
 
     @JsonView(DataViews.User.class) private String id;
     @JsonView(DataViews.User.class) private String firstName;
@@ -59,10 +58,10 @@ public class User implements IsSerializable {
     }
 
     public User(String id, String firstName, String lastName, String email, String institution,
-            String password, CountryCode countryCode,Timestamp lastUpdatePublications) {
+            String password, CountryCode countryCode, Timestamp lastUpdatePublications) {
 
         this(id, firstName, lastName, email, null, institution, password, false,
-                "", "", "", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1,null,lastUpdatePublications,0,false, null);
+                "", "", "", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1, null,lastUpdatePublications, 0, false, null);
     }
 
     public User(
@@ -73,7 +72,7 @@ public class User implements IsSerializable {
             String nextEmail,
             String institution,
             String password,
-            boolean confirmed,
+            Boolean confirmed,
             String code,
             String folder,
             String session,
@@ -85,7 +84,7 @@ public class User implements IsSerializable {
             Timestamp termsOfUse,
             Timestamp lastUpdatePublications,
             int failedAuthentications,
-            boolean locked,
+            Boolean locked,
             String apiKey
     ) {
         this.id = id;
@@ -121,8 +120,12 @@ public class User implements IsSerializable {
         this.id = id;
     }
 
-    public boolean isConfirmed() {
+    public Boolean isConfirmed() {
         return confirmed;
+    }
+
+    public void setConfirmed(Boolean confirmed) {
+        this.confirmed = confirmed;
     }
 
     public String getCode() {
@@ -135,6 +138,10 @@ public class User implements IsSerializable {
 
     public String getNextEmail() {
         return nextEmail;
+    }
+
+    public void setNextEmail(String nextEmail) {
+        this.nextEmail = nextEmail;
     }
 
     public String getFirstName() {
@@ -183,6 +190,10 @@ public class User implements IsSerializable {
 
     public String getSession() {
         return session;
+    }
+
+    public void setSession(String session) {
+        this.session = session;
     }
 
     public Timestamp getLastLogin() {
@@ -295,7 +306,7 @@ public class User implements IsSerializable {
     }
 
     public boolean hasAcceptTermsOfUse(){
-        return getTermsOfUse()!=null;
+        return getTermsOfUse() != null;
        }
 
     public boolean hasGroups(){
@@ -306,8 +317,16 @@ public class User implements IsSerializable {
         return this.failedAuthentications;
     }
 
-    public boolean isAccountLocked() {
+    public void setFailedAuthentications(int failedAuthentications) {
+        this.failedAuthentications = failedAuthentications;
+    }
+
+    public Boolean isAccountLocked() {
         return this.accountLocked;
+    }
+
+    public void setAccountLocked(Boolean accountLocked) {
+        this.accountLocked = accountLocked;
     }
 
     public String getApiKey() {
