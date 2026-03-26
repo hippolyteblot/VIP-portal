@@ -58,9 +58,11 @@ async function onSubmit() {
 <template>
   <div class="space-y-8">
     <div class="lg:hidden flex justify-center">
-      <div class="h-10 w-10 rounded-lg bg-primary-600 text-white font-bold flex items-center justify-center">
-        VIP
-      </div>
+      <img
+        src="@/assets/vip-logo-without-text.png"
+        alt="VIP Logo"
+        class="h-24 w-auto rounded-sm object-cover"
+      />
     </div>
 
     <div>

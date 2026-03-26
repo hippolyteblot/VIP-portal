@@ -7,7 +7,6 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import axios from 'axios'
 
-
 const router = useRouter()
 const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
@@ -50,18 +49,16 @@ async function onSubmit() {
 <template>
   <div class="space-y-8">
     <div class="lg:hidden flex justify-center">
-      <div class="h-10 w-10 rounded-lg bg-primary-600 text-white font-bold flex items-center justify-center">
-        VIP
-      </div>
+      <img
+        src="@/assets/vip-logo-without-text.png"
+        alt="VIP Logo"
+        class="h-24 w-auto rounded-sm object-cover"
+      />
     </div>
 
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">
-        Connexion
-      </h1>
-      <p class="mt-1 text-sm text-gray-500">
-        Connectez-vous à votre compte VIP
-      </p>
+      <h1 class="text-2xl font-bold text-gray-900">Connexion</h1>
+      <p class="mt-1 text-sm text-gray-500">Connectez-vous à votre compte VIP</p>
     </div>
 
     <form class="space-y-5" @submit.prevent="onSubmit">
@@ -79,11 +76,7 @@ async function onSubmit() {
         placeholder="••••••••"
         required
       />
-      <AppButton
-        type="submit"
-        variant="primary"
-        :loading="authStore.isLoading"
-      >
+      <AppButton type="submit" variant="primary" :loading="authStore.isLoading">
         Se connecter
       </AppButton>
     </form>
