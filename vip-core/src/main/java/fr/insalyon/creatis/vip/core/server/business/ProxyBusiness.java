@@ -3,6 +3,7 @@ package fr.insalyon.creatis.vip.core.server.business;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import fr.insalyon.creatis.vip.core.server.business.proxy.ProxyClient;
 // this class ensure that the proxy is renewed every each 10 hours
 // the schedule of the task is handled by spring
 @Component
+@EnableScheduling
 public class ProxyBusiness extends CommonBusiness {
 
     private final Server server;
