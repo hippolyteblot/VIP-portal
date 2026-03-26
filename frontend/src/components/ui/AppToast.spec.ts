@@ -69,4 +69,26 @@ describe('AppToast', () => {
     expect(removeToastSpy).toHaveBeenCalledWith('toast-2')
     expect(notifications.toasts).toHaveLength(0)
   })
+
+  it('applies type-specific variant classes', async () => {
+    const { wrapper, notifications } = mountWithStore()
+
+    notifications.$patch({
+      toasts: [
+        {
+          id: 'toast-3',
+          type: 'success',
+          title: 'Done',
+          message: 'Everything is fine',
+        },
+      ],
+    })
+
+    await nextTick()
+
+    const toastContainer = wrapper.findAll('div').find((node) => node.text().includes('Everything is fine'))
+    expect(toastContainer).toBeTruthy()
+    expect(toastContainer!.classes()).toContain('border-emerald-200')
+    expect(toastContainer!.classes()).toContain('bg-emerald-50/80')
+  })
 })

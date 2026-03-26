@@ -23,6 +23,27 @@ const colorMap: Record<string, string> = {
   warning: 'text-amber-500',
   info: 'text-primary-500',
 }
+
+const toastVariantMap: Record<string, string> = {
+  success: 'border-emerald-200 bg-emerald-50/80',
+  error: 'border-red-200 bg-red-50/80',
+  warning: 'border-amber-200 bg-amber-50/80',
+  info: 'border-primary-200 bg-primary-50/80',
+}
+
+const titleColorMap: Record<string, string> = {
+  success: 'text-emerald-900',
+  error: 'text-red-900',
+  warning: 'text-amber-900',
+  info: 'text-primary-900',
+}
+
+const messageColorMap: Record<string, string> = {
+  success: 'text-emerald-700',
+  error: 'text-red-700',
+  warning: 'text-amber-700',
+  info: 'text-primary-700',
+}
 </script>
 
 <template>
@@ -31,12 +52,15 @@ const colorMap: Record<string, string> = {
       <div
         v-for="toast in notifications.toasts"
         :key="toast.id"
-        class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-4 shadow-lg"
+        :class="[
+          'flex items-start gap-3 rounded-lg border p-4 shadow-lg',
+          toastVariantMap[toast.type] ?? 'border-gray-200 bg-white',
+        ]"
       >
         <component :is="iconMap[toast.type]" :class="['h-5 w-5 shrink-0 mt-0.5', colorMap[toast.type]]" />
         <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-gray-900">{{ toast.title }}</p>
-          <p class="mt-0.5 text-sm text-gray-500">{{ toast.message }}</p>
+          <p :class="['text-sm font-medium', titleColorMap[toast.type] ?? 'text-gray-900']">{{ toast.title }}</p>
+          <p :class="['mt-0.5 text-sm', messageColorMap[toast.type] ?? 'text-gray-500']">{{ toast.message }}</p>
         </div>
         <button
           class="shrink-0 rounded p-0.5 text-gray-400 hover:text-gray-600 transition-colors"
