@@ -99,6 +99,13 @@ public class UserBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public User update(User user) throws VipException {
+        User existingUser = getUserWithGroups(user.getEmail());
+        Set<Group> groupsToJoin = new HashSet<>(user.getGroups());
+        Set<Group> groupsToLeave = new HashSet<>(existingUser.getGroups());
+
+        groupsToJoin.removeAll(existingUser.getGroups());
+        groupsToLeave.removeAll(user.getGroups());
+    
         // we use JsonView to protect "sensitive"
         // fields from being edited (see @User.class)
         // not all can be handled like that, especially for groups
@@ -107,12 +114,10 @@ public class UserBusiness extends CommonBusiness {
                 // only admin can edit others accounts
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
-            Set<Group> diff = new HashSet<>(user.getGroups());
-            diff.retainAll(getUser().getGroups()); // only examine modifications
 
             // here user try to join private group (forbidden)
             // but it's okay if the user try to leave a private group
-            if ( ! diff.stream().allMatch(Group::isPublicGroup)) {
+            if ( ! groupsToJoin.stream().allMatch(Group::isPublicGroup)) {
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
             // only administrator can define "null" fields
@@ -121,6 +126,13 @@ public class UserBusiness extends CommonBusiness {
         }
         try {
             userDAO.update(user);
+
+            for (Group group : groupsToLeave) {
+                usersGroupsDAO.removeUserFromGroup(user.getEmail(), group.getName());
+            }
+            for (Group group : groupsToJoin) {
+                usersGroupsDAO.add(user.getEmail(), group.getName(), GROUP_ROLE.User);
+            }
             return user;
         } catch (DAOException ex) {
             throw new VipException(ex);
