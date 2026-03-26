@@ -36,6 +36,8 @@ public interface UserDAO {
 
     public void remove(String email) throws DAOException;
 
+    public void definePassword(String email, String password) throws DAOException;
+
     public void updatePassword(String email, String currentPassword, String newPassword) throws DAOException;
 
     void updateEmail(String oldEmail, String newEmail) throws DAOException;

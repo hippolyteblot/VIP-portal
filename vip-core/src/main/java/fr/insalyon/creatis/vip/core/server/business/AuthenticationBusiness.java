@@ -112,6 +112,7 @@ public class AuthenticationBusiness extends CommonBusiness {
             user.setLastUpdatePublications(ts);
             user.setCode(UUID.randomUUID().toString());
             user.setFailedAuthentications(0);
+
             if (user.getPassword() == null) {
                 user.setPassword(null);
             } else {
@@ -129,6 +130,7 @@ public class AuthenticationBusiness extends CommonBusiness {
             user.setLevel(UserLevel.Beginner);
             user.setId(CoreUtil.createUUID());
             userDAO.add(user);
+            userDAO.definePassword(user.getEmail(), user.getPassword());
 
             // Adding user to groups
             if (groups == null) {

@@ -26,6 +26,12 @@ import java.util.*;
 public class UserData extends JdbcDaoSupport implements UserDAO {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final String FIELDS = """
+        id, email, next_email, first_name, last_name, institution, 
+        code, confirmed, folder, session, registration, 
+        last_login, level, country_code, max_simulations, 
+        termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey 
+        """;
 
     @Autowired
     public void useDataSource(DataSource dataSource) {
@@ -34,32 +40,30 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public void add(User user) throws DAOException {
-        String query =  "INSERT INTO VIPUsers("
-        +               "id, email, pass, first_name, last_name, institution, "
-        +               "code, confirmed, folder, registration, last_login, level, "
-        +               "country_code, max_simulations, termsUse,lastUpdatePublications,"
-        +               "failed_authentications, account_locked) "
-        +               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query =  "INSERT INTO VIPUsers(" + FIELDS + ") "
+        +               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             ps.setString(1, user.getId());
             ps.setString(2, user.getEmail());
-            ps.setString(3, user.getPassword());
+            ps.setString(3, user.getNextEmail());
             ps.setString(4, user.getFirstName());
             ps.setString(5, user.getLastName());
             ps.setString(6, user.getInstitution());
             ps.setString(7, user.getCode());
             ps.setBoolean(8, user.isConfirmed());
             ps.setString(9, user.getFolder());
-            ps.setTimestamp(10, new Timestamp(user.getRegistration().getTime()));
-            ps.setTimestamp(11, new Timestamp(user.getLastLogin().getTime()));
-            ps.setString(12, user.getLevel().name());
-            ps.setString(13, user.getCountryCode().name());
-            ps.setInt(14, user.getMaxRunningSimulations());
-            ps.setTimestamp(15, user.getTermsOfUse());
-            ps.setTimestamp(16, user.getLastUpdatePublications());
-            ps.setInt(17, 0);
-            ps.setBoolean(18, false);
+            ps.setString(10, user.getSession());
+            ps.setTimestamp(11, new Timestamp(user.getRegistration().getTime()));
+            ps.setTimestamp(12, new Timestamp(user.getLastLogin().getTime()));
+            ps.setString(13, user.getLevel().name());
+            ps.setString(14, user.getCountryCode().name());
+            ps.setInt(15, user.getMaxRunningSimulations());
+            ps.setTimestamp(16, user.getTermsOfUse());
+            ps.setTimestamp(17, user.getLastUpdatePublications());
+            ps.setInt(18, user.getFailedAuthentications());
+            ps.setBoolean(19, user.isAccountLocked());
+            ps.setString(20, user.getApiKey());
 
             ps.execute();
 
@@ -76,7 +80,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public boolean authenticate(String email, String password) throws DAOException {
-
         try {
             PreparedStatement ps = getConnection().prepareStatement("SELECT "
                     + "pass,account_locked FROM VIPUsers WHERE email=?");
@@ -134,11 +137,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public User get(String email) throws DAOException {
-        String query =  "SELECT "
-        +               "id, email, next_email, first_name, last_name, institution, "
-        +               "code, confirmed, folder, session, registration, "
-        +               "last_login, level, country_code, max_simulations, "
-        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        String query =  "SELECT " + FIELDS
         +               "FROM VIPUsers WHERE email=?";
         try (PreparedStatement ps = getConnection().prepareStatement(query)){
             ps.setString(1, email);
@@ -159,11 +158,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public List<User> getUsers() throws DAOException {
-        String query =  "SELECT "
-        +               "id, email, next_email, first_name, last_name, institution, "
-        +               "code, confirmed, folder, session, registration, "
-        +               "last_login, level, country_code, max_simulations, "
-        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        String query =  "SELECT " + FIELDS
         +               "FROM VIPUsers ORDER BY LOWER(first_name), LOWER(last_name)";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
@@ -345,6 +340,34 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     }
 
     @Override
+    public void definePassword(String email, String password) throws DAOException {
+        String queryA = "SELECT pass FROM VIPUsers WHERE email = ?";
+        String queryB = "UPDATE VIPUsers SET pass = ? WHERE email = ?";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(queryA)){
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+
+            if ( ! rs.next()) {
+                logger.error("User not found for password creation ({})", email);
+                throw new DAOException("User not found for password creation!");
+            }
+            if (rs.getString("pass") != null) {
+                logger.error("Password already defined for {} use update method!", email);
+                throw new DAOException("Password already defined use update method!");
+            }
+            try (PreparedStatement ps2 = getConnection().prepareStatement(queryB)) {
+                ps2.setString(1, password);
+                ps2.setString(2, email);
+                ps2.executeUpdate();
+            }
+        } catch (SQLException e) {
+            logger.error("Error while creating user password for {}", email, e);
+            throw new DAOException(e);
+        }
+    }
+
+    @Override
     public void updatePassword(String email, String currentPassword,
                                String newPassword) throws DAOException {
 
@@ -492,11 +515,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public User getUserBySession(String session) throws DAOException {
-        String query =  "SELECT "
-        +               "id, email, next_email, first_name, last_name, institution, "
-        +               "code, confirmed, folder, session, registration, "
-        +               "last_login, level, country_code, max_simulations, "
-        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        String query =  "SELECT " + FIELDS
         +               "FROM VIPUsers WHERE session=?";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
@@ -515,11 +534,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public List<User> getAdministrators() throws DAOException {
-        String query =  "SELECT "
-        +               "id, email, next_email, first_name, last_name, institution, "
-        +               "code, confirmed, folder, session, registration, "
-        +               "last_login, level, country_code, max_simulations, "
-        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        String query =  "SELECT " + FIELDS
         +               "FROM VIPUsers WHERE level = ? ORDER BY LOWER(first_name), LOWER(last_name)";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
@@ -858,11 +873,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public User getById(String id) throws DAOException {
-        String query =  "SELECT "
-        +               "id, email, next_email, first_name, last_name, institution, "
-        +               "code, confirmed, folder, session, registration, "
-        +               "last_login, level, country_code, max_simulations, "
-        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        String query =  "SELECT " + FIELDS
         +               "FROM VIPUsers WHERE id=?";
         try (PreparedStatement ps = getConnection().prepareStatement(query)){
             ps.setString(1, id);
