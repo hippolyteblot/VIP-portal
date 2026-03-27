@@ -141,7 +141,9 @@ watch(selectedVersionName, async (versionName) => {
             </div>
 
             <div v-if="application.note" class="space-y-2">
-              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Description</h3>
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Description
+              </h3>
               <p class="text-sm text-gray-600">
                 {{ application.note }}
               </p>
@@ -165,10 +167,28 @@ watch(selectedVersionName, async (versionName) => {
               <span class="font-medium text-gray-700">Version:</span> {{ selectedVersion.version }}
             </p>
 
+
+            <div v-if="selectedVersion.tags.length" class="space-y-2">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Tags</h3>
+              <div class="flex flex-wrap gap-1.5">
+                <AppBadge
+                  v-for="tag in selectedVersion.tags"
+                  :key="tag.key"
+                  :variant="getGroupBadgeColor(tag.key)"
+                >
+                  {{ tag.key }}
+                </AppBadge>
+              </div>
+            </div>
+
             <div class="space-y-2">
               <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Resources</h3>
               <div v-if="selectedVersion.resources.length" class="flex flex-wrap gap-1.5">
-                <AppBadge v-for="resource in selectedVersion.resources" :key="resource.name" variant="gray">
+                <AppBadge
+                  v-for="resource in selectedVersion.resources"
+                  :key="resource.name"
+                  variant="gray"
+                >
                   {{ resource.name }}
                 </AppBadge>
               </div>
@@ -182,7 +202,9 @@ watch(selectedVersionName, async (versionName) => {
               <span class="font-medium text-gray-700">Source:</span> {{ selectedVersion.source }}
             </p>
             <div v-if="sanitizedVersionDescription" class="space-y-2">
-              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Description</h3>
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Description
+              </h3>
               <div
                 class="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700"
                 v-html="sanitizedVersionDescription"

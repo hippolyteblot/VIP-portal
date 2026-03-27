@@ -6,6 +6,7 @@ import {
   filterSelectableGroupNames,
   normalizeResources,
   parseBoutiquesIdentity,
+  toAppVersionTagsPayload,
   toAppVersionResourcesPayload,
   toApplicationGroupsPayload,
   toggleItemSelection,
@@ -140,5 +141,45 @@ describe('createApplication utils', () => {
         ['cluster-a', 'cluster-b', 'unknown'],
       ),
     ).toEqual([{ name: 'cluster-a', status: true, configuration: 'queue=short' }])
+  })
+
+  it('builds structured tags payload expected by backend AppVersion model', () => {
+    expect(
+      toAppVersionTagsPayload(
+        ['stable', 'custom-tag'],
+        [
+          {
+            key: 'stable',
+            value: 'true',
+            type: 'BOOLEAN',
+            application: 'legacy-app',
+            version: '0.1.0',
+            visible: true,
+            boutiques: false,
+          },
+        ],
+        'demo-app',
+        '1.2.3',
+      ),
+    ).toEqual([
+      {
+        key: 'stable',
+        value: 'true',
+        type: 'BOOLEAN',
+        application: 'demo-app',
+        version: '1.2.3',
+        visible: true,
+        boutiques: false,
+      },
+      {
+        key: 'custom-tag',
+        value: 'true',
+        type: 'BOOLEAN',
+        application: 'demo-app',
+        version: '1.2.3',
+        visible: true,
+        boutiques: false,
+      },
+    ])
   })
 })

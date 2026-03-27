@@ -2,6 +2,7 @@ import { backendClient } from './client'
 import type { AppVersion } from '@/types/appversion.types'
 import type { BoutiquesDescriptor } from '@/types/appversion.types'
 import type { PrecisePage } from '@/types/application.types'
+import type { Tag } from '@/types/tag.types'
 
 export interface BackendAppVersion {
   applicationName: string
@@ -11,11 +12,13 @@ export interface BackendAppVersion {
   doi: string | null
   visible: boolean
   resources: { name: string; status: boolean; configuration: string }[]
-  tags: string[]
+  tags: Tag[]
   settings: {}[]
   source: string | null
   note: string | null
 }
+
+type BackendAppVersionRaw = Omit<BackendAppVersion, 'parsedDescriptor'>
 
 function parseDescriptor(descriptor: string | null): BoutiquesDescriptor | null {
   if (!descriptor) return null
@@ -27,9 +30,10 @@ function parseDescriptor(descriptor: string | null): BoutiquesDescriptor | null 
   }
 }
 
-function withParsedDescriptor(version: Omit<BackendAppVersion, 'parsedDescriptor'>): BackendAppVersion {
+function withParsedDescriptor(version: BackendAppVersionRaw): BackendAppVersion {
   return {
     ...version,
+    tags: version.tags ?? [],
     parsedDescriptor: parseDescriptor(version.descriptor),
   }
 }
@@ -43,7 +47,7 @@ export interface CreateAppVersionPayload {
   source?: string | null
   note?: string | null
   resources?: { name: string; status: boolean; configuration: string }[]
-  tags?: string[]
+  tags?: Tag[]
   settings?: Record<string, string>
 }
 
@@ -51,7 +55,7 @@ export const appVersionsApi = {
 
   getAll: (offset = 0, quantity = 50) => {
     return backendClient
-      .get<PrecisePage<Omit<BackendAppVersion, 'parsedDescriptor'>>>(
+      .get<PrecisePage<BackendAppVersionRaw>>(
         `/internal/applications/versions`
       )
       .then((r) => ({
@@ -62,7 +66,7 @@ export const appVersionsApi = {
     
   getAllForApplication: (applicationId: string, offset = 0, quantity = 50) => {
     return backendClient
-      .get<PrecisePage<Omit<BackendAppVersion, 'parsedDescriptor'>>>(
+      .get<PrecisePage<BackendAppVersionRaw>>(
         `/internal/applications/${encodeURIComponent(applicationId)}/versions`
       )
       .then((r) => ({
@@ -73,7 +77,7 @@ export const appVersionsApi = {
 
   getByVersion: (applicationId: string, version: string) =>
     backendClient
-      .get<Omit<BackendAppVersion, 'parsedDescriptor'>>(
+      .get<BackendAppVersionRaw>(
         `/internal/applications/${encodeURIComponent(applicationId)}/versions/${encodeURIComponent(version)}`,
       )
       .then((r) => withParsedDescriptor(r.data)),

@@ -6,11 +6,11 @@ import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { appVersionsApi } from '@/api/appVersions.api'
 import { applicationsApi } from '@/api/applications.api'
-import { tagsApi } from '@/api/tags.api'
 import { boutiquesApi } from '@/api/boutiques.api'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useGroupsStore } from '@/stores/groups.store'
 import { useResourcesStore } from '@/stores/resources.store'
+import { useTagsStore } from '@/stores/tags.store'
 import {
   addCustomTag as addCustomTagToLists,
   buildGroupSelectionItems,
@@ -18,6 +18,7 @@ import {
   filterSelectableGroupNames,
   parseBoutiquesIdentity,
   toAppVersionResourcesPayload,
+  toAppVersionTagsPayload,
   toApplicationGroupsPayload,
   toggleItemSelection,
 } from '@/utils/createApplication'
@@ -26,6 +27,7 @@ const router = useRouter()
 const notificationsStore = useNotificationsStore()
 const groupsStore = useGroupsStore()
 const resourcesStore = useResourcesStore()
+const tagsStore = useTagsStore()
 
 const form = reactive({
   descriptorFile: null as File | null,
@@ -74,8 +76,8 @@ const resourceSelectionItems = computed(() => {
 
 onMounted(async () => {
   try {
-    const page = await tagsApi.getAll(0, 50)
-    availableTags.value = page.data.map((t) => t.name)
+    await tagsStore.fetchTags(0, 50)
+    availableTags.value = [...tagsStore.tagKeys]
   } catch {
     availableTags.value = []
   }
@@ -230,7 +232,12 @@ async function onSubmit() {
       visible: form.visible,
       source: form.source || null,
       note: form.note || null,
-      tags: selectedTags.value,
+      tags: toAppVersionTagsPayload(
+        selectedTags.value,
+        tagsStore.tags,
+        parsedAppName.value,
+        parsedVersion.value,
+      ),
       resources: toAppVersionResourcesPayload(resourcesStore.resources, selectedResourceNames.value),
       settings: {},
     }

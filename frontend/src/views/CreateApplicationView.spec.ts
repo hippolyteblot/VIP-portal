@@ -92,7 +92,26 @@ describe('CreateApplicationView', () => {
     vi.clearAllMocks()
 
     mocked.tagsGetAll.mockResolvedValue({
-      data: [{ name: 'stable' }, { name: 'neuro' }],
+      data: [
+        {
+          key: 'stable',
+          value: 'true',
+          type: 'BOOLEAN',
+          application: 'demo-app',
+          version: '1.0.0',
+          visible: true,
+          boutiques: false,
+        },
+        {
+          key: 'neuro',
+          value: 'domain-neuro',
+          type: 'STRING',
+          application: 'demo-app',
+          version: '1.0.0',
+          visible: true,
+          boutiques: false,
+        },
+      ],
       total: 2,
     })
     mocked.groupsGetAll.mockResolvedValue({
@@ -173,7 +192,7 @@ describe('CreateApplicationView', () => {
 
     const adminsLabel = wrapper
       .findAll('label')
-      .find((node) => node.text().includes('admins'))
+      .find((node: any) => node.text().includes('admins'))
 
     expect(adminsLabel).toBeTruthy()
 
@@ -184,7 +203,7 @@ describe('CreateApplicationView', () => {
 
     const resourceLabel = wrapper
       .findAll('label')
-      .find((node) => node.text().includes('cluster-a'))
+      .find((node: any) => node.text().includes('cluster-a'))
 
     expect(resourceLabel).toBeTruthy()
 
@@ -192,6 +211,17 @@ describe('CreateApplicationView', () => {
 
     expect(resourceCheckbox).toBeTruthy()
     await resourceCheckbox.setValue(true)
+
+    const tagLabel = wrapper
+      .findAll('label')
+      .find((node: any) => node.text().includes('stable'))
+
+    expect(tagLabel).toBeTruthy()
+
+    const tagCheckbox = tagLabel!.find('input[type="checkbox"]')
+
+    expect(tagCheckbox).toBeTruthy()
+    await tagCheckbox.setValue(true)
 
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -209,6 +239,17 @@ describe('CreateApplicationView', () => {
     expect(mocked.appVersionsCreate).toHaveBeenCalledTimes(1)
     expect(mocked.appVersionsCreate).toHaveBeenCalledWith(
       expect.objectContaining({
+        tags: [
+          {
+            key: 'stable',
+            value: 'true',
+            type: 'BOOLEAN',
+            application: 'demo-app',
+            version: '1.2.0',
+            visible: true,
+            boutiques: false,
+          },
+        ],
         resources: [
           { name: 'cluster-a', status: true, configuration: 'queue=short' },
         ],

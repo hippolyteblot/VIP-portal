@@ -1,3 +1,5 @@
+import type { Tag } from '@/types/tag.types'
+
 export interface BoutiquesContainerImage {
   image?: string
   type?: string
@@ -54,7 +56,7 @@ export interface AppVersion {
     doi: string | null
     visible: boolean
     resources: { name: string; status: boolean; configuration: string }[]
-    tags: string[]
+    tags: Tag[]
     settings: {}[]
     source: string | null
     note: string | null

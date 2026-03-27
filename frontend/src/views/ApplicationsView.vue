@@ -102,13 +102,13 @@ M4.5 12h15" />
                 </AppBadge>
               </div>
             </div>
-            <div v-if="app.groups.length" class="mt-3 flex flex-wrap gap-1.5">
+            <div v-if="app.latestVersion?.tags.length" class="mt-2 flex flex-wrap gap-1.5">
               <AppBadge
-                v-for="group in app.groups"
-                :key="group.name"
-                :variant="getGroupBadgeColor(group.name)"
+                v-for="tag in app.latestVersion.tags"
+                :key="`tag-${app.name}-${tag}`"
+                :variant="getGroupBadgeColor(tag.key)"
               >
-                {{ group.name }}
+                {{ tag.key }}
               </AppBadge>
             </div>
             <p v-if="app.latestVersion?.parsedDescriptor?.description" class="mt-3 line-clamp-2 text-xs text-gray-500">

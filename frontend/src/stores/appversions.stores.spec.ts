@@ -33,7 +33,17 @@ describe('useAppVersionsStore', () => {
           doi: null,
           visible: true,
           resources: [],
-          tags: ['stable'],
+          tags: [
+            {
+              key: 'stable',
+              value: 'true',
+              type: 'BOOLEAN',
+              application: 'demo-app',
+              version: '1.0.0',
+              visible: true,
+              boutiques: false,
+            },
+          ],
           settings: [],
           source: null,
           note: null,
@@ -92,7 +102,17 @@ describe('useAppVersionsStore', () => {
       doi: null,
       visible: true,
       resources: [],
-      tags: ['latest'],
+      tags: [
+        {
+          key: 'latest',
+          value: 'true',
+          type: 'BOOLEAN',
+          application: 'demo-app',
+          version: '3.0.0',
+          visible: true,
+          boutiques: false,
+        },
+      ],
       settings: [],
       source: null,
       note: null,
@@ -103,6 +123,6 @@ describe('useAppVersionsStore', () => {
 
     expect(mocked.getByVersion).toHaveBeenCalledWith('demo-app', '3.0.0')
     expect(version.version).toBe('3.0.0')
-    expect(version.tags).toEqual(['latest'])
+    expect(version.tags.map((tag) => tag.key)).toEqual(['latest'])
   })
 })

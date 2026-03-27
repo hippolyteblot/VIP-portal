@@ -1,5 +1,6 @@
 import type { Group } from '@/types/group.types'
 import type { Resource } from '@/types/resource.types'
+import type { Tag } from '@/types/tag.types'
 
 export type ParsedDescriptorIdentity = {
   name: string
@@ -129,6 +130,43 @@ export function toAppVersionResourcesPayload(
       status: resource.status,
       configuration: resource.configuration,
     }))
+}
+
+export function toAppVersionTagsPayload(
+  selectedTagKeys: string[],
+  availableTags: Tag[],
+  applicationName: string,
+  version: string,
+): Tag[] {
+  const firstTagByKey = new Map<string, Tag>()
+  for (const tag of availableTags) {
+    if (!firstTagByKey.has(tag.key)) {
+      firstTagByKey.set(tag.key, tag)
+    }
+  }
+
+  return selectedTagKeys.map((key) => {
+    const existing = firstTagByKey.get(key)
+
+    if (existing) {
+      return {
+        ...existing,
+        application: applicationName,
+        version,
+      }
+    }
+
+    // For custom tags created from the UI, use a deterministic default value/type.
+    return {
+      key,
+      value: 'true',
+      type: 'BOOLEAN',
+      application: applicationName,
+      version,
+      visible: true,
+      boutiques: false,
+    }
+  })
 }
 
 export function toApplicationGroupsPayload(groupNames: string[]): Group[] {

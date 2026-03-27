@@ -25,7 +25,7 @@ const mocked = vi.hoisted(() => ({
       doi: string | null
       visible: boolean
       resources: Array<{ name: string; status: boolean; configuration: string }>
-      tags: string[]
+      tags: Array<{ key: string; value: string; type: 'STRING' | 'BOOLEAN'; application: string; version: string; visible: boolean; boutiques: boolean }>
       settings: Array<Record<string, unknown>>
       source: string | null
       note: string | null
@@ -86,7 +86,17 @@ describe('ApplicationsView', () => {
         doi: null,
         visible: true,
         resources: [],
-        tags: [],
+        tags: [
+          {
+            key: 'legacy',
+            value: 'true',
+            type: 'BOOLEAN',
+            application: 'freesurfer',
+            version: '1.0.0',
+            visible: true,
+            boutiques: false,
+          },
+        ],
         settings: [],
         source: null,
         note: null,
@@ -99,7 +109,26 @@ describe('ApplicationsView', () => {
         doi: null,
         visible: true,
         resources: [],
-        tags: [],
+        tags: [
+          {
+            key: 'stable',
+            value: 'true',
+            type: 'BOOLEAN',
+            application: 'freesurfer',
+            version: '2.0.0',
+            visible: true,
+            boutiques: false,
+          },
+          {
+            key: 'neuro',
+            value: 'domain-neuro',
+            type: 'STRING',
+            application: 'freesurfer',
+            version: '2.0.0',
+            visible: true,
+            boutiques: false,
+          },
+        ],
         settings: [],
         source: null,
         note: null,
@@ -124,6 +153,9 @@ describe('ApplicationsView', () => {
     expect(wrapper.text()).toContain('2.0.0')
     expect(wrapper.text()).toContain('1.0.0')
     expect(wrapper.text()).toContain('Latest description')
+    expect(wrapper.text()).toContain('stable')
+    expect(wrapper.text()).toContain('neuro')
+    expect(wrapper.text()).not.toContain('legacy')
   })
 
   it('shows empty state when no matching applications with versions', async () => {
