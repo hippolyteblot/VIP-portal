@@ -91,7 +91,17 @@ describe('types contracts', () => {
       doi: null,
       visible: true,
       resources: [],
-      tags: ['stable'],
+      tags: [
+        {
+          key: 'stable',
+          value: 'true',
+          type: 'BOOLEAN',
+          application: 'demo-app',
+          version: '1.0.0',
+          visible: true,
+          boutiques: false,
+        },
+      ],
       settings: [],
       source: null,
       note: null,
