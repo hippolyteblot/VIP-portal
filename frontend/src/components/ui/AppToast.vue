@@ -52,6 +52,7 @@ const messageColorMap: Record<string, string> = {
       <div
         v-for="toast in notifications.toasts"
         :key="toast.id"
+        :data-toast-id="toast.id"
         :class="[
           'flex items-start gap-3 rounded-lg border p-4 shadow-lg',
           toastVariantMap[toast.type] ?? 'border-gray-200 bg-white',

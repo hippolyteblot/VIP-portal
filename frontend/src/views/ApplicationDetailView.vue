@@ -10,6 +10,7 @@ import { useApplicationsStore } from '@/stores/applications.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
 import { parseDescriptorInputs } from '@/utils/boutiquesDescriptor'
+import { getGroupBadgeColor } from '@/utils/groupColor'
 import { sanitizeHtml } from '@/utils/sanitizeHtml'
 import { sortByVersionDesc } from '@/utils/versionSort'
 
@@ -129,7 +130,11 @@ watch(selectedVersionName, async (versionName) => {
             <div v-if="application.groups.length" class="space-y-2">
               <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Groups</h3>
               <div class="flex flex-wrap gap-1.5">
-                <AppBadge v-for="group in application.groups" :key="group.name" variant="gray">
+                <AppBadge
+                  v-for="group in application.groups"
+                  :key="group.name"
+                  :variant="getGroupBadgeColor(group.name)"
+                >
                   {{ group.name }}
                 </AppBadge>
               </div>

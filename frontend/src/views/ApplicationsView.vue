@@ -8,6 +8,7 @@ import { useApplicationsStore } from '@/stores/applications.store'
 import { useAppVersionsStore } from '@/stores/appversions.stores'
 import type { AppVersion } from '@/types/appversion.types'
 import type { Application } from '@/types/application.types'
+import { getGroupBadgeColor } from '@/utils/groupColor'
 import { sortByVersionDesc } from '@/utils/versionSort'
 
 const applicationsStore = useApplicationsStore()
@@ -105,7 +106,7 @@ M4.5 12h15" />
               <AppBadge
                 v-for="group in app.groups"
                 :key="group.name"
-                variant="gray"
+                :variant="getGroupBadgeColor(group.name)"
               >
                 {{ group.name }}
               </AppBadge>

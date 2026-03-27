@@ -86,9 +86,8 @@ describe('AppToast', () => {
 
     await nextTick()
 
-    const toastContainer = wrapper.findAll('div').find((node) => node.text().includes('Everything is fine'))
-    expect(toastContainer).toBeTruthy()
-    expect(toastContainer!.classes()).toContain('border-emerald-200')
-    expect(toastContainer!.classes()).toContain('bg-emerald-50/80')
+    const toastContainer = wrapper.get('[data-toast-id="toast-3"]')
+    expect(toastContainer.classes()).toContain('border-emerald-200')
+    expect(toastContainer.classes()).toContain('bg-emerald-50/80')
   })
 })
