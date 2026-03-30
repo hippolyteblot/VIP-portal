@@ -46,9 +46,9 @@ const router = createRouter({
     },
     {
       path: '/',
-      name: '',
-      component: () => import('@/views/DashboardView.vue'),
-      meta: { requiresAuth: true, title: 'Dashboard' },
+      name: 'home',
+      component: () => import('@/views/LandingView.vue'),
+      meta: { title: 'Landing' },
     },
   ],
 })
@@ -60,6 +60,14 @@ router.beforeEach(async (to) => {
     await auth.initialize()
   }
 
+  if (to.name === 'home') {
+    return auth.isAuthenticated ? { name: 'dashboard' } : undefined
+  }
+
+  if (to.name === 'landing') {
+    return auth.isAuthenticated ? { name: 'dashboard' } : undefined
+  }
+
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' }
   }
@@ -67,7 +75,7 @@ router.beforeEach(async (to) => {
   if (
     !to.meta.requiresAuth &&
     auth.isAuthenticated &&
-    ['login', 'register', 'landing'].includes(to.name as string)
+    ['login', 'register'].includes(to.name as string)
   ) {
     return { name: 'dashboard' }
   }

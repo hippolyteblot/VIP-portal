@@ -6,17 +6,20 @@ import MainLayout from '@/components/layout/MainLayout.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 
 const route = useRoute()
-const isLandingRoute = computed(() => ['landing', 'home'].includes(route.name as string))
+const routeName = computed(() => (typeof route.name === 'string' ? route.name : ''))
+const isRouteResolved = computed(() => routeName.value.length > 0)
+const isLandingRoute = computed(() => ['landing', 'home'].includes(routeName.value))
+const isAuthRoute = computed(() => ['login', 'register'].includes(routeName.value))
 </script>
 
 <template>
   
   <AppToast />
 
-  <template v-if="isLandingRoute">
+  <template v-if="!isRouteResolved || isLandingRoute">
     <RouterView />
   </template>
-  <component v-else :is="route.path === '/login' || route.path === '/register' ? AuthLayout : MainLayout">
+  <component v-else :is="isAuthRoute ? AuthLayout : MainLayout">
     <RouterView />
   </component>
 </template>
