@@ -57,8 +57,10 @@ async function onSubmit() {
     </div>
 
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Connexion</h1>
-      <p class="mt-1 text-sm text-gray-500">Connectez-vous à votre compte VIP</p>
+      <h1 class="text-2xl font-bold text-gray-900">
+        Welcome back
+      </h1>
+      <p class="mt-1 text-sm text-gray-500">Log in to your VIP Portal account</p>
     </div>
 
     <form class="space-y-5" @submit.prevent="onSubmit">
@@ -66,25 +68,25 @@ async function onSubmit() {
         v-model="form.email"
         label="Email"
         type="email"
-        placeholder="vous@exemple.com"
+        placeholder="you@example.com"
         required
       />
       <AppInput
         v-model="form.password"
-        label="Mot de passe"
+        label="Password"
         type="password"
         placeholder="••••••••"
         required
       />
       <AppButton type="submit" variant="primary" :loading="authStore.isLoading">
-        Se connecter
+        Log in
       </AppButton>
     </form>
 
     <p class="text-center text-sm text-gray-600">
-      Pas encore de compte ?
+      Don't have an account?
       <RouterLink to="/register" class="font-medium text-primary-600 hover:text-primary-700">
-        Créer un compte
+        Create an account
       </RouterLink>
     </p>
   </div>

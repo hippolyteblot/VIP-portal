@@ -67,10 +67,10 @@ async function onSubmit() {
 
     <div>
       <h1 class="text-2xl font-bold text-gray-900">
-        Créer un compte
+        Create your account
       </h1>
       <p class="mt-1 text-sm text-gray-500">
-        Rejoignez la communauté VIP
+        Join the VIP community and start using the portal to manage and launch applications for your research projects.
       </p>
     </div>
 
@@ -78,14 +78,14 @@ async function onSubmit() {
       <div class="grid grid-cols-2 gap-4">
         <AppInput
           v-model="form.firstName"
-          label="Prénom"
-          placeholder="Jean"
+          label="First Name"
+          placeholder="Isaac"
           required
         />
         <AppInput
           v-model="form.lastName"
-          label="Nom"
-          placeholder="Dupont"
+          label="Last Name"
+          placeholder="Asimov"
           required
         />
       </div>
@@ -94,13 +94,13 @@ async function onSubmit() {
         v-model="form.email"
         label="Email"
         type="email"
-        placeholder="vous@exemple.com"
+        placeholder="you@example.com"
         required
       />
 
       <AppInput
         v-model="form.password"
-        label="Mot de passe"
+        label="Password"
         type="password"
         placeholder="••••••••"
         required
@@ -108,16 +108,16 @@ async function onSubmit() {
 
       <AppInput
         v-model="form.passwordConfirm"
-        label="Confirmer le mot de passe"
+        label="Confirm Password"
         type="password"
         placeholder="••••••••"
-        :error="passwordMismatch ? 'Les mots de passe ne correspondent pas' : undefined"
+        :error="passwordMismatch ? 'Passwords do not match' : undefined"
         required
       />
 
       <AppInput
         v-model="form.countryCode"
-        label="Code pays"
+        label="Country Code"
         placeholder="fr"
         required
       />
@@ -131,12 +131,12 @@ async function onSubmit() {
 
       <div class="space-y-1">
         <label class="block text-sm font-medium text-gray-700">
-          Commentaires pour l'équipe VIP
+          Comments for the VIP team
         </label>
         <textarea
           v-model="form.comments"
           rows="4"
-          placeholder="Décrivez votre projet de recherche..."
+          placeholder="Describe your research project..."
           class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 focus:border-primary-500 transition-colors duration-150"
         />
       </div>
@@ -148,7 +148,7 @@ async function onSubmit() {
           class="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
         />
         <span class="text-sm text-gray-600">
-          J'accepte les conditions d'utilisation
+          I accept the terms and conditions
         </span>
       </label>
 
@@ -157,14 +157,14 @@ async function onSubmit() {
         variant="primary"
         :loading="authStore.isLoading"
       >
-        Créer mon compte
+        Create my account
       </AppButton>
     </form>
 
     <p class="text-center text-sm text-gray-600">
-      Déjà un compte ?
+      Already have an account?
       <RouterLink to="/login" class="font-medium text-primary-600 hover:text-primary-700">
-        Se connecter
+        Log in
       </RouterLink>
     </p>
   </div>
