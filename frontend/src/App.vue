@@ -1,19 +1,22 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.store'
 import AuthLayout from '@/components/layout/AuthLayout.vue'
 import MainLayout from '@/components/layout/MainLayout.vue'
 import AppToast from '@/components/ui/AppToast.vue'
 
 const route = useRoute()
-const auth = useAuthStore()
+const isLandingRoute = computed(() => ['landing', 'home'].includes(route.name as string))
 </script>
 
 <template>
   
   <AppToast />
 
-  <component :is="route.path === '/login' || route.path === '/register' ? AuthLayout : MainLayout">
+  <template v-if="isLandingRoute">
+    <RouterView />
+  </template>
+  <component v-else :is="route.path === '/login' || route.path === '/register' ? AuthLayout : MainLayout">
     <RouterView />
   </component>
 </template>
