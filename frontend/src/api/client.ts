@@ -44,6 +44,24 @@ export const backendClient = axios.create({
   },
 })
 
+function isLoginRequest(url?: string, method?: string): boolean {
+  return (method || '').toUpperCase() === 'POST' && (url || '').includes('/internal/session')
+}
+
+function isSessionProbeRequest(url?: string, method?: string): boolean {
+  return (method || '').toUpperCase() === 'GET' && (url || '').includes('/internal/session')
+}
+
+function redirectToLogin(): void {
+  const base = import.meta.env.BASE_URL || '/'
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
+  const loginPath = `${normalizedBase}login`
+
+  if (window.location.pathname !== loginPath) {
+    window.location.assign(loginPath)
+  }
+}
+
 backendClient.interceptors.request.use((config) => {
   const method = (config.method || 'get').toUpperCase()
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
@@ -54,3 +72,19 @@ backendClient.interceptors.request.use((config) => {
   }
   return config
 })
+
+backendClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status as number | undefined
+    const url = error?.config?.url as string | undefined
+    const method = error?.config?.method as string | undefined
+
+    // If session is no longer valid (expired/missing cookies), force user back to login.
+    if (status === 401 && !isLoginRequest(url, method) && !isSessionProbeRequest(url, method)) {
+      redirectToLogin()
+    }
+
+    return Promise.reject(error)
+  },
+)
