@@ -22,6 +22,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.bind.annotation.RestController;
@@ -58,6 +59,7 @@ import static org.springframework.util.ResourceUtils.CLASSPATH_URL_PREFIX;
 // Spring Security & Spring MVC are configured in a shared ApplicationContext.
 // This implies that the root context must also be a WebMvc one.
 @EnableWebMvc
+@EnableScheduling
 @ComponentScan(
         basePackages = "fr.insalyon.creatis.vip",
         excludeFilters = {
