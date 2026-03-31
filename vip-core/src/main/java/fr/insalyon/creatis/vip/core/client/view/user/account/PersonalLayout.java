@@ -67,6 +67,7 @@ public class PersonalLayout extends AbstractFormLayout {
                         if (institutionField.validate() & countryField.validate()) {
 
                             User user = new User(
+                                    CoreModule.user.getId(),
                                     CoreModule.user.getFirstName(),
                                     CoreModule.user.getLastName(),
                                     CoreModule.user.getEmail(),

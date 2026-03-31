@@ -17,8 +17,8 @@ import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.grida.common.bean.CachedFile;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.datamanager.client.view.DataManagerException;
 import fr.insalyon.creatis.vip.datamanager.models.DMCachedFile;
 
@@ -28,21 +28,21 @@ public class DataManagerBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private GRIDAClient gridaClient;
-    private GRIDACacheClient gridaCacheClient;
-    private ConfigurationBusiness configurationBusiness;
-    private LfcPathsBusiness lfcPathsBusiness;
-    private Server server;
+    private final GRIDAClient gridaClient;
+    private final GRIDACacheClient gridaCacheClient;
+    private final LfcPathsBusiness lfcPathsBusiness;
+    private final Server server;
+    private final UserBusiness userBusiness;
 
     @Autowired
     public DataManagerBusiness(
             GRIDAClient gridaClient, GRIDACacheClient gridaCacheClient,
-            ConfigurationBusiness configurationBusiness, LfcPathsBusiness lfcPathsBusiness, Server server) {
+            LfcPathsBusiness lfcPathsBusiness, Server server, UserBusiness userBusiness) {
         this.gridaClient = gridaClient;
         this.gridaCacheClient = gridaCacheClient;
-        this.configurationBusiness = configurationBusiness;
         this.lfcPathsBusiness = lfcPathsBusiness;
         this.server = server;
+        this.userBusiness = userBusiness;
     }
 
     public void deleteLocalFile(String fileName) {
@@ -112,7 +112,7 @@ public class DataManagerBusiness {
 
     public String getLFCDir(String email, String lfcName) throws VipException {
 
-        User user = configurationBusiness.getUser(email);
+        User user = userBusiness.getUser(email);
         String homeDir = server.getDataManagerUsersHome() + "/" + user.getFolder();
 
         return (homeDir + "/" + lfcName);

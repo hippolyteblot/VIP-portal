@@ -101,8 +101,8 @@ public class MessageData extends JdbcDaoSupport implements MessageDAO {
             SimpleDateFormat f = new SimpleDateFormat("MMMM d, yyyy HH:mm");
 
             while (rs.next()) {
-                User from = userDAO.getUser(rs.getString("sender"));
-                User to = userDAO.getUser(email);
+                User from = userDAO.get(rs.getString("sender"));
+                User to = userDAO.get(email);
                 Date posted = new Date(rs.getTimestamp("posted").getTime());
                 messages.add(new Message(rs.getLong("id"), from, to, rs.getString("title"),
                         rs.getString("message"), f.format(posted), posted,
@@ -138,7 +138,7 @@ public class MessageData extends JdbcDaoSupport implements MessageDAO {
 
             while (rs.next()) {
 
-                User sender = userDAO.getUser(email);
+                User sender = userDAO.get(email);
 
                 PreparedStatement ps2 = getConnection().prepareStatement("SELECT "
                         + "receiver FROM VIPSocialMessageSenderReceiver "
@@ -149,7 +149,7 @@ public class MessageData extends JdbcDaoSupport implements MessageDAO {
                 List<User> receivers = new ArrayList<User>();
 
                 while (rs2.next()) {
-                    receivers.add(userDAO.getUser(rs2.getString("receiver")));
+                    receivers.add(userDAO.get(rs2.getString("receiver")));
                 }
                 Date posted = new Date(rs.getTimestamp("posted").getTime());
                 messages.add(new Message(rs.getLong("id"), sender,

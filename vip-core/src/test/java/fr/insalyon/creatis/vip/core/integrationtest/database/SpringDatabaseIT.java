@@ -6,9 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -19,6 +16,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.test.jdbc.JdbcTestUtils;
@@ -27,8 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.ProxyBusiness;
+import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
 
 /**
  * Integration tests that verify the spring database/transactions configuration
@@ -37,7 +37,10 @@ import fr.insalyon.creatis.vip.core.models.Group;
  * These tests are ordered as this is needed for the last ones.
  */
 @TestMethodOrder(OrderAnnotation.class)
-public class SpringDatabaseIT extends BaseSpringIT{
+public class SpringDatabaseIT extends BaseSpringIT {
+
+    @Autowired private ProxyBusiness configurationBusiness;
+    @Autowired private TermsOfUseBusiness termsOfUseBusiness;
     
     /*
         verify database init and that only one connection is shared in a test
@@ -105,13 +108,15 @@ public class SpringDatabaseIT extends BaseSpringIT{
 
     private void testRollbackInTransaction(
             Exception exception, boolean shouldRollback) throws VipException, GRIDAClientException {
+        setAdminContext();
+
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         Supplier<Integer> countUser =
                 () -> JdbcTestUtils.countRowsInTable(jdbcTemplate, "VIPUsers");
 
         String testEmail = "test@email.fr";
         assertEquals(1, countUser.get());
-        createUser(testEmail);
+        User user = createUser(testEmail);
         // verify initial user + new one are there
         assertEquals(2, countUser.get());
         // Now we will remove an user, and throw an exception when an email is sent at the end
@@ -124,7 +129,7 @@ public class SpringDatabaseIT extends BaseSpringIT{
 
         Exception exceptionCatched = null;
         try {
-            configurationBusiness.removeUser(testEmail, true);
+            userBusiness.remove(user.getId(), true);
         } catch (Exception ex) {
             exceptionCatched = ex;
         }
@@ -133,7 +138,7 @@ public class SpringDatabaseIT extends BaseSpringIT{
         assertEquals(shouldRollback ? 2 : 1, countUser.get());
         if (shouldRollback) {
             // clean if necessary
-            configurationBusiness.removeUser(testEmail, false);
+            userBusiness.remove(user.getId(), false);
         }
         assertEquals(1, countUser.get());
     }
@@ -146,18 +151,7 @@ public class SpringDatabaseIT extends BaseSpringIT{
         // and not when the connection is obtained through spring and so errors cause SqlException
         // and not spring DataAccessException, so vip is able to catch them and transform them in VipException
         Mockito.doThrow(SQLException.class).when(dataSource).getConnection();
-        assertThrows(VipException.class, () -> configurationBusiness.addTermsUse());
-        Mockito.reset(dataSource);
-    }
-
-    @Test
-    @Order(7)
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void connectionShouldBeLazyInTransaction() throws SQLException, MalformedURLException, URISyntaxException {
-        // getConnection throw an exception but should not be called as 'getLoginUrlCas' do not need db access
-        Mockito.doThrow(SQLException.class).when(dataSource).getConnection();
-        String res = configurationBusiness.getLoginUrlCas(new URI("file:/plop").toURL());
-        assertEquals(ServerMockConfig.TEST_CAS_URL + "/login?service=file:/plop", res);
+        assertThrows(VipException.class, () -> termsOfUseBusiness.add());
         Mockito.reset(dataSource);
     }
 }

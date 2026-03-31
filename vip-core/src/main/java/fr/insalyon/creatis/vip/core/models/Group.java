@@ -2,8 +2,12 @@ package fr.insalyon.creatis.vip.core.models;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+
+@JsonView(DataViews.User.class)
 public class Group implements IsSerializable {
 
     private String name;

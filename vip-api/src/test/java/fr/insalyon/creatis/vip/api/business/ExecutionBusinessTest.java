@@ -16,6 +16,7 @@ import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 public class ExecutionBusinessTest {
 
@@ -68,7 +69,7 @@ public class ExecutionBusinessTest {
     // UTILS to be externalized later
 
     private User prepareTestUser(int userIndex, boolean isAdmin) {
-        return new User(USER_FIRST_NAME[userIndex], USER_LAST_NAME[userIndex], USER_MAIL[userIndex], null,
+        return new User(CoreUtil.createUUID(), USER_FIRST_NAME[userIndex], USER_LAST_NAME[userIndex], USER_MAIL[userIndex], null,
                 isAdmin ? UserLevel.Administrator : UserLevel.Beginner, null);
     }
 
