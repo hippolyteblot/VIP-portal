@@ -9,6 +9,70 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/storage/**" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "listStoragePath",
+        "parameters" : [ {
+          "name" : "refresh",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "oneOf" : [ {
+                    "type" : "string",
+                    "format" : "binary"
+                  }, {
+                    "type" : "array",
+                    "items" : {
+                      "$ref" : "#/components/schemas/Data"
+                    }
+                  } ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "uploadFile",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/resources/{id}" : {
       "get" : {
         "tags" : [ "resource-controller" ],
@@ -988,51 +1052,6 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PrecisePageTag"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/storage/**" : {
-      "get" : {
-        "tags" : [ "storage-controller" ],
-        "operationId" : "listStoragePath",
-        "parameters" : [ {
-          "name" : "refresh",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "oneOf" : [ {
-                    "type" : "string",
-                    "format" : "binary"
-                  }, {
-                    "type" : "array",
-                    "items" : {
-                      "$ref" : "#/components/schemas/Data"
-                    }
-                  } ]
                 }
               }
             }
