@@ -30,6 +30,8 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.springframework.util.ResourceUtils.CLASSPATH_URL_PREFIX;
 
@@ -124,6 +126,12 @@ public class SpringCoreConfig {
     @Bean
     public ObjectMapper objectMapper() {
         return Jackson2ObjectMapperBuilder.json().build();
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public ScheduledExecutorService scheduledExecutorService() {
+        // Shared scheduler for polling/background checks in service beans.
+        return Executors.newScheduledThreadPool(4);
     }
 
     // to verify the @Value injection existence
