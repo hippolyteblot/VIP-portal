@@ -1,0 +1,334 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronRight,
+  File,
+  Folder,
+  House,
+  RefreshCw,
+  Trash2,
+  LoaderCircle,
+} from 'lucide-vue-next'
+import { filesApi, type BackendData } from '@/api/files.api'
+
+
+const ROOT_PATH = '/vip'
+
+const currentPath = ref(ROOT_PATH)
+const entries = ref<BackendData[]>([])
+const isLoading = ref(false)
+const errorMessage = ref<string | null>(null)
+const activeActionId = ref<string | null>(null)
+const uploadInput = ref<HTMLInputElement | null>(null)
+
+const breadcrumbs = computed(() => {
+  const segments = currentPath.value.split('/').filter(Boolean)
+  const crumbs = [{ label: 'vip', path: ROOT_PATH }]
+
+  let path = ''
+  for (const segment of segments) {
+    path += `/${segment}`
+    if (path === ROOT_PATH) {
+      continue
+    }
+    crumbs.push({ label: segment, path })
+  }
+
+  return crumbs
+})
+
+const canGoUp = computed(() => currentPath.value !== ROOT_PATH)
+
+const sortedEntries = computed(() => {
+  return [...entries.value].sort((a, b) => {
+    if (a.type !== b.type) {
+      return a.type === 'folder' ? -1 : 1
+    }
+    return a.name.localeCompare(b.name)
+  })
+})
+
+function entryPath(name: string): string {
+  const base = currentPath.value.endsWith('/') ? currentPath.value.slice(0, -1) : currentPath.value
+  return `${base}/${name}`.replace(/\/{2,}/g, '/')
+}
+
+function formatSize(bytes: number): string {
+  if (bytes <= 0) return '-'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let size = bytes
+  let unitIndex = 0
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+  return `${size.toFixed(size >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+}
+
+function fileNameFromPath(path: string): string {
+  const parts = path.split('/').filter(Boolean)
+  return parts[parts.length - 1] ?? 'download'
+}
+
+function parentPath(path: string): string {
+  if (path === ROOT_PATH) return ROOT_PATH
+  const parts = path.split('/').filter(Boolean)
+  if (parts.length <= 1) return ROOT_PATH
+  return `/${parts.slice(0, -1).join('/')}`
+}
+
+async function loadDirectory(path = currentPath.value): Promise<void> {
+  isLoading.value = true
+  errorMessage.value = null
+  try {
+    const data = await filesApi.listChildren(path)
+    currentPath.value = path
+    entries.value = data
+  } catch {
+    errorMessage.value = `Impossible de charger le dossier ${path}.`
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function openEntry(entry: BackendData): void {
+  if (entry.type === 'folder') {
+    void loadDirectory(entryPath(entry.name))
+  }
+}
+
+function goUp(): void {
+  if (!canGoUp.value) return
+  void loadDirectory(parentPath(currentPath.value))
+}
+
+function refreshDirectory(): void {
+  void loadDirectory(currentPath.value)
+}
+
+function triggerUploadPicker(): void {
+  if (isLoading.value || activeActionId.value !== null) return
+  uploadInput.value?.click()
+}
+
+async function onUploadChange(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) {
+    return
+  }
+
+  const id = `upload:${file.name}`
+  activeActionId.value = id
+  errorMessage.value = null
+
+  try {
+    await filesApi.uploadFile(entryPath(file.name), file)
+    await loadDirectory(currentPath.value)
+  } catch {
+    errorMessage.value = `Impossible de telecharger le fichier ${file.name}.`
+  } finally {
+    input.value = ''
+    activeActionId.value = null
+  }
+}
+
+async function downloadEntry(entry: BackendData): Promise<void> {
+  if (entry.type !== 'file') return
+
+  const id = `download:${entry.name}`
+  activeActionId.value = id
+  errorMessage.value = null
+
+  const path = entryPath(entry.name)
+  let objectUrl: string | null = null
+
+  try {
+    const blob = await filesApi.downloadFile(path)
+    objectUrl = window.URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = objectUrl
+    link.download = fileNameFromPath(path)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  } catch {
+    errorMessage.value = `Impossible de telecharger le fichier ${entry.name}.`
+  } finally {
+    if (objectUrl !== null) {
+      window.URL.revokeObjectURL(objectUrl)
+    }
+    activeActionId.value = null
+  }
+}
+
+onMounted(() => {
+  void loadDirectory(ROOT_PATH)
+})
+</script>
+
+<template>
+  <section class="space-y-6">
+    <header class="space-y-4">
+      <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Fichiers</h1>
+        <p class="mt-1 text-sm text-gray-600">Naviguez dans votre espace VIP et gerez vos donnees.</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!canGoUp || isLoading"
+          @click="goUp"
+        >
+          <ArrowUp class="h-4 w-4" />
+          Monter
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="isLoading"
+          @click="refreshDirectory"
+        >
+          <RefreshCw class="h-4 w-4" />
+          Rafraichir
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="isLoading || activeActionId !== null"
+          @click="triggerUploadPicker"
+        >
+          <LoaderCircle v-if="activeActionId?.startsWith('upload:')" class="h-4 w-4 animate-spin" />
+          <ArrowUp v-else class="h-4 w-4" />
+          Upload
+        </button>
+        <input
+          ref="uploadInput"
+          type="file"
+          class="hidden"
+          :disabled="isLoading || activeActionId !== null"
+          @change="onUploadChange"
+        />
+      </div>
+
+      <nav class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded-md px-2 py-1 hover:bg-gray-100"
+          @click="loadDirectory(ROOT_PATH)"
+        >
+          <House class="h-3.5 w-3.5" />
+          /vip
+        </button>
+        <template v-for="crumb in breadcrumbs.slice(1)" :key="crumb.path">
+          <ChevronRight class="h-3.5 w-3.5 text-gray-400" />
+          <button
+            type="button"
+            class="rounded-md px-2 py-1 hover:bg-gray-100"
+            @click="loadDirectory(crumb.path)"
+          >
+            {{ crumb.label }}
+          </button>
+        </template>
+      </nav>
+    </header>
+
+    <div v-if="errorMessage" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      {{ errorMessage }}
+    </div>
+
+    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div
+        v-if="isLoading"
+        class="flex items-center justify-center gap-2 px-4 py-16 text-sm font-medium text-gray-500"
+      >
+        <LoaderCircle class="h-4 w-4 animate-spin" />
+        Chargement du dossier...
+      </div>
+
+      <table v-else class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Nom
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Taille
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Modifie
+            </th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Permissions
+            </th>
+            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Actions
+            </th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100">
+          <tr
+            v-for="entry in sortedEntries"
+            :key="entry.name"
+            class="group hover:bg-gray-50"
+            @dblclick="openEntry(entry)"
+          >
+            <td class="px-4 py-3">
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 text-left text-sm font-medium text-gray-800 hover:text-primary-700"
+                @click="openEntry(entry)"
+              >
+                <Folder v-if="entry.type === 'folder'" class="h-4 w-4 text-amber-500" />
+                <File v-else class="h-4 w-4 text-gray-400" />
+                {{ entry.name }}
+              </button>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600">
+              {{ entry.type === 'folder' ? '-' : formatSize(entry.length) }}
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600">
+              {{ entry.modificationDate || '-' }}
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600">
+              {{ entry.permissions || '-' }}
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex justify-end gap-2">
+                <button
+                  v-if="entry.type === 'file'"
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="isLoading || activeActionId !== null"
+                  @click="downloadEntry(entry)"
+                >
+                  <LoaderCircle v-if="activeActionId === `download:${entry.name}`" class="h-3.5 w-3.5 animate-spin" />
+                  <ArrowDown v-else class="h-3.5 w-3.5" />
+                  Download
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="isLoading || activeActionId !== null"
+                >
+                  <LoaderCircle v-if="activeActionId === `delete:${entry.name}`" class="h-3.5 w-3.5 animate-spin" />
+                  <Trash2 v-else class="h-3.5 w-3.5" />
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr v-if="sortedEntries.length === 0">
+            <td colspan="5" class="px-4 py-12 text-center text-sm text-gray-500">Dossier vide</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</template>
