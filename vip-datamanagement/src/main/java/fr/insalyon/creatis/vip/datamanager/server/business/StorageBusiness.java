@@ -192,6 +192,7 @@ public class StorageBusiness {
         rootDir.add(USERS_HOME);
         rootDir.add(TRASH_HOME);
         for (Group group : currentUserProvider.get().getGroups()) {
+            logger.info("Adding group {} to root dir", group.getName());
             rootDir.add(group.getName() + GROUP_APPEND);
         }
         return rootDir;
