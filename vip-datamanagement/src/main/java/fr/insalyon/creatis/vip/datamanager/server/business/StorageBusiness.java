@@ -92,6 +92,12 @@ public class StorageBusiness {
         }
         Optional<Data.Type> type = lfcBusiness.getPathInfo(currentUserProvider.get(), path);
         if (type.isEmpty()) {
+            if (isValidGroupPath(path)) {
+                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), path);
+                type = lfcBusiness.getPathInfo(currentUserProvider.get(), path);
+            }
+        }
+        if (type.isEmpty()) {
             logger.error("Trying to list a non-existing path ({})", path);
             throw new VipException("Error listing a directory");
         }
@@ -149,8 +155,12 @@ public class StorageBusiness {
         String parentLfcPath = javaPath.getParent().toString();
 
         if (!lfcBusiness.exists(currentUserProvider.get(), parentLfcPath)) {
-            logger.error("parent directory of upload {} does not exist :", lfcPath);
-            throw new VipException("Upload directory does not exist");
+            if (isValidGroupPath(parentLfcPath)) {
+                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), parentLfcPath);
+            } else {
+                logger.error("parent directory of upload {} does not exist :", lfcPath);
+                throw new VipException("Upload directory does not exist");
+            }
         }
 
         String uploadDirectory = dataManagerBusiness.getUploadRootDirectory(false);
@@ -176,8 +186,12 @@ public class StorageBusiness {
         String parentLfcPath = javaPath.getParent().toString();
 
         if (!lfcBusiness.exists(currentUserProvider.get(), parentLfcPath)) {
-            logger.error("parent directory of {} does not exist :", lfcPath);
-            throw new VipException("Upload directory does not exist");
+            if (isValidGroupPath(parentLfcPath)) {
+                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), parentLfcPath);
+            } else {
+                logger.error("parent directory of {} does not exist :", lfcPath);
+                throw new VipException("Upload directory does not exist");
+            }
         }
 
         String uploadDirectory = dataManagerBusiness.getUploadRootDirectory(false);
@@ -212,6 +226,27 @@ public class StorageBusiness {
 
     private void checkReadPermission(String path) throws VipException {
         checkPermission(path, LFCAccessType.READ);
+    }
+
+    private boolean isValidGroupPath(String path) throws VipException {
+        if (path == null || !path.startsWith(ROOT + "/")) {
+            return false;
+        }
+
+        String remaining = path.substring((ROOT + "/").length());
+        int slashIndex = remaining.indexOf('/');
+        String firstDir = slashIndex >= 0 ? remaining.substring(0, slashIndex) : remaining;
+
+        if (!firstDir.endsWith(GROUP_APPEND)) {
+            return false;
+        }
+
+        String groupName = firstDir.substring(0, firstDir.length() - GROUP_APPEND.length());
+        List<Group> groups = currentUserProvider.get().isGroupAdmin()
+                ? groupDAO.get()
+                : new ArrayList<>(currentUserProvider.get().getGroups());
+
+        return groups.stream().anyMatch(group -> groupName.equals(group.getName()));
     }
 
     private void checkDownloadPermission(String path) throws VipException {
