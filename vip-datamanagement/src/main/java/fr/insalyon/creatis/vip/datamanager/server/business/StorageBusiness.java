@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.server.dao.GroupDAO;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.Server;
@@ -52,6 +53,7 @@ public class StorageBusiness {
     private final LFCBusiness lfcBusiness;
     private final LFCPermissionBusiness lfcPermissionBusiness;
     private final Supplier<User> currentUserProvider;
+    private final GroupDAO groupDAO;
     private final TransferPoolBusiness transferPoolBusiness;
     private final DataManagerBusiness dataManagerBusiness;
     private final ScheduledExecutorService scheduler;
@@ -62,6 +64,7 @@ public class StorageBusiness {
             LFCBusiness lfcBusiness,
             LFCPermissionBusiness lfcPermissionBusiness,
             Supplier<User> currentUserProvider,
+            GroupDAO groupDAO,
             ScheduledExecutorService scheduler,
             TransferPoolBusiness transferPoolBusiness,
             DataManagerBusiness dataManagerBusiness) {
@@ -69,6 +72,7 @@ public class StorageBusiness {
         this.lfcBusiness = lfcBusiness;
         this.lfcPermissionBusiness = lfcPermissionBusiness;
         this.currentUserProvider = currentUserProvider;
+        this.groupDAO = groupDAO;
         this.scheduler = scheduler;
         this.transferPoolBusiness = transferPoolBusiness;
         this.dataManagerBusiness = dataManagerBusiness;
@@ -187,11 +191,19 @@ public class StorageBusiness {
         waitForOperationOrTimeout(opId);
     }
 
-    public List<String> getRootDirectoriesName() {
+    public List<String> getRootDirectoriesName() throws VipException {
         List<String> rootDir = new ArrayList<>();
         rootDir.add(USERS_HOME);
         rootDir.add(TRASH_HOME);
-        for (Group group : currentUserProvider.get().getGroups()) {
+
+        List<Group> groups;
+        if (currentUserProvider.get().isGroupAdmin()) {
+            groups = groupDAO.get();
+        } else {
+            groups = new ArrayList<>(currentUserProvider.get().getGroups());
+        }
+
+        for (Group group : groups) {
             logger.info("Adding group {} to root dir", group.getName());
             rootDir.add(group.getName() + GROUP_APPEND);
         }
