@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -87,5 +88,12 @@ public class StorageController {
         String path = resolvePath(request);
         storageBusiness.uploadRawFileFromInputStream(path, request.getInputStream());
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @DeleteMapping(value = "/**")
+    public ResponseEntity<Void> deleteFile(HttpServletRequest request) throws VipException {
+        String path = resolvePath(request);
+        storageBusiness.deletePath(path);
+        return ResponseEntity.noContent().build();
     }
 }
