@@ -49,4 +49,8 @@ export const filesApi = {
       }
     )
   },
+
+  async deleteFile(id: string): Promise<void> {
+    await backendClient.delete(`/internal/storage/${toStorageUrlPath(id)}`)
+  }
 }

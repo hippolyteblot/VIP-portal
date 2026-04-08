@@ -22,6 +22,8 @@ const isLoading = ref(false)
 const errorMessage = ref<string | null>(null)
 const activeActionId = ref<string | null>(null)
 const uploadInput = ref<HTMLInputElement | null>(null)
+const isDeleteModalOpen = ref(false)
+const pendingDeleteEntry = ref<BackendData | null>(null)
 
 const breadcrumbs = computed(() => {
   const segments = currentPath.value.split('/').filter(Boolean)
@@ -163,6 +165,44 @@ async function downloadEntry(entry: BackendData): Promise<void> {
     }
     activeActionId.value = null
   }
+}
+
+async function deleteEntry(entry: BackendData): Promise<void> {
+  if (entry.type !== 'file') return
+
+  const id = `delete:${entry.name}`
+  activeActionId.value = id
+  errorMessage.value = null
+
+  try {
+    await filesApi.deleteFile(entryPath(entry.name))
+    await loadDirectory(currentPath.value)
+  } catch {
+    errorMessage.value = `Impossible de supprimer le fichier ${entry.name}.`
+  } finally {
+    activeActionId.value = null
+  }
+}
+
+function requestDelete(entry: BackendData): void {
+  if (entry.type !== 'file') return
+  if (isLoading.value || activeActionId.value !== null) return
+  pendingDeleteEntry.value = entry
+  isDeleteModalOpen.value = true
+}
+
+function closeDeleteModal(): void {
+  if (activeActionId.value?.startsWith('delete:')) return
+  isDeleteModalOpen.value = false
+  pendingDeleteEntry.value = null
+}
+
+async function confirmDelete(): Promise<void> {
+  const entry = pendingDeleteEntry.value
+  if (!entry) return
+  await deleteEntry(entry)
+  isDeleteModalOpen.value = false
+  pendingDeleteEntry.value = null
 }
 
 onMounted(() => {
@@ -316,6 +356,7 @@ onMounted(() => {
                   type="button"
                   class="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   :disabled="isLoading || activeActionId !== null"
+                  @click="requestDelete(entry)"
                 >
                   <LoaderCircle v-if="activeActionId === `delete:${entry.name}`" class="h-3.5 w-3.5 animate-spin" />
                   <Trash2 v-else class="h-3.5 w-3.5" />
@@ -329,6 +370,40 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div
+      v-if="isDeleteModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      @click.self="closeDeleteModal"
+    >
+      <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-lg">
+        <h2 class="text-lg font-semibold text-gray-900">Confirmer la suppression</h2>
+        <p class="mt-2 text-sm text-gray-600">
+          Voulez-vous vraiment supprimer
+          <span class="font-medium text-gray-900">{{ pendingDeleteEntry?.name }}</span>
+          ?
+        </p>
+        <div class="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="activeActionId?.startsWith('delete:')"
+            @click="closeDeleteModal"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="activeActionId?.startsWith('delete:')"
+            @click="confirmDelete"
+          >
+            <LoaderCircle v-if="activeActionId?.startsWith('delete:')" class="h-4 w-4 animate-spin" />
+            Supprimer
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 </template>
