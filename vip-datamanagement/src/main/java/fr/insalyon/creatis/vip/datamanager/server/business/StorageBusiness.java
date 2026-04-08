@@ -165,6 +165,7 @@ public class StorageBusiness {
 
         String uploadDirectory = dataManagerBusiness.getUploadRootDirectory(false);
         String fileName = DataManagerUtil.getCleanFilename(javaPath.getFileName().toString());
+        // TODO : handle potential file name conflict in upload directory
         String localPath = uploadDirectory + fileName;
 
         logger.debug("storing upload file in : {}", localPath);
@@ -372,7 +373,7 @@ public class StorageBusiness {
                     .setCharset(StandardCharsets.UTF_8)
                     .get();
             InputStream base64InputStream = decoder.wrap(inputStream);
-            Files.copy(base64InputStream, Paths.get(localFilePath));
+            Files.copy(base64InputStream, Paths.get(localFilePath), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             logger.error("Error writing base64 file in {}", localFilePath, e);
             throw new VipException("Error writing base64 file", e);
