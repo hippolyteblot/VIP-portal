@@ -39,9 +39,6 @@ export const backendClient = axios.create({
   timeout: 30000,
   withCredentials: true,
   withXSRFToken: false,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 function isLoginRequest(url?: string, method?: string): boolean {
@@ -64,6 +61,20 @@ function redirectToLogin(): void {
 
 backendClient.interceptors.request.use((config) => {
   const method = (config.method || 'get').toUpperCase()
+
+  const hasFormDataPayload = typeof FormData !== 'undefined' && config.data instanceof FormData
+  if (hasFormDataPayload) {
+    // Browser must set multipart boundary automatically for FormData.
+    if (config.headers) {
+      delete config.headers['Content-Type']
+    }
+  } else if (config.data !== undefined) {
+    config.headers = config.headers || {}
+    if (!config.headers['Content-Type']) {
+      config.headers['Content-Type'] = 'application/json'
+    }
+  }
+
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     const raw = readCookie('XSRF-TOKEN')
     if (raw) {
