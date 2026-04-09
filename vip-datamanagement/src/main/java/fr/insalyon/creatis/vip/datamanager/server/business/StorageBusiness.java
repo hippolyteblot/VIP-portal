@@ -147,6 +147,58 @@ public class StorageBusiness {
         return getDownloadFile(downloadOperationId);
     }
 
+    public String submitUploadFromInputStream(
+            String lfcPath,
+            InputStream inputStream,
+            String originalFileName) throws VipException {
+        checkPermission(lfcPath, LFCAccessType.UPLOAD);
+
+        java.nio.file.Path javaPath = Paths.get(lfcPath);
+        String parentLfcPath = javaPath.getParent().toString();
+        ensureUploadParentExists(parentLfcPath, lfcPath);
+
+        String uploadDirectory = dataManagerBusiness.getUploadRootDirectory(false);
+        String sourceFileName = originalFileName != null && !originalFileName.isBlank()
+                ? originalFileName
+                : javaPath.getFileName().toString();
+        String cleanFileName = DataManagerUtil.getCleanFilename(sourceFileName);
+        String localPath = buildUniqueLocalUploadPath(uploadDirectory, cleanFileName);
+
+        saveInputStreamToFile(inputStream, localPath);
+        return transferPoolBusiness.uploadFile(currentUserProvider.get(), localPath, parentLfcPath);
+    }
+
+    public String submitDownload(String path) throws VipException {
+        checkDownloadPermission(path);
+        return transferPoolBusiness.downloadFile(currentUserProvider.get(), path);
+    }
+
+    public PoolOperation.Status getOperationStatus(String operationId) throws VipException {
+        PoolOperation operation = transferPoolBusiness.getOperationById(
+                operationId,
+                currentUserProvider.get().getFolder());
+        ensureOperationOwnership(operation, operationId);
+        return operation.getStatus();
+    }
+
+    public File getDownloadFileByOperationId(String operationId) throws VipException {
+        PoolOperation operation = transferPoolBusiness.getOperationById(
+                operationId,
+                currentUserProvider.get().getFolder());
+        ensureOperationOwnership(operation, operationId);
+
+        if (!PoolOperation.Type.Download.equals(operation.getType())) {
+            throw new VipException("Operation is not a download");
+        }
+
+        PoolOperation downloadOperation = transferPoolBusiness.getDownloadPoolOperation(operationId);
+        if (!PoolOperation.Status.Done.equals(downloadOperation.getStatus())) {
+            throw new VipException("Download operation not completed");
+        }
+
+        return getDownloadFile(operationId);
+    }
+
     public void uploadRawFileFromInputStream(String lfcPath, InputStream is)
             throws VipException {
         checkPermission(lfcPath, LFCAccessType.UPLOAD);
@@ -154,14 +206,7 @@ public class StorageBusiness {
         java.nio.file.Path javaPath = Paths.get(lfcPath);
         String parentLfcPath = javaPath.getParent().toString();
 
-        if (!lfcBusiness.exists(currentUserProvider.get(), parentLfcPath)) {
-            if (isValidGroupPath(parentLfcPath)) {
-                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), parentLfcPath);
-            } else {
-                logger.error("parent directory of upload {} does not exist :", lfcPath);
-                throw new VipException("Upload directory does not exist");
-            }
-        }
+        ensureUploadParentExists(parentLfcPath, lfcPath);
 
         String uploadDirectory = dataManagerBusiness.getUploadRootDirectory(false);
         String fileName = DataManagerUtil.getCleanFilename(javaPath.getFileName().toString());
@@ -186,14 +231,7 @@ public class StorageBusiness {
         java.nio.file.Path javaPath = Paths.get(lfcPath);
         String parentLfcPath = javaPath.getParent().toString();
 
-        if (!lfcBusiness.exists(currentUserProvider.get(), parentLfcPath)) {
-            if (isValidGroupPath(parentLfcPath)) {
-                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), parentLfcPath);
-            } else {
-                logger.error("parent directory of {} does not exist :", lfcPath);
-                throw new VipException("Upload directory does not exist");
-            }
-        }
+        ensureUploadParentExists(parentLfcPath, lfcPath);
 
         String uploadDirectory = dataManagerBusiness.getUploadRootDirectory(false);
         String fileName = DataManagerUtil.getCleanFilename(javaPath.getFileName().toString());
@@ -300,6 +338,29 @@ public class StorageBusiness {
         return file;
     }
 
+    private void ensureUploadParentExists(String parentLfcPath, String lfcPath) throws VipException {
+        if (!lfcBusiness.exists(currentUserProvider.get(), parentLfcPath)) {
+            if (isValidGroupPath(parentLfcPath)) {
+                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), parentLfcPath);
+            } else {
+                logger.error("parent directory of upload {} does not exist :", lfcPath);
+                throw new VipException("Upload directory does not exist");
+            }
+        }
+    }
+
+    private String buildUniqueLocalUploadPath(String uploadDirectory, String cleanFileName) {
+        return uploadDirectory + System.currentTimeMillis() + "_" + cleanFileName;
+    }
+
+    private void ensureOperationOwnership(PoolOperation operation, String operationId) throws VipException {
+        String currentUserEmail = currentUserProvider.get().getEmail();
+        if (operation.getUser() == null || !operation.getUser().equals(currentUserEmail)) {
+            logger.error("Operation {} does not belong to current user {}", operationId, currentUserEmail);
+            throw new VipException("Operation not accessible");
+        }
+    }
+
     private void waitForOperationOrTimeout(String operationId)
             throws VipException {
         User user = currentUserProvider.get();
@@ -367,13 +428,13 @@ public class StorageBusiness {
 
     private void writeFileFromBase64(String base64Content, String localFilePath) throws VipException {
         Base64.Decoder decoder = Base64.getDecoder();
-        try {
-            InputStream inputStream = ReaderInputStream.builder()
-                    .setReader(new StringReader(base64Content))
-                    .setCharset(StandardCharsets.UTF_8)
-                    .get();
-            InputStream base64InputStream = decoder.wrap(inputStream);
-            Files.copy(base64InputStream, Paths.get(localFilePath), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        try (
+                InputStream inputStream = ReaderInputStream.builder()
+                        .setReader(new StringReader(base64Content))
+                        .setCharset(StandardCharsets.UTF_8)
+                        .get();
+                InputStream base64InputStream = decoder.wrap(inputStream)) {
+            saveInputStreamToFile(base64InputStream, localFilePath);
         } catch (IOException e) {
             logger.error("Error writing base64 file in {}", localFilePath, e);
             throw new VipException("Error writing base64 file", e);
@@ -381,19 +442,39 @@ public class StorageBusiness {
     }
 
     private boolean saveInputStreamToFile(InputStream is, String path) throws VipException {
+        Long maxSize = server.getCarminApiDataTransfertMaxSize();
+        long totalBytesRead = 0;
+
         try (OutputStream fos = Files.newOutputStream(Paths.get(path))) {
             byte[] buffer = new byte[1024];
             int bytesRead;
             boolean isFileEmpty = true;
             while ((bytesRead = is.read(buffer)) != -1) {
+                totalBytesRead += bytesRead;
+                if (maxSize != null && maxSize > 0 && totalBytesRead > maxSize) {
+                    logger.error("Trying to upload a file too big ({} bytes, max {} bytes)",
+                            totalBytesRead, maxSize);
+                    throw new VipException("Upload file too big");
+                }
                 isFileEmpty = false;
                 fos.write(buffer, 0, bytesRead);
             }
             fos.flush();
             return isFileEmpty;
+        } catch (VipException e) {
+            cleanupLocalUploadFile(path);
+            throw e;
         } catch (IOException e) {
             logger.error("IO Error storing file {}", path, e);
             throw new VipException("Upload error", e);
+        }
+    }
+
+    private void cleanupLocalUploadFile(String path) {
+        try {
+            Files.deleteIfExists(Paths.get(path));
+        } catch (IOException cleanupException) {
+            logger.warn("Could not cleanup temporary upload file {}", path, cleanupException);
         }
     }
 }
