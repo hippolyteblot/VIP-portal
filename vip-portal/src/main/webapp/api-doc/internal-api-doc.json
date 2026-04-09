@@ -9,6 +9,89 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/storage/**" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "listStoragePath",
+        "parameters" : [ {
+          "name" : "refresh",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "oneOf" : [ {
+                    "type" : "string",
+                    "format" : "binary"
+                  }, {
+                    "type" : "array",
+                    "items" : {
+                      "$ref" : "#/components/schemas/Data"
+                    }
+                  } ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "uploadFile",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "deleteFile",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/resources/{id}" : {
       "get" : {
         "tags" : [ "resource-controller" ],
@@ -219,88 +302,6 @@
           },
           "200" : {
             "description" : "OK"
-          }
-        }
-      }
-    },
-    "/files/{id}/content" : {
-      "get" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "getFileContent",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "string",
-                  "format" : "byte"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "putFileContent",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "string",
-                "format" : "byte"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/EntryResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -802,44 +803,6 @@
         }
       }
     },
-    "/entries" : {
-      "post" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "createEntry",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateEntryRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/EntryResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/boutiques/check" : {
       "post" : {
         "tags" : [ "boutiques-controller" ],
@@ -1065,113 +1028,6 @@
         }
       }
     },
-    "/entries/{id}" : {
-      "get" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "getEntry",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/EntryResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "deleteEntry",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      },
-      "patch" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "patchEntry",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/UpdateEntryRequest"
-              }
-            }
-          },
-          "required" : true
-        },
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/EntryResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/tags" : {
       "get" : {
         "tags" : [ "tag-controller" ],
@@ -1215,53 +1071,6 @@
               "*/*" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/PrecisePageTag"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/entries/{id}/children" : {
-      "get" : {
-        "tags" : [ "node-controller" ],
-        "operationId" : "listChildren",
-        "parameters" : [ {
-          "name" : "id",
-          "in" : "path",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "refresh",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/EntryResponse"
-                  }
                 }
               }
             }
@@ -1391,36 +1200,6 @@
           }
         }
       },
-      "EntryResponse" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "directory" : {
-            "type" : "boolean"
-          },
-          "length" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "modificationDate" : {
-            "type" : "string"
-          },
-          "permissions" : {
-            "type" : "string"
-          },
-          "replicas" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
       "Application" : {
         "type" : "object",
         "properties" : {
@@ -1499,14 +1278,14 @@
           "note" : {
             "type" : "string"
           },
+          "descriptorFilename" : {
+            "type" : "string"
+          },
           "resourcesNames" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "descriptorFilename" : {
-            "type" : "string"
           }
         }
       },
@@ -1567,37 +1346,6 @@
           }
         }
       },
-      "CreateEntryRequest" : {
-        "type" : "object",
-        "properties" : {
-          "parentId" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "content" : {
-            "type" : "string"
-          }
-        }
-      },
-      "UpdateEntryRequest" : {
-        "type" : "object",
-        "properties" : {
-          "newPath" : {
-            "type" : "string"
-          },
-          "newName" : {
-            "type" : "string"
-          },
-          "extendPath" : {
-            "type" : "boolean"
-          }
-        }
-      },
       "PrecisePageTag" : {
         "type" : "object",
         "properties" : {
@@ -1610,6 +1358,34 @@
           "total" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "Data" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "folder", "folderSync", "file", "fileSync" ]
+          },
+          "length" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "modificationDate" : {
+            "type" : "string"
+          },
+          "replicas" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "permissions" : {
+            "type" : "string"
           }
         }
       },
