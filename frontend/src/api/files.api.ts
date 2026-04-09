@@ -78,7 +78,12 @@ export const filesApi = {
   },
 
   async deleteFile(id: string): Promise<void> {
-    await backendClient.delete(`/internal/storage/${toStorageUrlPath(id)}`)
+    const submitResponse = await backendClient.post<StorageOperationResponse>(
+      '/internal/storage/deletes',
+      { path: id },
+    )
+
+    await waitForOperationCompletion(submitResponse.data.operationId)
   }
 }
 
