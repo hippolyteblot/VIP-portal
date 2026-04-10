@@ -6,6 +6,7 @@ import {
   ChevronRight,
   File,
   Folder,
+  FolderPlus,
   House,
   RefreshCw,
   Trash2,
@@ -24,6 +25,8 @@ const activeActionId = ref<string | null>(null)
 const uploadInput = ref<HTMLInputElement | null>(null)
 const isDeleteModalOpen = ref(false)
 const pendingDeleteEntry = ref<BackendData | null>(null)
+const isCreateDirectoryModalOpen = ref(false)
+const newDirectoryName = ref('')
 
 const breadcrumbs = computed(() => {
   const segments = currentPath.value.split('/').filter(Boolean)
@@ -127,12 +130,46 @@ async function onUploadChange(event: Event): Promise<void> {
   errorMessage.value = null
 
   try {
-    await filesApi.uploadFile(entryPath(file.name), file)
+    await filesApi.uploadFile(currentPath.value, file)
     await loadDirectory(currentPath.value)
   } catch {
     errorMessage.value = `Impossible de telecharger le fichier ${file.name}.`
   } finally {
     input.value = ''
+    activeActionId.value = null
+  }
+}
+
+function openCreateDirectoryModal(): void {
+  if (isLoading.value || activeActionId.value !== null) return
+  newDirectoryName.value = ''
+  isCreateDirectoryModalOpen.value = true
+}
+
+function closeCreateDirectoryModal(): void {
+  if (activeActionId.value === 'create-directory') return
+  isCreateDirectoryModalOpen.value = false
+  newDirectoryName.value = ''
+}
+
+async function confirmCreateDirectory(): Promise<void> {
+  const name = newDirectoryName.value.trim()
+  if (name.length === 0) {
+    errorMessage.value = 'Le nom du dossier est obligatoire.'
+    return
+  }
+
+  activeActionId.value = 'create-directory'
+  errorMessage.value = null
+
+  try {
+    await filesApi.createDirectory(currentPath.value, name)
+    await loadDirectory(currentPath.value)
+    isCreateDirectoryModalOpen.value = false
+    newDirectoryName.value = ''
+  } catch {
+    errorMessage.value = `Impossible de creer le dossier ${name}.`
+  } finally {
     activeActionId.value = null
   }
 }
@@ -236,6 +273,16 @@ onMounted(() => {
         >
           <RefreshCw class="h-4 w-4" />
           Rafraichir
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="isLoading || activeActionId !== null"
+          @click="openCreateDirectoryModal"
+        >
+          <LoaderCircle v-if="activeActionId === 'create-directory'" class="h-4 w-4 animate-spin" />
+          <FolderPlus v-else class="h-4 w-4" />
+          Nouveau dossier
         </button>
         <button
           type="button"
@@ -401,6 +448,52 @@ onMounted(() => {
           >
             <LoaderCircle v-if="activeActionId?.startsWith('delete:')" class="h-4 w-4 animate-spin" />
             Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="isCreateDirectoryModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      @click.self="closeCreateDirectoryModal"
+    >
+      <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-5 shadow-lg">
+        <h2 class="text-lg font-semibold text-gray-900">Creer un dossier</h2>
+        <p class="mt-2 text-sm text-gray-600">
+          Entrez le nom du nouveau dossier dans
+          <span class="font-medium text-gray-900">{{ currentPath }}</span>.
+        </p>
+        <div class="mt-4">
+          <label for="new-directory-name" class="mb-1 block text-sm font-medium text-gray-700">
+            Nom du dossier
+          </label>
+          <input
+            id="new-directory-name"
+            v-model="newDirectoryName"
+            type="text"
+            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-800 outline-none ring-primary-200 focus:border-primary-500 focus:ring-2"
+            :disabled="activeActionId === 'create-directory'"
+            @keydown.enter.prevent="confirmCreateDirectory"
+          />
+        </div>
+        <div class="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="activeActionId === 'create-directory'"
+            @click="closeCreateDirectoryModal"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-md border border-primary-200 bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="activeActionId === 'create-directory'"
+            @click="confirmCreateDirectory"
+          >
+            <LoaderCircle v-if="activeActionId === 'create-directory'" class="h-4 w-4 animate-spin" />
+            Creer
           </button>
         </div>
       </div>

@@ -9,6 +9,8 @@ export interface BackendData {
   permissions: string;
 }
 
+interface StorageMetadata extends BackendData {}
+
 interface StorageOperationResponse {
   operationId: string
   status: string
@@ -32,11 +34,26 @@ const DEFAULT_POLL_TIMEOUT_MS = 5 * 60 * 1000
 
 export const filesApi = {
 
-  // Send something like /internal/storage/vip/home?refresh=false
+  // Send something like /internal/storage/directories/vip/home?refresh=false
   async listChildren(id: string, refresh = false): Promise<BackendData[]> {
-    const response = await backendClient.get<BackendData[]>(`/internal/storage/${toStorageUrlPath(id)}`, {
+    const normalizedPath = toStorageUrlPath(id)
+    const endpoint = normalizedPath.length > 0
+      ? `/internal/storage/directories/${normalizedPath}`
+      : '/internal/storage/directories'
+
+    const response = await backendClient.get<BackendData[]>(endpoint, {
       params: { refresh },
     })
+    return response.data
+  },
+
+  async getMetadata(id: string): Promise<StorageMetadata> {
+    const normalizedPath = toStorageUrlPath(id)
+    const endpoint = normalizedPath.length > 0
+      ? `/internal/storage/${normalizedPath}`
+      : '/internal/storage'
+
+    const response = await backendClient.get<StorageMetadata>(endpoint)
     return response.data
   },
 
@@ -59,15 +76,7 @@ export const filesApi = {
   async uploadFile(destinationPath: string, file: File): Promise<void> {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append(
-      'metadata',
-      new Blob([
-        JSON.stringify({
-          path: destinationPath,
-          fileName: file.name,
-        }),
-      ], { type: 'application/json' }),
-    )
+    formData.append('destination', destinationPath)
 
     const submitResponse = await backendClient.post<StorageOperationResponse>(
       '/internal/storage/uploads',
@@ -78,12 +87,16 @@ export const filesApi = {
   },
 
   async deleteFile(id: string): Promise<void> {
-    const submitResponse = await backendClient.post<StorageOperationResponse>(
-      '/internal/storage/deletes',
-      { path: id },
-    )
+    const normalizedPath = toStorageUrlPath(id)
+    const endpoint = normalizedPath.length > 0
+      ? `/internal/storage/${normalizedPath}`
+      : '/internal/storage'
 
-    await waitForOperationCompletion(submitResponse.data.operationId)
+    await backendClient.delete(endpoint)
+  },
+
+  async createDirectory(path: string, name: string): Promise<void> {
+    await backendClient.post('/internal/storage/directories', { path, name })
   }
 }
 
