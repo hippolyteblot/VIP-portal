@@ -108,6 +108,31 @@ public class StorageBusiness {
         return lfcBusiness.listDir(currentUserProvider.get(), path, true);
     }
 
+    public void createDirectory(String path, String name) throws VipException {
+        String normalizedPath = normalizePath(path);
+        if (name == null || name.isBlank()) {
+            throw new VipException("Directory name is required");
+        }
+        if (name.contains("/")) {
+            throw new VipException("Directory name cannot contain '/'");
+        }
+
+        String targetPath = normalizedPath.endsWith("/")
+                ? normalizedPath + name
+                : normalizedPath + "/" + name;
+        checkPermission(targetPath, LFCAccessType.UPLOAD);
+
+        if (!lfcBusiness.exists(currentUserProvider.get(), normalizedPath)) {
+            if (isValidGroupPath(normalizedPath)) {
+                lfcBusiness.ensureDirectoryExists(currentUserProvider.get(), normalizedPath);
+            } else {
+                throw new VipException("Parent directory does not exist");
+            }
+        }
+
+        lfcBusiness.createDir(currentUserProvider.get(), normalizedPath, name);
+    }
+
     public Optional<Data.Type> getPathInfo(String path) throws VipException {
         checkReadPermission(path);
         if (path.equals(ROOT)) {
@@ -133,6 +158,15 @@ public class StorageBusiness {
     }
 
     public void deletePath(String path) throws VipException {
+        checkPermission(path, LFCAccessType.DELETE);
+        if (!lfcBusiness.exists(currentUserProvider.get(), path)) {
+            logger.error("trying to delete a non-existing file : {}", path);
+            throw new VipException("trying to delete a non-existing file");
+        }
+        transferPoolBusiness.delete(currentUserProvider.get(), path);
+    }
+
+    public void delete(String path) throws VipException {
         checkPermission(path, LFCAccessType.DELETE);
         if (!lfcBusiness.exists(currentUserProvider.get(), path)) {
             logger.error("trying to delete a non-existing file : {}", path);
@@ -265,6 +299,18 @@ public class StorageBusiness {
 
     private void checkReadPermission(String path) throws VipException {
         checkPermission(path, LFCAccessType.READ);
+    }
+
+    private String normalizePath(String path) {
+        if (path == null || path.isBlank()) {
+            return ROOT;
+        }
+        String normalized = path.startsWith("/") ? path : "/" + path;
+        normalized = normalized.replaceAll("/{2,}", "/");
+        if (normalized.length() > 1 && normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     private boolean isValidGroupPath(String path) throws VipException {

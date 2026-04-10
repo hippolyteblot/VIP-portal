@@ -9,89 +9,6 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
-    "/storage/**" : {
-      "get" : {
-        "tags" : [ "storage-controller" ],
-        "operationId" : "listStoragePath",
-        "parameters" : [ {
-          "name" : "refresh",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "boolean",
-            "default" : false
-          }
-        } ],
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "oneOf" : [ {
-                    "type" : "string",
-                    "format" : "binary"
-                  }, {
-                    "type" : "array",
-                    "items" : {
-                      "$ref" : "#/components/schemas/Data"
-                    }
-                  } ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "put" : {
-        "tags" : [ "storage-controller" ],
-        "operationId" : "uploadFile",
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ "storage-controller" ],
-        "operationId" : "deleteFile",
-        "responses" : {
-          "500" : {
-            "description" : "Internal Server Error",
-            "content" : {
-              "*/*" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
-                }
-              }
-            }
-          },
-          "200" : {
-            "description" : "OK"
-          }
-        }
-      }
-    },
     "/resources/{id}" : {
       "get" : {
         "tags" : [ "resource-controller" ],
@@ -537,6 +454,99 @@
           },
           "200" : {
             "description" : "OK"
+          }
+        }
+      }
+    },
+    "/storage/uploads" : {
+      "post" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "uploadFile",
+        "parameters" : [ {
+          "name" : "path",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  },
+                  "metadata" : {
+                    "$ref" : "#/components/schemas/StorageUploadMetadata"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StorageOperationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/downloads" : {
+      "post" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "submitDownload",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StorageDownloadRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StorageOperationResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1078,6 +1088,142 @@
         }
       }
     },
+    "/storage/operations/{operationId}" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "getOperationStatus",
+        "parameters" : [ {
+          "name" : "operationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StorageOperationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/downloads/{operationId}/content" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "getDownloadContent",
+        "parameters" : [ {
+          "name" : "operationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/**" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "listStoragePath",
+        "parameters" : [ {
+          "name" : "refresh",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "oneOf" : [ {
+                    "type" : "string",
+                    "format" : "binary"
+                  }, {
+                    "type" : "array",
+                    "items" : {
+                      "$ref" : "#/components/schemas/Data"
+                    }
+                  } ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "deleteFile",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/applications/versions" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
@@ -1313,6 +1459,36 @@
           },
           "boutiques" : {
             "type" : "boolean"
+          }
+        }
+      },
+      "StorageUploadMetadata" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "fileName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StorageOperationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "operationId" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StorageDownloadRequest" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string"
           }
         }
       },

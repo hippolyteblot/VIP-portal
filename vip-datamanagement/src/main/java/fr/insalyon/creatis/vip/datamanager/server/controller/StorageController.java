@@ -31,9 +31,9 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 import fr.insalyon.creatis.vip.datamanager.models.Data;
 import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
+import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageCreateDirectoryRequest;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageDownloadRequest;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageOperationResponse;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageUploadMetadata;
 import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
 
 @RestController
@@ -46,14 +46,12 @@ public class StorageController {
         this.storageBusiness = storageBusiness;
     }
 
-    // GET /storage/<path>?refresh=<bool>
-    @GetMapping(value = "/**")
-    public List<Data> listStoragePath(
+    @GetMapping(value = {"/directories", "/directories/**"})
+    public List<Data> listDirectory(
             HttpServletRequest request,
             @RequestParam(defaultValue = "false") boolean refresh) throws VipException {
         String resolvedPath = resolvePath(request);
-        List<Data> children = storageBusiness.listDir(resolvedPath);
-        return children;
+        return storageBusiness.listDir(resolvedPath);
     }
 
     private String resolvePath(HttpServletRequest request) {
@@ -72,39 +70,40 @@ public class StorageController {
         return DataManagerConstants.ROOT;
     }
 
-    @GetMapping(value = "/**", params = "download")
-    public ResponseEntity<Resource> downloadFile(HttpServletRequest request) throws VipException {
-        String path = resolvePath(request);
-        File file = storageBusiness.getFile(path);
-
-        Resource resource = new FileSystemResource(file);
-        String fileName = file.getName();
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(file.length())
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        ContentDisposition.attachment()
-                                .filename(fileName, StandardCharsets.UTF_8)
-                                .build()
-                                .toString())
-                .body(resource);
+    // GET /storage/<path>
+    @GetMapping(value = "/**")
+    public Data getPathMetadata(HttpServletRequest request) throws VipException {
+        // TODO : Not implemented yet
+        return new Data();
     }
 
     @PostMapping(value = "/uploads", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StorageOperationResponse> uploadFile(
             @RequestPart("file") MultipartFile file,
-            @RequestPart(value = "metadata", required = false) StorageUploadMetadata metadata,
-            @RequestParam(value = "path", required = false) String path) throws VipException, java.io.IOException {
-        String targetPath = resolveUploadTargetPath(path, metadata, file);
+            @RequestPart("destination") String destination) throws VipException, java.io.IOException {
+        String targetPath = buildUploadTargetPath(destination, file);
         String operationId = storageBusiness.submitUploadFromInputStream(
                 targetPath,
                 file.getInputStream(),
-                resolveUploadFileName(file, metadata));
+                file.getOriginalFilename());
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
                 .body(new StorageOperationResponse(operationId, PoolOperation.Status.Queued.name()));
+    }
+
+    @PostMapping(value = "/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createDirectory(
+            @RequestBody StorageCreateDirectoryRequest request) throws VipException {
+        if (request == null || request.getPath() == null || request.getPath().isBlank()) {
+            throw new VipException("Directory path is required");
+        }
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new VipException("Directory name is required");
+        }
+
+        storageBusiness.createDirectory(request.getPath(), request.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping(value = "/operations/{operationId}")
@@ -156,35 +155,20 @@ public class StorageController {
         return ResponseEntity.noContent().build();
     }
 
-    private String resolveUploadTargetPath(
-            String requestParamPath,
-            StorageUploadMetadata metadata,
-            MultipartFile file) throws VipException {
-        String rawPath = requestParamPath;
-        if (metadata != null && metadata.getPath() != null && !metadata.getPath().isBlank()) {
-            rawPath = metadata.getPath();
+    private String buildUploadTargetPath(String destination, MultipartFile file) throws VipException {
+        if (destination == null || destination.isBlank()) {
+            throw new VipException("Upload destination is required");
         }
 
-        if (rawPath == null || rawPath.isBlank()) {
-            throw new VipException("Upload path is required");
+        String fileName = file.getOriginalFilename();
+        if (fileName == null || fileName.isBlank()) {
+            throw new VipException("Upload file name is required");
         }
 
-        String normalized = rawPath.startsWith("/") ? rawPath : "/" + rawPath;
-        if (normalized.endsWith("/")) {
-            String fileName = resolveUploadFileName(file, metadata);
-            if (fileName == null || fileName.isBlank()) {
-                throw new VipException("Upload file name is required");
-            }
-            return normalized + fileName;
+        String normalizedDestination = destination.startsWith("/") ? destination : "/" + destination;
+        if (normalizedDestination.endsWith("/")) {
+            return normalizedDestination + fileName;
         }
-
-        return normalized;
-    }
-
-    private String resolveUploadFileName(MultipartFile file, StorageUploadMetadata metadata) {
-        if (metadata != null && metadata.getFileName() != null && !metadata.getFileName().isBlank()) {
-            return metadata.getFileName();
-        }
-        return file.getOriginalFilename();
+        return normalizedDestination + "/" + fileName;
     }
 }
