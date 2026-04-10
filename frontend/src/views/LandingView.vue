@@ -105,7 +105,7 @@ const publications = [
 ]
 
 // But for the team, its probably something that we can hardcode...
-const currentTeam = [
+const permanentTeam = [
   {
     name: 'Sorina Pop',
     role: 'Project Manager',
@@ -120,13 +120,9 @@ const currentTeam = [
     url: 'https://www.egi.eu/people/axel-bonnet/',
     photo: '/team/axel_bonnet.jpg',
   },
-  {
-    name: 'Hippolyte Blot',
-    role: 'Apprentice',
-    org: 'CREATIS',
-    url: null,
-    photo: '/team/hippolyte_blot.jpg',
-  },
+]
+
+const fixedTermTeam = [
   {
     name: 'Guillaume Vinet',
     role: 'Research Engineer',
@@ -140,6 +136,13 @@ const currentTeam = [
     org: 'CREATIS',
     url: null,
     photo: '/team/mayssa_rouissi.png',
+  },
+  {
+    name: 'Hippolyte Blot',
+    role: 'Apprentice',
+    org: 'CREATIS',
+    url: null,
+    photo: '/team/hippolyte_blot.jpg',
   },
 ]
 
@@ -515,9 +518,42 @@ onUnmounted(() => {
           </p>
         </div>
 
-        <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-12 grid gap-6 sm:grid-cols-2">
           <div
-            v-for="member in currentTeam"
+            v-for="member in permanentTeam"
+            :key="member.name"
+            class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
+          >
+            <div class="flex items-center gap-4">
+              <img
+                :src="member.photo"
+                :alt="member.name"
+                class="h-16 w-16 rounded-full object-cover ring-2 ring-gray-100 ring-offset-2 transition group-hover:ring-primary-200"
+                loading="lazy"
+              />
+              <div>
+                <h3 class="font-bold text-gray-900">{{ member.name }}</h3>
+                <p class="text-sm text-gray-500">{{ member.role }}</p>
+                <span class="mt-1 inline-block rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-600">
+                  {{ member.org }}
+                </span>
+              </div>
+            </div>
+            <a
+              v-if="member.url"
+              :href="member.url"
+              target="_blank"
+              rel="noopener"
+              class="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700"
+            >
+              More info <ExternalLink class="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            v-for="member in fixedTermTeam"
             :key="member.name"
             class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
           >
