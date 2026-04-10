@@ -31,10 +31,10 @@ public class ExecutionTestUtils {
                 "Exec test 1", SimulationStatus.Running.toString(), "engine 1", null);
         execution1 = getExecution(simulation1, ExecutionStatus.RUNNING);
         List<Map<String, Object>> parametersMaps = new ArrayList<>();
-        parametersMaps.add(new HashMap<>() {{
-            put("param 1", "value 1");
-            put("param 2", "42");
-        }});
+        Map<String, Object> map = new HashMap<>();
+        map.put("param 1", "value 1");
+        map.put("param 2", "42");
+        parametersMaps.add(map);
         execution1.setInputValues(parametersMaps);
         execution1.clearReturnedFiles();
 
