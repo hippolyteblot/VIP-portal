@@ -13,7 +13,7 @@ public class Execution {
     private int timeout;
     private ExecutionStatus status;
     @NotNull
-    private Map<String, java.lang.Object> inputValues;
+    private List<Map<String, Object>> inputValues;
     private Map<String, List<java.lang.Object>> returnedFiles;
 
     // optional arguments
@@ -25,7 +25,7 @@ public class Execution {
     private Map<Integer, Map<String, Object>> jobs; // jobId -> status
 
     public Execution() {
-        inputValues = new HashMap<>();
+        inputValues = new ArrayList<>();
         returnedFiles = new HashMap<>();
         jobs = new HashMap<>();
     }
@@ -94,11 +94,11 @@ public class Execution {
         this.status = status;
     }
 
-    public Map<String, java.lang.Object> getInputValues() {
+    public List<Map<String, Object>> getInputValues() {
         return inputValues;
     }
 
-    public void setInputValues(Map<String, java.lang.Object> inputValues) {
+    public void setInputValues(List<Map<String, Object>> inputValues) {
         this.inputValues = inputValues;
     }
 
