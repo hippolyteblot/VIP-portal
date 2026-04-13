@@ -6,11 +6,25 @@ export const useNotificationsStore = defineStore('notifications', () => {
   const toasts = ref<Notification[]>([])
   const dashboardNotifications = ref<DashboardNotification[]>([])
 
-  function addToast(toast: Omit<Notification, 'id'>) {
+  function addToast(toast: Omit<Notification, 'id'>): string {
     const id = 'toast-' + Date.now()
     toasts.value.push({ ...toast, id })
     const duration = toast.duration ?? 5000
     setTimeout(() => removeToast(id), duration)
+    return id
+  }
+
+  function updateToast(id: string, updates: Partial<Omit<Notification, 'id'>>) {
+    const toast = toasts.value.find((t) => t.id === id)
+    if (!toast) {
+      return
+    }
+
+    Object.assign(toast, updates)
+
+    if (typeof updates.duration === 'number') {
+      setTimeout(() => removeToast(id), updates.duration)
+    }
   }
 
   function removeToast(id: string) {
@@ -46,6 +60,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     toasts,
     dashboardNotifications,
     addToast,
+    updateToast,
     removeToast,
     success,
     error,
