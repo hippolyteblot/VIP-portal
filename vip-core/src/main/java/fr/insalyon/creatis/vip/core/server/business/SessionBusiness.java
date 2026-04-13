@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
+import fr.insalyon.creatis.vip.core.server.dao.DAOException;
+import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import fr.insalyon.creatis.vip.core.server.model.AuthenticationCredentials;
 import fr.insalyon.creatis.vip.core.server.model.Session;
 import jakarta.servlet.http.Cookie;
@@ -26,27 +28,29 @@ public class SessionBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    final private ConfigurationBusiness configurationBusiness;
-    final private Supplier<User> userProvider;
-    final private Server server;
+    private final Supplier<User> userProvider;
+    private final Server server;
+    private final UserDAO userDAO;
+    private final AuthenticationBusiness authenticationBusiness;
 
 
     @Autowired
-    public SessionBusiness(ConfigurationBusiness configurationBusiness, Supplier<User> userProvider, Server server) {
-        this.configurationBusiness = configurationBusiness;
+    public SessionBusiness(Supplier<User> userProvider, Server server, UserDAO userDAO, AuthenticationBusiness authenticationBusiness) {
         this.userProvider = userProvider;
         this.server = server;
+        this.userDAO = userDAO;
+        this.authenticationBusiness = authenticationBusiness;
     }
 
     public Session signin(AuthenticationCredentials creds)
             throws VipException {
-        User user = configurationBusiness.signin(creds.getUsername(), creds.getPassword());
+        User user = authenticationBusiness.signin(creds.getUsername(), creds.getPassword());
 
         return getSession(user);
     }
 
     public void signout() throws VipException {
-        configurationBusiness.signout(userProvider.get().getEmail());
+        authenticationBusiness.signout(userProvider.get().getEmail());
 
         // remove current user from Spring context
         SecurityContextHolder.clearContext();
@@ -88,5 +92,23 @@ public class SessionBusiness {
         cookie.setMaxAge(maxAge);
         logger.debug("Creating {} cookie, secured : {}, httpOnly : {}", name, isSecure, httpOnly);
         return cookie;
+    }
+
+    public boolean validateSession(String email, String session) throws VipException {
+        try {
+            if (email != null && session != null) {
+                if (userDAO.verifySession(email, session) && !userDAO.isLocked(email)) {
+                    return true;
+                }
+                logger.info("Failed to verify user [{}]'s session {}", email, session);
+                userDAO.incNFailedAuthentications(email); // just in case...
+                if (userDAO.getNFailedAuthentications(email) > 5) {
+                    userDAO.lock(email);
+                }
+            }
+            return false;
+        } catch (DAOException ex) {
+            throw new VipException(ex);
+        }
     }
 }

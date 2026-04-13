@@ -2,18 +2,14 @@ package fr.insalyon.creatis.vip.api;
 
 import java.util.Collections;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import fr.insalyon.creatis.vip.api.business.VipConfigurer;
 
 /**
  * Configure the spring mvc DispatcherServlet. Few things to do, as the
@@ -28,13 +24,6 @@ import fr.insalyon.creatis.vip.api.business.VipConfigurer;
         includeFilters = {@ComponentScan.Filter(type = FilterType.ANNOTATION, value = RestController.class)}
 )
 public class SpringRestApiConfig implements WebMvcConfigurer {
-
-    private final VipConfigurer vipConfigurer;
-
-    @Autowired
-    public SpringRestApiConfig(final VipConfigurer vipConfigurer) {
-        this.vipConfigurer = vipConfigurer;
-    }
 
     @Override
     @SuppressWarnings("deprecation")
@@ -52,13 +41,5 @@ public class SpringRestApiConfig implements WebMvcConfigurer {
         // this should be the default in Spring 5.3 and may be removed then
         configurer.useRegisteredExtensionsOnly(true);
         configurer.replaceMediaTypes(Collections.emptyMap());
-    }
-
-    /*
-     to verify that the proxy is still valid each day
-     */
-    @Override
-    public void addInterceptors(final InterceptorRegistry registry) {
-        registry.addInterceptor(vipConfigurer);
     }
 }

@@ -38,6 +38,7 @@ public class InternalSecurityConfig {
                 .securityMatcher(antMatcher("/internal/**"))
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers(antMatcher(HttpMethod.POST, "/internal/session")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/internal/users")).permitAll()
                         .requestMatchers(antMatcher("/internal/**")).authenticated())
                 // default CORS : no configuration, so block preflight and let the rest
                 .cors(Customizer.withDefaults())
@@ -47,7 +48,10 @@ public class InternalSecurityConfig {
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         // we could active CSRF protection on whole endpoint but we will need a
                         // /internal/csrf GET endpoint
-                        .ignoringRequestMatchers(antMatcher(HttpMethod.POST, "/internal/session")))
+                        .ignoringRequestMatchers(
+                            antMatcher(HttpMethod.POST, "/internal/session"),
+                            antMatcher(HttpMethod.POST, "/internal/users")
+                        ))
                 .exceptionHandling((handler) -> handler.authenticationEntryPoint(vipAuthenticationEntryPoint));
         return http.build();
     }

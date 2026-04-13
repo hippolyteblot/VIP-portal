@@ -95,8 +95,6 @@ public interface ConfigurationService extends RemoteService {
 
     void updateLastUpdatePublication() throws CoreException;
 
-    String getCASLoginPageUrl() throws CoreException;
-
     UsageStats getUsageStats() throws CoreException;
 
     boolean testLastUpdatePublication() throws CoreException;

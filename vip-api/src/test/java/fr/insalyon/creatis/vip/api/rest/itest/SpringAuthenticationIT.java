@@ -27,7 +27,7 @@ public class SpringAuthenticationIT extends BaseRestApiSpringIT {
     @Test
     public void authenticationOK() throws Exception {
         createUserWithPassword(emailUser2, "coucou");
-        String apikey = getConfigurationBusiness().generateNewUserApikey(emailUser2);
+        String apikey = userBusiness.generateNewUserApikey(emailUser2);
         mockMvc.perform(get("/rest/wrongUrl")
                 .with(ApikeyRequestPostProcessor.apikey("testapikey", apikey)))
                 .andDo(print())

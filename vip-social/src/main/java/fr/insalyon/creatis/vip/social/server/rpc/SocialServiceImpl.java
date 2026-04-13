@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.rpc.AbstractRemoteServiceServlet;
 import fr.insalyon.creatis.vip.social.client.rpc.SocialService;
 import fr.insalyon.creatis.vip.social.client.view.SocialException;
@@ -23,13 +23,13 @@ public class SocialServiceImpl extends AbstractRemoteServiceServlet implements S
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private MessageBusiness messageBusiness;
-    private ConfigurationBusiness configurationBusiness;
+    private UserBusiness userBusiness;
 
     @Override
     public void init() throws ServletException {
         super.init();
         messageBusiness = getBean(MessageBusiness.class);
-        configurationBusiness = getBean(ConfigurationBusiness.class);
+        userBusiness = getBean(UserBusiness.class);
     }
 
     public List<Message> getMessagesByUser(Date startDate) throws SocialException {
@@ -94,7 +94,7 @@ public class SocialServiceImpl extends AbstractRemoteServiceServlet implements S
     public List<User> getUsers() throws SocialException {
         try {
             if (isSystemAdministrator()) {
-                return configurationBusiness.getUsers();
+                return userBusiness.getUsers();
             }
             logger.error("{} is not an admin, he cant access all users", getSessionUser());
             throw new SocialException("Only administrators can send message.");
@@ -152,7 +152,7 @@ public class SocialServiceImpl extends AbstractRemoteServiceServlet implements S
             messageBusiness.sendGroupMessage(
                 getSessionUser(),
                 groupName,
-                configurationBusiness.getUsersFromGroup(groupName),
+                userBusiness.getUsersFromGroup(groupName),
                 subject,
                 message);
         } catch (VipException ex) {

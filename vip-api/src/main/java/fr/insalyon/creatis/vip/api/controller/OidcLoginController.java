@@ -17,7 +17,7 @@ import org.springframework.web.util.UriUtils;
 import fr.insalyon.creatis.vip.api.exception.ApiError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.SessionBusiness;
 import fr.insalyon.creatis.vip.core.server.model.Session;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,12 +29,12 @@ public class OidcLoginController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final SessionBusiness sessionBusiness;
-    private final ConfigurationBusiness configurationBusiness;
+    private final AuthenticationBusiness authenticationBusiness;
 
     @Autowired
-    public OidcLoginController(SessionBusiness sessionBusiness, ConfigurationBusiness configurationBusiness) {
+    public OidcLoginController(SessionBusiness sessionBusiness, AuthenticationBusiness authenticationBusiness) {
         this.sessionBusiness = sessionBusiness;
-        this.configurationBusiness = configurationBusiness;
+        this.authenticationBusiness = authenticationBusiness;
     }
 
     @GetMapping("/loginOIDC")
@@ -66,7 +66,7 @@ public class OidcLoginController {
         }
 
         try {
-            User vipUser = configurationBusiness.getOrCreateUser((String) userAttributes.get("email"), domainName, null);
+            User vipUser = authenticationBusiness.getOrCreateUser((String) userAttributes.get("email"), domainName, null);
             Session session = new Session();
 
             session.id = vipUser.getSession();
