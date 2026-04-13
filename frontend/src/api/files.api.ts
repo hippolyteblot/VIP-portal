@@ -76,11 +76,19 @@ export const filesApi = {
   async uploadFile(destinationPath: string, file: File): Promise<void> {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('destination', destinationPath)
+
+    const normalizedDirectoryPath = destinationPath.endsWith('/')
+      ? destinationPath
+      : `${destinationPath}/`
 
     const submitResponse = await backendClient.post<StorageOperationResponse>(
       '/internal/storage/uploads',
       formData,
+      {
+        params: {
+          path: normalizedDirectoryPath,
+        },
+      },
     )
 
     await waitForOperationCompletion(submitResponse.data.operationId)
