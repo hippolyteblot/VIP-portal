@@ -59,7 +59,7 @@ const sortedEntries = computed(() => {
     if (a.type !== b.type) {
       return a.type === 'folder' ? -1 : 1
     }
-    return a.name.localeCompare(b.name)
+    return (a.name || '').localeCompare(b.name || '')
   })
 })
 

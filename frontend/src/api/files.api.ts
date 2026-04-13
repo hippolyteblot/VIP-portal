@@ -9,6 +9,15 @@ export interface BackendData {
   permissions: string;
 }
 
+interface RawBackendData {
+  name?: unknown
+  type?: unknown
+  length?: unknown
+  modificationDate?: unknown
+  replicas?: unknown
+  permissions?: unknown
+}
+
 interface StorageMetadata extends BackendData {}
 
 interface StorageOperationResponse {
@@ -44,7 +53,7 @@ export const filesApi = {
     const response = await backendClient.get<BackendData[]>(endpoint, {
       params: { refresh },
     })
-    return response.data
+    return normalizeEntries(response.data)
   },
 
   async getMetadata(id: string): Promise<StorageMetadata> {
@@ -115,6 +124,59 @@ export const filesApi = {
   async createDirectory(path: string, name: string): Promise<void> {
     await backendClient.post('/internal/storage/directories', { path, name })
   }
+}
+
+function normalizeEntries(data: unknown): BackendData[] {
+  if (!Array.isArray(data)) {
+    throw new Error('Invalid storage list payload: expected array')
+  }
+
+  return data
+    .map((item) => normalizeEntry(item as RawBackendData))
+    .filter((item): item is BackendData => item !== null)
+}
+
+function normalizeEntry(item: RawBackendData): BackendData | null {
+  if (typeof item.name !== 'string' || item.name.trim().length === 0) {
+    return null
+  }
+
+  const normalizedType = normalizeType(item.type)
+  if (normalizedType === null) {
+    return null
+  }
+
+  const length = typeof item.length === 'number' ? item.length : 0
+  const modificationDate = typeof item.modificationDate === 'string' ? item.modificationDate : ''
+  const replicas = Array.isArray(item.replicas)
+    ? item.replicas.filter((value): value is string => typeof value === 'string')
+    : []
+  const permissions = typeof item.permissions === 'string' ? item.permissions : ''
+
+  return {
+    name: item.name,
+    type: normalizedType,
+    length,
+    modificationDate,
+    replicas,
+    permissions,
+  }
+}
+
+function normalizeType(type: unknown): string | null {
+  if (typeof type !== 'string') {
+    return null
+  }
+
+  if (type === 'folder' || type === 'folderSync') {
+    return 'folder'
+  }
+
+  if (type === 'file' || type === 'fileSync') {
+    return 'file'
+  }
+
+  return null
 }
 
 async function waitForOperationCompletion(
