@@ -31,6 +31,7 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 import fr.insalyon.creatis.vip.datamanager.models.Data;
 import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
+import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageCreateDirectoryRequest;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageDownloadRequest;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageOperationResponse;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageUploadMetadata;
@@ -54,6 +55,19 @@ public class StorageController {
         String resolvedPath = resolvePath(request);
         List<Data> children = storageBusiness.listDir(resolvedPath);
         return children;
+    }
+
+    @PostMapping(value = "/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createDirectory(@RequestBody StorageCreateDirectoryRequest request) throws VipException {
+        if (request == null || request.getPath() == null || request.getPath().isBlank()) {
+            throw new VipException("Directory path is required");
+        }
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new VipException("Directory name is required");
+        }
+
+        storageBusiness.createDirectory(request.getPath(), request.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     private String resolvePath(HttpServletRequest request) {

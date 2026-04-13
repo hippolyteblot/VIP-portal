@@ -142,6 +142,22 @@ public class StorageBusiness {
         transferPoolBusiness.delete(currentUserProvider.get(), path);
     }
 
+    public void createDirectory(String parentPath, String name) throws VipException {
+        String normalizedParent = normalizeDirectoryPath(parentPath);
+        String normalizedName = name == null ? "" : name.trim();
+
+        if (normalizedName.isEmpty() || normalizedName.contains("/")) {
+            throw new VipException("Directory name is invalid");
+        }
+
+        String targetPath = normalizedParent.endsWith("/")
+                ? normalizedParent + normalizedName
+                : normalizedParent + "/" + normalizedName;
+
+        checkPermission(targetPath, LFCAccessType.UPLOAD);
+        lfcBusiness.createDir(currentUserProvider.get(), normalizedParent, normalizedName);
+    }
+
     public File getFile(String path) throws VipException {
         checkDownloadPermission(path);
         String downloadOperationId = downloadFileToLocalStorage(path);
@@ -266,6 +282,21 @@ public class StorageBusiness {
 
     private void checkReadPermission(String path) throws VipException {
         checkPermission(path, LFCAccessType.READ);
+    }
+
+    private String normalizeDirectoryPath(String path) {
+        if (path == null || path.isBlank()) {
+            return ROOT;
+        }
+
+        String normalized = path.trim().replaceAll("/{2,}", "/");
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        if (normalized.length() > 1 && normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     private boolean isValidGroupPath(String path) throws VipException {

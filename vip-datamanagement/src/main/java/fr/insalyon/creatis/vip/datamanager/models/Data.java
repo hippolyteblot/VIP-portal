@@ -1,8 +1,11 @@
 package fr.insalyon.creatis.vip.datamanager.models;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import com.fasterxml.jackson.annotation.JsonView;
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 /**
  *
@@ -14,11 +17,17 @@ public class Data implements IsSerializable {
 
         folder, folderSync, file, fileSync
     };
+    @JsonView(DataViews.User.class)
     private String name;
+    @JsonView(DataViews.User.class)
     private Type type;
+    @JsonView(DataViews.User.class)
     private long length;
+    @JsonView(DataViews.User.class)
     private String modificationDate;
+    @JsonView(DataViews.User.class)
     private List<String> replicas;
+    @JsonView(DataViews.User.class)
     private String permissions;
 
     public Data() {
