@@ -95,8 +95,9 @@ public class StorageController {
     public ResponseEntity<StorageOperationResponse> uploadFile(
             @RequestPart("file") MultipartFile file,
             @RequestPart(value = "metadata", required = false) StorageUploadMetadata metadata,
+            @RequestPart(value = "destination", required = false) String destination,
             @RequestParam(value = "path", required = false) String path) throws VipException, java.io.IOException {
-        String targetPath = resolveUploadTargetPath(path, metadata, file);
+        String targetPath = resolveUploadTargetPath(path, destination, metadata, file);
         String operationId = storageBusiness.submitUploadFromInputStream(
                 targetPath,
                 file.getInputStream(),
@@ -165,9 +166,13 @@ public class StorageController {
 
     private String resolveUploadTargetPath(
             String requestParamPath,
+            String destination,
             StorageUploadMetadata metadata,
             MultipartFile file) throws VipException {
         String rawPath = requestParamPath;
+        if (rawPath == null || rawPath.isBlank()) {
+            rawPath = destination;
+        }
         if (metadata != null && metadata.getPath() != null && !metadata.getPath().isBlank()) {
             rawPath = metadata.getPath();
         }
