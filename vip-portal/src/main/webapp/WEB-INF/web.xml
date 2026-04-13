@@ -142,7 +142,7 @@
     <!-- Internal API -->
     <servlet>
         <servlet-name>InternalAPI</servlet-name>
-        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <servlet-class>fr.insalyon.creatis.vip.core.server.MultipartDispatcherServlet</servlet-class>
         <init-param>
             <param-name>contextClass</param-name>
             <param-value>org.springframework.web.context.support.AnnotationConfigWebApplicationContext</param-value>
