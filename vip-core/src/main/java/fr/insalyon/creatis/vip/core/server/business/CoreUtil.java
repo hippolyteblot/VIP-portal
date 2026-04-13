@@ -1,5 +1,7 @@
 package fr.insalyon.creatis.vip.core.server.business;
 
+import java.security.SecureRandom;
+import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import java.text.Normalizer;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -42,5 +44,16 @@ public class CoreUtil {
             s = s.replaceAll("[^a-zA-Z0-9]", replacement);
         }
         return s;
+    }
+
+    public static String createUUID() {
+        final String alphabet = CoreConstants.UUID_ALPHABET;
+        final SecureRandom random = new SecureRandom();
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < CoreConstants.UUID_SIZE; i++) {
+            sb.append(alphabet.charAt(random.nextInt(alphabet.length())));
+        }
+        return sb.toString();
     }
 }

@@ -3,7 +3,6 @@ package fr.insalyon.creatis.vip.core.integrationtest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,8 +37,6 @@ abstract public class BaseWebSpringIT extends BaseSpringIT {
     protected ResourceLoader resourceLoader;
     @Autowired
     protected UserDAO userDAO;
-    @Autowired
-    protected ConfigurationBusiness configurationBusiness;
     @Autowired
     protected GRIDAClient gridaClient;
 
@@ -83,10 +80,6 @@ abstract public class BaseWebSpringIT extends BaseSpringIT {
 
     public UserDAO getUserDAO() {
         return userDAO;
-    }
-
-    public ConfigurationBusiness getConfigurationBusiness() {
-        return configurationBusiness;
     }
 
     protected static String asJsonString(final Object obj) {

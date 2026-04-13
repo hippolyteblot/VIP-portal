@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.dao.GroupDAO;
 import fr.insalyon.creatis.vip.core.models.Group;
@@ -454,7 +455,7 @@ public class StorageBusiness {
                 if (maxSize != null && maxSize > 0 && totalBytesRead > maxSize) {
                     logger.error("Trying to upload a file too big ({} bytes, max {} bytes)",
                             totalBytesRead, maxSize);
-                    throw new VipException("Upload file too big");
+                    throw new VipException(DefaultError.FILE_TOO_LARGE, maxSize);
                 }
                 isFileEmpty = false;
                 fos.write(buffer, 0, bytesRead);

@@ -10,7 +10,8 @@ import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
 import fr.insalyon.creatis.vip.api.SpringRestApiConfig;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 
 import org.hamcrest.Matchers;
@@ -56,8 +57,7 @@ public class VipWebConfigurationIT {
     @Autowired private Server server;
     @Autowired private GRIDAClient gridaClient;
     @Autowired private EmailBusiness emailBusiness;
-    @Autowired private ConfigurationBusiness configurationBusiness;
-
+    @Autowired private AuthenticationBusiness authenticationBusiness;
 
     @BeforeEach
     public final void setup() {
@@ -71,12 +71,12 @@ public class VipWebConfigurationIT {
     @Test
     public void testGetPipelines() throws Exception {
         Mockito.doReturn(new String[]{"test@admin.test"}).when(emailBusiness).getAdministratorsEmails();
-        User newUser = new User("firstName",
+        User newUser = new User(CoreUtil.createUUID(), "firstName",
                 "LastName", "testEmail@test.tst", "Test institution",
                 "testPassword", CountryCode.fr,
                 null);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        configurationBusiness.signup(newUser, "", (Group) null);
+        authenticationBusiness.signup(newUser, "", (Group) null);
         mockMvc.perform(get("/rest/pipelines")
             .with(SecurityMockMvcRequestPostProcessors.user(new SpringPrincipalUser(newUser))))
             .andDo(print())

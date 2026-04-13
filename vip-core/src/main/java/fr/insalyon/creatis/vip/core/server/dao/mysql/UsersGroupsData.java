@@ -233,10 +233,10 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
 
         try {
             PreparedStatement ps = getConnection().prepareStatement("SELECT "
-                    + "us.email AS uemail, next_email, first_name, last_name, institution, "
+                    + "id, us.email AS uemail, next_email, first_name, last_name, institution, "
                     + "code, confirmed, folder, registration, last_login, "
                     + "level, country_code, max_simulations, termsUse, lastUpdatePublications, "
-                    + "failed_authentications, account_locked "
+                    + "failed_authentications, account_locked, apikey "
                     + "FROM VIPUsers us, VIPUsersGroups ug "
                     + "WHERE us.email = ug.email AND ug.groupname = ? "
                     + "ORDER BY LOWER(first_name), LOWER(last_name)");
@@ -247,21 +247,22 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
             List<User> users = new ArrayList<User>();
 
             while (rs.next()) {
-                users.add(new User(
+                users.add(new User(rs.getString("id"),
                         rs.getString("first_name"), rs.getString("last_name"),
                         rs.getString("uemail"), rs.getString("next_email"),
                         rs.getString("institution"),
                         "", rs.getBoolean("confirmed"),
                         rs.getString("code"), rs.getString("folder"), "",
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        new Date(rs.getTimestamp("last_login").getTime()),
+                        rs.getTimestamp("registration"),
+                        rs.getTimestamp("last_login"),
                         UserLevel.valueOf(rs.getString("level")),
                         CountryCode.valueOf(rs.getString("country_code")),
                         rs.getInt("max_simulations"),
                         rs.getTimestamp("termsUse"),
                         rs.getTimestamp("lastUpdatePublications"),
                         rs.getInt("failed_authentications"),
-                        rs.getBoolean("account_locked")));
+                        rs.getBoolean("account_locked"),
+                        rs.getString("apikey")));
             }
             ps.close();
             return users;

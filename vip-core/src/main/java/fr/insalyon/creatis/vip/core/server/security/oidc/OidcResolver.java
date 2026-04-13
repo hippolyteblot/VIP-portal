@@ -27,18 +27,18 @@ import org.springframework.stereotype.Service;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 
 @Service
 public class OidcResolver {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final ConfigurationBusiness configurationBusiness;
+    private final UserBusiness userBusiness;
     private final OidcConfig oidcConfig;
     private final SimpleAuthorityMapper authoritiesMapper;
 
     @Autowired
-    public OidcResolver(ConfigurationBusiness configurationBusiness, OidcConfig oidcConfig) {
-        this.configurationBusiness = configurationBusiness;
+    public OidcResolver(OidcConfig oidcConfig, UserBusiness userBusiness) {
+        this.userBusiness = userBusiness;
         this.oidcConfig = oidcConfig;
         this.authoritiesMapper = new SimpleAuthorityMapper();
         this.authoritiesMapper.setConvertToUpperCase(true);
@@ -61,7 +61,7 @@ public class OidcResolver {
         }
         User vipUser;
         try {
-            vipUser = configurationBusiness.getUserWithGroups(email);
+            vipUser = userBusiness.getUserWithGroups(email);
         } catch (VipException e) { // DB lookup failed
             logger.error("Error when getting user from OIDC token: doing as if there is an auth error", e);
             throw authError();

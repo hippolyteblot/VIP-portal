@@ -13,7 +13,9 @@ public enum DefaultError implements VipError {
 
     // new errors can use the 1xxx appropriated error code (see VipError)
     NOT_FOUND(1000, "Item {} not found", 1),
-    ACCESS_DENIED(1001, "You do not have the right to do that!", 0);
+    ACCESS_DENIED(1001, "You do not have the right to do that!", 0),
+    UNAUTHENTIFIED_ONLY(1002, "You should not be authentified to do that!", 0),
+    FILE_TOO_LARGE(1003, "Uploaded file is too large. Maximum allowed size is {} bytes.", 1);
 
     private final String message;
     private final Integer code;

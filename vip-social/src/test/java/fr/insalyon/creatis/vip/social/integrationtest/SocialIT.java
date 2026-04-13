@@ -46,17 +46,17 @@ public class SocialIT extends BaseSpringIT {
         createUser(emailUser4, "suffix4");
 
         // Get test users
-        user1 = configurationBusiness.getUser(emailUser1);
-        user2 = configurationBusiness.getUser(emailUser2);
-        user3 = configurationBusiness.getUser(emailUser3);
-        user4 = configurationBusiness.getUser(emailUser4);
+        user1 = userBusiness.getUser(emailUser1);
+        user2 = userBusiness.getUser(emailUser2);
+        user3 = userBusiness.getUser(emailUser3);
+        user4 = userBusiness.getUser(emailUser4);
         adminEmail = ServerMockConfig.TEST_ADMIN_EMAIL;
-        admin = configurationBusiness.getUser(adminEmail);
+        admin = userBusiness.getUser(adminEmail);
 
         // Send test messages
         messageBusiness.sendMessage(admin, new String[]{emailUser1, emailUser3}, "test subject", "test message");
         messageBusiness.sendGroupMessage(user1, nameGroup1,
-                configurationBusiness.getUsersFromGroup(nameGroup1),
+                userBusiness.getUsersFromGroup(nameGroup1),
                 "subject user 1", "message user 1");
 
     }
@@ -522,7 +522,7 @@ public class SocialIT extends BaseSpringIT {
         messageBusiness.sendGroupMessage
                 (
                         user2,
-                        nameGroup1, configurationBusiness.getUsersFromGroup(nameGroup1),
+                        nameGroup1, userBusiness.getUsersFromGroup(nameGroup1),
                         "subject user 2",
                         "message user 2"
                 );
@@ -556,7 +556,7 @@ public class SocialIT extends BaseSpringIT {
                                 (
                                         nonExistentUser,
                                         nameGroup1,
-                                        configurationBusiness.getUsersFromGroup(nameGroup1),
+                                        userBusiness.getUsersFromGroup(nameGroup1),
                                         "subject user 2",
                                         "message user 2"
                                 )
@@ -575,7 +575,7 @@ public class SocialIT extends BaseSpringIT {
                                 (
                                         user3,
                                         "nonExistent group",
-                                        configurationBusiness.getUsersFromGroup(nameGroup1),
+                                        userBusiness.getUsersFromGroup(nameGroup1),
                                         "subject user 2",
                                         "message user 2"
                                 )
@@ -593,7 +593,7 @@ public class SocialIT extends BaseSpringIT {
                 (
                         user3,
                         nameGroup1,
-                        configurationBusiness.getUsersFromGroup("nonExistent group"),
+                        userBusiness.getUsersFromGroup("nonExistent group"),
                         "subject user 2",
                         "message user 2"
                 );
