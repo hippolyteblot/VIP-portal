@@ -46,8 +46,8 @@ public class StorageController {
         this.storageBusiness = storageBusiness;
     }
 
-    // GET /storage/<path>?refresh=<bool>
-    @GetMapping(value = "/**")
+    // GET /storage/directories/<path>?refresh=<bool>
+    @GetMapping(value = "/directories/**")
     public List<Data> listStoragePath(
             HttpServletRequest request,
             @RequestParam(defaultValue = "false") boolean refresh) throws VipException {
@@ -151,6 +151,13 @@ public class StorageController {
 
     @DeleteMapping(value = "/**")
     public ResponseEntity<Void> deleteFile(HttpServletRequest request) throws VipException {
+        String path = resolvePath(request);
+        storageBusiness.deletePath(path);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping(value = "/directories/**")
+    public ResponseEntity<Void> deleteDirectory(HttpServletRequest request) throws VipException {
         String path = resolvePath(request);
         storageBusiness.deletePath(path);
         return ResponseEntity.noContent().build();
