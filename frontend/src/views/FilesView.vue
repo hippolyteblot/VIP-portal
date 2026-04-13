@@ -205,24 +205,26 @@ async function downloadEntry(entry: BackendData): Promise<void> {
 }
 
 async function deleteEntry(entry: BackendData): Promise<void> {
-  if (entry.type !== 'file') return
-
   const id = `delete:${entry.name}`
   activeActionId.value = id
   errorMessage.value = null
 
   try {
-    await filesApi.deleteFile(entryPath(entry.name))
+    if (entry.type === 'folder') {
+      await filesApi.deleteDirectory(entryPath(entry.name))
+    } else {
+      await filesApi.deleteFile(entryPath(entry.name))
+    }
     await loadDirectory(currentPath.value)
   } catch {
-    errorMessage.value = `Impossible de supprimer le fichier ${entry.name}.`
+    const targetLabel = entry.type === 'folder' ? 'dossier' : 'fichier'
+    errorMessage.value = `Impossible de supprimer le ${targetLabel} ${entry.name}.`
   } finally {
     activeActionId.value = null
   }
 }
 
 function requestDelete(entry: BackendData): void {
-  if (entry.type !== 'file') return
   if (isLoading.value || activeActionId.value !== null) return
   pendingDeleteEntry.value = entry
   isDeleteModalOpen.value = true
