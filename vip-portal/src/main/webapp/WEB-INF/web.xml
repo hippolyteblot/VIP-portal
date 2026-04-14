@@ -174,11 +174,6 @@
             <param-name>contextConfigLocation</param-name>
             <param-value>fr.insalyon.creatis.vip.api.SpringRestApiConfig</param-value>
         </init-param>
-        <multipart-config>
-            <max-file-size>-1</max-file-size>
-            <max-request-size>-1</max-request-size>
-            <file-size-threshold>0</file-size-threshold>
-        </multipart-config>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
