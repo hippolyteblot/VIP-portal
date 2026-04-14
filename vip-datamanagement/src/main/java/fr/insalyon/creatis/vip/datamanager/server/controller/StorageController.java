@@ -34,7 +34,6 @@ import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageCreateDirectoryRequest;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageDownloadRequest;
 import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageOperationResponse;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageUploadMetadata;
 import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
 
 @RestController
@@ -108,14 +107,12 @@ public class StorageController {
     @PostMapping(value = "/uploads", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<StorageOperationResponse> uploadFile(
             @RequestPart("file") MultipartFile file,
-            @RequestPart(value = "metadata", required = false) StorageUploadMetadata metadata,
-            @RequestPart(value = "destination", required = false) String destination,
             @RequestParam(value = "path", required = false) String path) throws VipException, java.io.IOException {
-        String targetPath = resolveUploadTargetPath(path, destination, metadata, file);
+        String targetPath = resolveUploadTargetPath(path, file);
         String operationId = storageBusiness.submitUploadFromInputStream(
                 targetPath,
                 file.getInputStream(),
-                resolveUploadFileName(file, metadata));
+            file.getOriginalFilename());
 
         return ResponseEntity
                 .status(HttpStatus.ACCEPTED)
@@ -180,16 +177,8 @@ public class StorageController {
 
     private String resolveUploadTargetPath(
             String requestParamPath,
-            String destination,
-            StorageUploadMetadata metadata,
             MultipartFile file) throws VipException {
         String rawPath = requestParamPath;
-        if (rawPath == null || rawPath.isBlank()) {
-            rawPath = destination;
-        }
-        if (metadata != null && metadata.getPath() != null && !metadata.getPath().isBlank()) {
-            rawPath = metadata.getPath();
-        }
 
         if (rawPath == null || rawPath.isBlank()) {
             throw new VipException("Upload path is required");
@@ -197,7 +186,7 @@ public class StorageController {
 
         String normalized = rawPath.startsWith("/") ? rawPath : "/" + rawPath;
         if (normalized.endsWith("/")) {
-            String fileName = resolveUploadFileName(file, metadata);
+            String fileName = file.getOriginalFilename();
             if (fileName == null || fileName.isBlank()) {
                 throw new VipException("Upload file name is required");
             }
@@ -205,12 +194,5 @@ public class StorageController {
         }
 
         return normalized;
-    }
-
-    private String resolveUploadFileName(MultipartFile file, StorageUploadMetadata metadata) {
-        if (metadata != null && metadata.getFileName() != null && !metadata.getFileName().isBlank()) {
-            return metadata.getFileName();
-        }
-        return file.getOriginalFilename();
     }
 }
