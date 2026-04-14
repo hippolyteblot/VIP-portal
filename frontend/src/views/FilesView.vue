@@ -305,7 +305,7 @@ async function confirmDelete(): Promise<void> {
   isDeleteModalOpen.value = false
   pendingDeleteEntry.value = null
   if (deleted) {
-    window.alert('Deletion request has been taken into account.')
+    notificationsStore.info('Deletion request has been taken into account.')
   }
 }
 
