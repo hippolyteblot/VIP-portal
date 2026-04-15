@@ -7,6 +7,7 @@ import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
@@ -24,7 +25,7 @@ import java.nio.charset.StandardCharsets;
  * Spring web uses a MockMvc that mocks a single Spring MVC Dispatcher servlet, so one MockMvc can only be used on
  * the Rest API or the internal api API, not both.
  * There are 2 separate Base Test class for each API, extending this with a custom @ContextHierarchy and with the
- * appropriate servlet path in getServletPath()
+ * appropriate servlet path in the test.servletPath property
  * see {@link BaseInternalApiSpringIT}
  * and {@link fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT} (in vip-api)
  */
@@ -40,14 +41,15 @@ abstract public class BaseWebSpringIT extends BaseSpringIT {
     @Autowired
     protected GRIDAClient gridaClient;
 
+    @Value("${test.servletPath}")
+    private String servletPath;
+
     @BeforeEach
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mockMvc = buildMockMvc(getServletPath());
+        mockMvc = buildMockMvc(servletPath);
     }
-
-    protected abstract String getServletPath();
 
     protected MockMvc buildMockMvc(String servletPath) {
         return MockMvcBuilders

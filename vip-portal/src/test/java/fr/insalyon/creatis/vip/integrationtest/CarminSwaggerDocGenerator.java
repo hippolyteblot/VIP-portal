@@ -1,11 +1,13 @@
 package fr.insalyon.creatis.vip.integrationtest;
 
 import fr.insalyon.creatis.vip.api.data.UserTestUtils;
+import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
@@ -23,22 +25,23 @@ import java.nio.file.Path;
  */
 
 @ContextHierarchy(
-        @ContextConfiguration(name="internal-api", classes = TestSpringDocConfiguration.class)
+        @ContextConfiguration(name="rest-api", classes = TestSpringDocConfiguration.class)
 )
 @ActiveProfiles("springdoc")
-public class SwaggerDocGenerator extends BaseInternalApiSpringIT {
+@TestPropertySource(properties = {"db.jsonType=TEXT"})
+public class CarminSwaggerDocGenerator extends BaseRestApiSpringIT {
 
     @Test
     public void generateSwaggerJson() throws Exception {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders
-                        .get("/internal/v3/api-docs")
+                        .get("/rest/v3/api-docs")
                         .with(UserTestUtils.baseUser1()))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andReturn();
 
         String swaggerJsonString = mvcResult.getResponse().getContentAsString();
-        Files.writeString(Path.of("src/main/webapp/api-doc/internal-api-doc.json"), swaggerJsonString, StandardCharsets.UTF_8);
+        Files.writeString(Path.of("src/main/webapp/api-doc/carmin-api-doc.json"), swaggerJsonString, StandardCharsets.UTF_8);
     }
 
 }

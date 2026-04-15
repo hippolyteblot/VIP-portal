@@ -1191,7 +1191,7 @@
     "/applications/versions" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -1480,14 +1480,14 @@
           "note" : {
             "type" : "string"
           },
+          "descriptorFilename" : {
+            "type" : "string"
+          },
           "resourcesNames" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
-          },
-          "descriptorFilename" : {
-            "type" : "string"
           }
         }
       },
