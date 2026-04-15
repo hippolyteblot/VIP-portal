@@ -46,22 +46,20 @@ public class User implements IsSerializable {
 
     public User() { }
 
-    public User(String id, String firstName, String lastName, String email, String institution, UserLevel level, CountryCode countryCode) {
-        this(id, firstName, lastName, email, null, institution, "", false, "", "",
-                "", null, null, level, countryCode, 1,null,null,0,false, null);
-    }
-
-    public User(String id, String firstName, String lastName, String email, String institution, String password, UserLevel level, CountryCode countryCode) {
-        this(id, firstName, lastName, email, null, institution, password, false, "", "",
-                "", null, null, level, countryCode, 1,null,null,0,false, null);
+    public User(String id, String firstName, String lastName, String email, String institution,
+                UserLevel level, CountryCode countryCode) {
+        this(id, firstName, lastName, email, null, institution,
+                false, "", "", "",
+                null, null, level, countryCode, 1,null,null,0,false, null);
 
     }
 
     public User(String id, String firstName, String lastName, String email, String institution,
-            String password, CountryCode countryCode, Timestamp lastUpdatePublications) {
+                CountryCode countryCode, Timestamp lastUpdatePublications) {
 
-        this(id, firstName, lastName, email, null, institution, password, false,
-                "", "", null, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1, null,lastUpdatePublications, 0, false, null);
+        this(id, firstName, lastName, email, null, institution,
+                false, "", "", null,
+                new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1, null,lastUpdatePublications, 0, false, null);
     }
 
     public User(
@@ -71,7 +69,6 @@ public class User implements IsSerializable {
             String email,
             String nextEmail,
             String institution,
-            String password,
             Boolean confirmed,
             String code,
             String folder,
@@ -93,7 +90,7 @@ public class User implements IsSerializable {
         this.email = email;
         this.nextEmail = nextEmail;
         this.institution = institution;
-        this.password = password;
+        this.password = "";
         this.confirmed = confirmed;
         this.code = code;
         this.folder = folder;

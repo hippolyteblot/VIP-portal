@@ -251,7 +251,7 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
                         rs.getString("first_name"), rs.getString("last_name"),
                         rs.getString("uemail"), rs.getString("next_email"),
                         rs.getString("institution"),
-                        "", rs.getBoolean("confirmed"),
+                        rs.getBoolean("confirmed"),
                         rs.getString("code"), rs.getString("folder"), "",
                         rs.getTimestamp("registration"),
                         rs.getTimestamp("last_login"),
