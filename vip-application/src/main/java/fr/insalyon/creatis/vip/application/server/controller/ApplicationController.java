@@ -45,7 +45,7 @@ public class ApplicationController {
         Application app = applicationBusiness.get(id);
 
         if (app == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, "application", id);
         } else {
             return app;
         }
@@ -56,7 +56,7 @@ public class ApplicationController {
         Application app = applicationBusiness.get(id);
 
         if (app == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, "application", id);
         } else {
             applicationBusiness.remove(id);
         }

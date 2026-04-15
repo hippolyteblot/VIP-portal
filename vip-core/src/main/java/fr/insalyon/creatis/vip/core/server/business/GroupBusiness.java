@@ -105,15 +105,15 @@ public class GroupBusiness extends CommonBusiness {
     @VIPExternalSafe
     public List<Group> get(boolean onlyApplications, boolean onlyResources) throws VipException {
         try {
+            if (onlyApplications && onlyResources) {
+                // Both filters requested = error
+                throw new VipException(DefaultError.BAD_PARAMETERS, "onlyApplications and onlyResources cannot be both true!");
+            }
             List<Group> groups;
             if (getUserLevel().equals(UserLevel.Administrator)) {
                 groups = groupDAO.get();
             } else {
                 groups = usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
-            }
-            if (onlyApplications && onlyResources) {
-                // Both filters requested = error
-                throw new VipException(DefaultError.BAD_PARAMETERS, "onlyApplications and onlyResources cannot be both true!");
             }
             if (onlyApplications) {
                 groups = groups.stream().filter((g) -> g.getType().equals(GroupType.APPLICATION)).toList();

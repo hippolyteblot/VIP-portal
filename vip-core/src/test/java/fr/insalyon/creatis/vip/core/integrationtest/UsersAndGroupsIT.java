@@ -291,7 +291,9 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
         );
         // getUser is called and had an exception before the beginning of the internship
-        assertTrue(StringUtils.contains(exception.getMessage(), "Item nonExistent user not found (Error code 1000)"));
+        assertTrue(StringUtils.contains(
+            exception.getMessage(),
+            "Entity of type 'user' named 'nonExistent user' not found (Error code 1000)"));
     }
 
     /* ********************************************************************************************************************************************** */

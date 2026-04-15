@@ -82,8 +82,12 @@ public class CorePermissions {
     }
 
     public <T> T shouldExist(T a) throws VipException {
+        return shouldExist(a, "item", "unknown");
+    }
+
+    public <T> T shouldExist(T a, String type, String name) throws VipException {
         if (a == null) {
-            throw new VipException(DefaultError.NOT_FOUND);
+            throw new VipException(DefaultError.NOT_FOUND, type, name);
         } else {
             return a;
         }

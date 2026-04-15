@@ -45,7 +45,7 @@ public class ResourceController {
         Resource resource = resourceBusiness.get(id);
 
         if (resource == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, "resource", id);
         } else {
             return resource;
         }

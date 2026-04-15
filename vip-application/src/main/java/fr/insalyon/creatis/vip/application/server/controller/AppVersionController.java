@@ -44,7 +44,7 @@ public class AppVersionController {
         AppVersion version = appVersionBusiness.get(appId, id);
 
         if (version == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, "appVersion", id);
         } else {
             return version;
         }
@@ -55,7 +55,7 @@ public class AppVersionController {
         AppVersion version = appVersionBusiness.get(appId, id);
 
         if (version == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, "appVersion", id);
         } else {
             appVersionBusiness.remove(appId, id);
         }

@@ -46,7 +46,7 @@ public class GroupController {
         Group group = groupBusiness.get(id);
 
         if (group == null) {
-        throw new VipException(DefaultError.NOT_FOUND, id);
+        throw new VipException(DefaultError.NOT_FOUND, "group", id);
         } else {
             return group;
         }
@@ -57,7 +57,7 @@ public class GroupController {
         Group group = groupBusiness.get(id);
 
         if (group == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, "group", id);
         } else {
             groupBusiness.remove(id);
         }

@@ -46,7 +46,10 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void add(AppVersion version) throws VipException {
-        Application app = permissions.shouldExist(applicationBusiness.get(version.getApplicationName()));
+        Application app = permissions.shouldExist(
+            applicationBusiness.get(version.getApplicationName()),
+            "application",
+            version.getApplicationName());
         permissions.filter((chain) -> chain
             .admin()
             .developer(() -> {
@@ -75,7 +78,10 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(AppVersion version) throws VipException {
-        AppVersion existingVersion = permissions.shouldExist(get(version.getApplicationName(), version.getVersion()));
+        AppVersion existingVersion = permissions.shouldExist(
+            get(version.getApplicationName(), version.getVersion()),
+            "appVersion",
+            version.getVersion());
         Application app = applicationBusiness.get(version.getApplicationName());
 
         permissions.filter((chain) -> chain
@@ -113,7 +119,10 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void remove(String applicationName, String version) throws VipException {
-        Application app = permissions.shouldExist(applicationBusiness.getApplication(applicationName));
+        Application app = permissions.shouldExist(
+            applicationBusiness.getApplication(applicationName),
+            "application",
+            applicationName);
         AppVersion appVersion = get(applicationName, version);
 
         if (appVersion == null) return;
@@ -192,7 +201,10 @@ public class AppVersionBusiness extends CommonBusiness {
     @VIPExternalSafe
     public AppVersion get(String application, String version) throws VipException {
         try {
-            Application app = permissions.shouldExist(applicationBusiness.get(application));
+            Application app = permissions.shouldExist(
+                applicationBusiness.get(application),
+                "application",
+                application);
             AppVersion appVersion = applicationDAO.getVersion(app.getName(), version);
 
             if (appVersion != null) {
@@ -219,7 +231,10 @@ public class AppVersionBusiness extends CommonBusiness {
                     versions.addAll(applicationDAO.getVersions(app.getName()));
                 }
             } else {
-                Application app = permissions.shouldExist(applicationBusiness.get(application));
+                Application app = permissions.shouldExist(
+                    applicationBusiness.get(application),
+                    "application",
+                    application);
                 versions = applicationDAO.getVersions(app.getName());
             }
 
