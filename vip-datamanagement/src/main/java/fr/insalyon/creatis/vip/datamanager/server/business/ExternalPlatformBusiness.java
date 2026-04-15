@@ -64,8 +64,10 @@ public class ExternalPlatformBusiness {
         int indexOfColon = parameterValue.indexOf(':');
         String platformIdentifier = parameterValue.substring(0, indexOfColon);
 
+        // we support file: and http(s): protocols
         if ("file".equals(platformIdentifier)) {
-            // its a local file keep it as it is
+            return new ParseResult(true, parameterValue);
+        } else if ("http".equals(platformIdentifier) || "https".equals(platformIdentifier)) {
             return new ParseResult(true, parameterValue);
         }
 

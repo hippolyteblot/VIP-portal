@@ -97,7 +97,7 @@ public class ApplicationConstants {
     public static final String WORKKFLOW_EXAMPLE_TAG = "example";
     public static final String SEPARATOR_INPUT = "##";
     public static final String SEPARATOR_LIST = "@@";
-    public static final String INPUT_VALID_CHARS = "0-9.,A-Za-z-+@/_(): ";
+    public static final String INPUT_VALID_CHARS = "0-9.,A-Za-z-+@/_():~ ";
     public static final String EXEC_NAME_VALID_CHARS = "0-9A-Za-z-_ ";
     public static final String DEFAULT_EXECUTOR_GASW = "default.executor";
 
