@@ -50,10 +50,10 @@ public class RegisterUserController extends ApiController {
                 signUpUser.getLastName(),
                 signUpUser.getEmail(),
                 signUpUser.getInstitution(),
-                signUpUser.getPassword(),
                 signUpUser.getCountryCode(),
                 null
                 );
+        user.setPassword(signUpUser.getPassword());
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
         user.setRegistration(now);

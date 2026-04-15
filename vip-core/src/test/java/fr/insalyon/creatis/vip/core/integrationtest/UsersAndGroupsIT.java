@@ -78,7 +78,8 @@ public class UsersAndGroupsIT extends BaseSpringIT {
 
         // Create a very complete test users
         final Timestamp now = new Timestamp(System.currentTimeMillis());
-        user5 = new User(CoreUtil.createUUID(), "firstName", "lastName", "email5@test.fr", "nextEmail@test.fr", "institution", "password", false, "code", "folder", "session", now, now, Beginner, CountryCode.fr, 1, now, now, 0, false, null);
+        user5 = new User(CoreUtil.createUUID(), "firstName", "lastName", "email5@test.fr", "nextEmail@test.fr", "institution", false, "code", "folder", "session", now, now, Beginner, CountryCode.fr, 1, now, now, 0, false, null);
+        user5.setPassword("password");
         createUserInGroup("email5@test.fr", "suffix5", "group2");
 
         Map<Group, CoreConstants.GROUP_ROLE> groups = new HashMap<>();
@@ -111,7 +112,8 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     public void testCreateUser() throws VipException, GRIDAClientException {
         clearContext();
         // try all the constructors
-        User user6 = new User(CoreUtil.createUUID(), "firstName", "lastName", "email9@test.fr", "institution", "password", CountryCode.fr, new Timestamp(System.currentTimeMillis()));
+        User user6 = new User(CoreUtil.createUUID(), "firstName", "lastName", "email9@test.fr", "institution", CountryCode.fr, new Timestamp(System.currentTimeMillis()));
+        user6.setPassword("password");
         authenticationBusiness.signup(user6, "", false, true, group2);
 
         // Check users number
