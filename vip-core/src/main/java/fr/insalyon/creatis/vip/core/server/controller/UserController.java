@@ -1,6 +1,6 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
-import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,17 +31,31 @@ public class UserController {
 
     private final UserBusiness userBusiness;
     private final AuthenticationBusiness authenticationBusiness;
+    private final Supplier<User> userProvider;
 
     @Autowired
-    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness) {
+    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness, Supplier<User> userProvider) {
         this.userBusiness = userBusiness;
         this.authenticationBusiness = authenticationBusiness;
+        this.userProvider = userProvider;
     }
 
     @GetMapping
     public PrecisePage<User> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
     return userBusiness.getAll(offset, quantity);
+    }
+
+    @GetMapping(value = "me")
+    public User getCurrentUser() throws VipException {
+        User currentUser = userProvider.get();
+        User user = userBusiness.get(currentUser.getId());
+
+        if (user == null) {
+            throw new VipException(DefaultError.NOT_FOUND, currentUser.getId());
+        } else {
+            return user;
+        }
     }
 
     @GetMapping(value = "{id}")
