@@ -52,7 +52,7 @@ public class CorsRestApiIT extends BaseRestApiSpringIT {
     @BeforeEach
     public void setUpTestUser() throws VipException, GRIDAClientException {
         createUserWithPassword(emailUser2, "coucou");
-        apikey = getConfigurationBusiness().generateNewUserApikey(emailUser2);
+        apikey = userBusiness.generateNewUserApikey(emailUser2);
     }
 
     // without an Origin header (not CORS), with a valid api key, GET is ok

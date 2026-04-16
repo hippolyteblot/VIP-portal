@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.insalyon.creatis.vip.application.server.business.ApplicationBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
@@ -25,13 +24,11 @@ public class GateLabBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private ApplicationBusiness applicationBusiness;
     private UserDAO userDAO;
     private EmailBusiness emailBusiness;
 
     @Autowired
-    public GateLabBusiness(ApplicationBusiness applicationBusiness, UserDAO userDAO, EmailBusiness emailBusiness) {
-        this.applicationBusiness = applicationBusiness;
+    public GateLabBusiness(UserDAO userDAO, EmailBusiness emailBusiness) {
         this.userDAO = userDAO;
         this.emailBusiness = emailBusiness;
     }
@@ -110,7 +107,7 @@ public class GateLabBusiness {
     public void reportProblem(String email, String message) throws VipException {
 
         try {
-            User user = userDAO.getUser(email);
+            User user = userDAO.get(email);
 
             String adminsEmailContents = "<html>"
                     + "<head></head>"

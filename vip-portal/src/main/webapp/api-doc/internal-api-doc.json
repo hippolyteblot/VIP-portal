@@ -9,10 +9,117 @@
     "description" : "Generated server url"
   } ],
   "paths" : {
+    "/users/{id}" : {
+      "get" : {
+        "tags" : [ "user-controller" ],
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "user-controller" ],
+        "operationId" : "update",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/User"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "user-controller" ],
+        "operationId" : "remove",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/resources/{id}" : {
       "get" : {
         "tags" : [ "resource-controller" ],
-        "operationId" : "get",
+        "operationId" : "get_1",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -119,7 +226,7 @@
     "/groups/{id}" : {
       "get" : {
         "tags" : [ "group-controller" ],
-        "operationId" : "get_1",
+        "operationId" : "get_2",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -226,7 +333,7 @@
     "/applications/{id}" : {
       "get" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "get_2",
+        "operationId" : "get_3",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -333,7 +440,7 @@
     "/applications/{appId}/versions/{id}" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "get_3",
+        "operationId" : "get_4",
         "parameters" : [ {
           "name" : "appId",
           "in" : "path",
@@ -458,18 +565,96 @@
         }
       }
     },
+    "/users" : {
+      "get" : {
+        "tags" : [ "user-controller" ],
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "name" : "quantity",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 10,
+            "exclusiveMinimum" : 0,
+            "maximum" : 50
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PrecisePageUser"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "user-controller" ],
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SignUpForm"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/storage/uploads" : {
       "post" : {
         "tags" : [ "storage-controller" ],
         "operationId" : "uploadFile",
-        "parameters" : [ {
-          "name" : "path",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
         "requestBody" : {
           "content" : {
             "multipart/form-data" : {
@@ -480,11 +665,11 @@
                     "type" : "string",
                     "format" : "binary"
                   },
-                  "metadata" : {
-                    "$ref" : "#/components/schemas/StorageUploadMetadata"
+                  "destination" : {
+                    "type" : "string"
                   }
                 },
-                "required" : [ "file" ]
+                "required" : [ "destination", "file" ]
               }
             }
           }
@@ -547,6 +732,75 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/storage/directories" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "listDirectory",
+        "parameters" : [ {
+          "name" : "refresh",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Data"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "createDirectory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StorageCreateDirectoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
           }
         }
       }
@@ -637,7 +891,7 @@
     "/resources" : {
       "get" : {
         "tags" : [ "resource-controller" ],
-        "operationId" : "list",
+        "operationId" : "list_1",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -692,7 +946,7 @@
       },
       "post" : {
         "tags" : [ "resource-controller" ],
-        "operationId" : "create",
+        "operationId" : "create_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -730,7 +984,7 @@
     "/groups" : {
       "get" : {
         "tags" : [ "group-controller" ],
-        "operationId" : "list_1",
+        "operationId" : "list_2",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -778,7 +1032,7 @@
       },
       "post" : {
         "tags" : [ "group-controller" ],
-        "operationId" : "create_1",
+        "operationId" : "create_2",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -847,7 +1101,7 @@
     "/applications" : {
       "get" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "list_2",
+        "operationId" : "list_3",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -902,7 +1156,7 @@
       },
       "post" : {
         "tags" : [ "application-controller" ],
-        "operationId" : "create_2",
+        "operationId" : "create_3",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -940,7 +1194,7 @@
     "/applications/{appId}/versions" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "list_3",
+        "operationId" : "list_4",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -995,7 +1249,7 @@
       },
       "post" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "create_3",
+        "operationId" : "create_4",
         "parameters" : [ {
           "name" : "appId",
           "in" : "path",
@@ -1038,10 +1292,38 @@
         }
       }
     },
+    "/users/me" : {
+      "get" : {
+        "tags" : [ "user-controller" ],
+        "operationId" : "getCurrentUser",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tags" : {
       "get" : {
         "tags" : [ "tag-controller" ],
-        "operationId" : "list_4",
+        "operationId" : "list_5",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -1160,10 +1442,10 @@
         }
       }
     },
-    "/storage/**" : {
+    "/storage/directories/**" : {
       "get" : {
         "tags" : [ "storage-controller" ],
-        "operationId" : "listStoragePath",
+        "operationId" : "listDirectory_1",
         "parameters" : [ {
           "name" : "refresh",
           "in" : "query",
@@ -1189,15 +1471,38 @@
             "content" : {
               "*/*" : {
                 "schema" : {
-                  "oneOf" : [ {
-                    "type" : "string",
-                    "format" : "binary"
-                  }, {
-                    "type" : "array",
-                    "items" : {
-                      "$ref" : "#/components/schemas/Data"
-                    }
-                  } ]
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/Data"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/**" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "getPathMetadata",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Data"
                 }
               }
             }
@@ -1227,7 +1532,7 @@
     "/applications/versions" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
-        "operationId" : "list_5",
+        "operationId" : "list_6",
         "parameters" : [ {
           "name" : "offset",
           "in" : "query",
@@ -1304,6 +1609,98 @@
             "enum" : [ "APPLICATION", "RESOURCE" ]
           },
           "auto" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "User" : {
+        "type" : "object",
+        "properties" : {
+          "confirmed" : {
+            "type" : "boolean"
+          },
+          "accountLocked" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "institution" : {
+            "type" : "string"
+          },
+          "registration" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastLogin" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "level" : {
+            "type" : "string",
+            "enum" : [ "Beginner", "Advanced", "Developer", "Administrator" ]
+          },
+          "maxRunningSimulations" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "countryCode" : {
+            "type" : "string",
+            "enum" : [ "ad", "ae", "af", "ag", "ai", "al", "am", "an", "ao", "aq", "ar", "as", "at", "au", "aw", "ax", "az", "ba", "bb", "bd", "be", "bf", "bg", "bh", "bi", "bj", "bm", "bn", "bo", "br", "bs", "bt", "bv", "bw", "by", "bz", "ca", "cc", "cd", "cf", "cg", "ch", "ci", "ck", "cl", "cm", "cn", "co", "cr", "cs", "cu", "cv", "cx", "cy", "cz", "de", "dj", "dk", "dm", "dz", "ec", "ee", "eg", "eh", "er", "es", "et", "fi", "fj", "fk", "fm", "fo", "fr", "ga", "gb", "gd", "ge", "gf", "gh", "gi", "gl", "gm", "gn", "gp", "gq", "gr", "gs", "gt", "gu", "gw", "gy", "hk", "hm", "hn", "hr", "ht", "hu", "id", "ie", "il", "in", "io", "iq", "ir", "is", "it", "jm", "jo", "jp", "ke", "kg", "kh", "ki", "km", "kn", "kp", "kr", "kw", "ky", "kz", "la", "lb", "lc", "li", "lk", "lr", "ls", "lt", "lu", "lv", "ly", "ma", "mc", "md", "mg", "mh", "mk", "ml", "mm", "mn", "mo", "mp", "mq", "mr", "ms", "mt", "mu", "mv", "mw", "mx", "my", "mz", "na", "nc", "ne", "nf", "ng", "ni", "nl", "no", "np", "nr", "nu", "nz", "om", "pa", "pe", "pf", "pg", "ph", "pk", "pl", "pm", "pn", "pr", "ps", "pt", "pw", "py", "qa", "re", "ro", "ru", "rw", "sa", "sb", "sc", "sd", "se", "sg", "sh", "si", "sj", "sk", "sl", "sm", "sn", "so", "sr", "st", "sv", "sy", "sz", "tc", "td", "tg", "th", "tj", "tk", "tl", "tm", "tn", "to", "tp", "tr", "tt", "tv", "tw", "tz", "ua", "ug", "uk", "us", "uy", "uz", "va", "vc", "ve", "vg", "vi", "vn", "vu", "wf", "ws", "ye", "yt", "za", "zm", "zw" ]
+          },
+          "termsOfUse" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "lastUpdatePublications" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "groups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Group"
+            },
+            "uniqueItems" : true
+          },
+          "apiKey" : {
+            "type" : "string"
+          },
+          "nextEmail" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "folder" : {
+            "type" : "string"
+          },
+          "session" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "failedAuthentications" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "fullName" : {
+            "type" : "string"
+          },
+          "systemAdministrator" : {
+            "type" : "boolean"
+          },
+          "developer" : {
             "type" : "boolean"
           }
         }
@@ -1462,13 +1859,13 @@
           }
         }
       },
-      "StorageUploadMetadata" : {
+      "SignUpForm" : {
         "type" : "object",
         "properties" : {
-          "path" : {
-            "type" : "string"
+          "user" : {
+            "$ref" : "#/components/schemas/User"
           },
-          "fileName" : {
+          "comment" : {
             "type" : "string"
           }
         }
@@ -1488,6 +1885,17 @@
         "type" : "object",
         "properties" : {
           "path" : {
+            "type" : "string"
+          }
+        }
+      },
+      "StorageCreateDirectoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "name" : {
             "type" : "string"
           }
         }
@@ -1519,6 +1927,21 @@
           "userlevel" : {
             "type" : "string",
             "enum" : [ "Beginner", "Advanced", "Developer", "Administrator" ]
+          }
+        }
+      },
+      "PrecisePageUser" : {
+        "type" : "object",
+        "properties" : {
+          "data" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/User"
+            }
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },

@@ -104,7 +104,7 @@ public class ResourceIT extends BaseSpringIT {
         createGroup("resourcetest");
         createUserInGroup("super@test.insa", "resourcetest");
         Group group = groupBusiness.get("resourcetest");
-        User user = configurationBusiness.getUser("super@test.insa");
+        User user = userBusiness.getUser("super@test.insa");
 
         resource.setGroups(Set.of(group));
         resourceBusiness.update(resource);

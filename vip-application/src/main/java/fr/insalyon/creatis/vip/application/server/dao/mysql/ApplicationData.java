@@ -144,7 +144,7 @@ public class ApplicationData extends JdbcDaoSupport implements ApplicationDAO {
 
             while (rs.next()) {
                 String appOwner = rs.getString("owner");
-                User user = userDAO.getUser(appOwner);
+                User user = userDAO.get(appOwner);
 
                 applications.add(new Application(
                     rs.getString("name"), 

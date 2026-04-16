@@ -165,6 +165,8 @@ public class CoreConstants implements IsSerializable {
         Admin, User, None
     };
 
+    public static final String UUID_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    public static final int UUID_SIZE = 8;
 
     public static String getTileGridId(String tileName) {
         return "application_"
