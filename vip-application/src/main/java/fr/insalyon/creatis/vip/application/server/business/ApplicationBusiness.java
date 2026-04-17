@@ -86,7 +86,7 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(Application app) throws VipException {
-        Application existingApp = permissions.shouldExist(get(app.getName()), "application", app.getName());
+        Application existingApp = permissions.shouldExist(get(app.getName()), Application.class, app.getName());
 
         permissions.filter((chain) -> chain
             .admin()
@@ -223,7 +223,7 @@ public class ApplicationBusiness extends CommonBusiness {
         app = getApplication(app.getName());
         Group group = groupBusiness.get(groupName);
         if (group == null) {
-            throw new VipException(DefaultError.NOT_FOUND, "group", groupName);
+            throw new VipException(DefaultError.NOT_FOUND, Group.class.getSimpleName(), groupName);
         }
 
         try {
@@ -236,7 +236,7 @@ public class ApplicationBusiness extends CommonBusiness {
     public void dissociate(Application app, String groupName) throws VipException {
         Group group = groupBusiness.get(groupName);
         if (group == null) {
-            throw new VipException(DefaultError.NOT_FOUND, "group", groupName);
+            throw new VipException(DefaultError.NOT_FOUND, Group.class.getSimpleName(), groupName);
         }
 
         try {

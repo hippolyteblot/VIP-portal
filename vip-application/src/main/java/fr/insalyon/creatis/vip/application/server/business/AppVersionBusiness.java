@@ -48,7 +48,7 @@ public class AppVersionBusiness extends CommonBusiness {
     public void add(AppVersion version) throws VipException {
         Application app = permissions.shouldExist(
             applicationBusiness.get(version.getApplicationName()),
-            "application",
+            Application.class,
             version.getApplicationName());
         permissions.filter((chain) -> chain
             .admin()
@@ -80,7 +80,7 @@ public class AppVersionBusiness extends CommonBusiness {
     public void update(AppVersion version) throws VipException {
         AppVersion existingVersion = permissions.shouldExist(
             get(version.getApplicationName(), version.getVersion()),
-            "appVersion",
+            AppVersion.class,
             version.getVersion());
         Application app = applicationBusiness.get(version.getApplicationName());
 
@@ -121,7 +121,7 @@ public class AppVersionBusiness extends CommonBusiness {
     public void remove(String applicationName, String version) throws VipException {
         Application app = permissions.shouldExist(
             applicationBusiness.getApplication(applicationName),
-            "application",
+            Application.class,
             applicationName);
         AppVersion appVersion = get(applicationName, version);
 
@@ -203,7 +203,7 @@ public class AppVersionBusiness extends CommonBusiness {
         try {
             Application app = permissions.shouldExist(
                 applicationBusiness.get(application),
-                "application",
+                Application.class,
                 application);
             AppVersion appVersion = applicationDAO.getVersion(app.getName(), version);
 
@@ -233,7 +233,7 @@ public class AppVersionBusiness extends CommonBusiness {
             } else {
                 Application app = permissions.shouldExist(
                     applicationBusiness.get(application),
-                    "application",
+                    Application.class,
                     application);
                 versions = applicationDAO.getVersions(app.getName());
             }

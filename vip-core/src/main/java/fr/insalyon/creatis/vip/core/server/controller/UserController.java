@@ -1,7 +1,5 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,7 +47,7 @@ public class UserController {
         User user = userBusiness.get(id);
 
         if (user == null) {
-            throw new VipException(DefaultError.NOT_FOUND, "user", id);
+            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
         } else {
             return user;
         }

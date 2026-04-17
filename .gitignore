@@ -16,3 +16,5 @@ target/
 #vscode
 .vscode
 
+# api doc
+vip-portal/src/main/webapp/api-doc/*
