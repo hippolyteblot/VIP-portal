@@ -114,7 +114,7 @@ public class ExternalPlatformBusiness {
             throw new VipException(e);
         }
     }
-    public  static String adaptUri(String value) {
+    public static String sanitizeUri(String value) {
         if (value == null || value.isEmpty()) return value;
         try {
             URI uri = new URI(value);
@@ -123,9 +123,11 @@ public class ExternalPlatformBusiness {
             if (scheme == null) return value;
 
             if ("shanoir".equals(scheme)) {
-                return ShanoirStorageBusiness.adaptShanoirUri(uri);
+                ShanoirStorageBusiness shanoirStorageBusiness = new ShanoirStorageBusiness();
+                return shanoirStorageBusiness.adaptShanoirUri(uri);
             } else if ("girder".equals(scheme)) {
-                return GirderStorageBusiness.adaptGirderUri(uri); 
+                GirderStorageBusiness girderStorageBusiness = new GirderStorageBusiness(null, null);
+                return girderStorageBusiness.adaptGirderUri(uri); 
             }
         } catch (URISyntaxException ex) {
             return value;
@@ -133,13 +135,13 @@ public class ExternalPlatformBusiness {
         return value;
     }
 
-    public static  List<String> sanitizePath(List<String> rawList) {
+    public static  List<String> sanitizeUriList(List<String> rawList) {
         if (rawList == null) {
             return new ArrayList<>();
         }
         List<String> cleanList = new ArrayList<>();
         for (String value : rawList) {
-            cleanList.add(adaptUri(value));
+            cleanList.add(sanitizeUri(value));
         }
         return cleanList;
     }

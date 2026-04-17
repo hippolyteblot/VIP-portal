@@ -158,8 +158,9 @@ public class ExecutionBusiness {
                 null// results location (not available in VIP yet)
         );
 
-        if (summarize) 
-            {return e;}
+        if (summarize) {
+                return e;
+            }
 
         //get the current user's folder to filter file access
         String userFolder = currentUserProvider.get().getFolder();
@@ -169,11 +170,9 @@ public class ExecutionBusiness {
             for (InOutData iod : inputs) {
                 String key = iod.getProcessor(); 
                 String value = iod.getPath();
-
                 if (!e.getInputValues().containsKey(key)) {
                     e.getInputValues().put(key, new ArrayList<>());
                 }
-                
                 ((List<Object>) e.getInputValues().get(key)).add(value);
             }
         // retrieves results directory
@@ -182,18 +181,17 @@ public class ExecutionBusiness {
                 resDirList = new ArrayList<>();
             }
             if (!resDirList.isEmpty()) {
-                e.setResultsLocation(resDirList.get(0).toString());
+                e.setResultsLocation(resDirList.toString());
                 e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
             }
         List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
         for (InOutData iod : outputs) {
             String key = iod.getProcessor();
             String value = iod.getPath();
-        
             if (!e.getReturnedFiles().containsKey(key)) {
                 e.getReturnedFiles().put(key, new ArrayList<Object>());
             }
-            ((List<Object>) e.getReturnedFiles().get(key)).add(value);
+            e.getReturnedFiles().get(key).add(value);
         }
 
         List<Task> tasks = simulationBusiness.getJobsList(s.getID());
@@ -223,8 +221,8 @@ public class ExecutionBusiness {
             List<String> dbInputs = simulationBusiness.getJobInputs(s.getID(), jobName, userFolder);
             List<String> dbOutputs = simulationBusiness.getJobOutputs(s.getID(), jobName, userFolder);
 
-            jobInputs.addAll(ExternalPlatformBusiness.sanitizePath(dbInputs));
-            jobOutputs.addAll(ExternalPlatformBusiness.sanitizePath(dbOutputs));
+            jobInputs.addAll(ExternalPlatformBusiness.sanitizeUriList(dbInputs));
+            jobOutputs.addAll(ExternalPlatformBusiness.sanitizeUriList(dbOutputs));
 
             // Build the data structure 
             Map<String, Object> jobData = new HashMap<>();

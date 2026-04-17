@@ -189,7 +189,7 @@ public class ShanoirStorageBusiness {
         }
     }
 
-    public static String adaptShanoirUri(URI uri) {
+    public String adaptShanoirUri(URI uri) {
         return DataManagerUtil.selectUriQueries(uri, "apiUrl", "upload_url", "resourceId", "type", "format", "keycloak_client_id", "converterId");
     }
 

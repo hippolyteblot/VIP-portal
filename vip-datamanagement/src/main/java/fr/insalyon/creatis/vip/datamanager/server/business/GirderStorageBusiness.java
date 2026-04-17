@@ -219,7 +219,7 @@ public class GirderStorageBusiness {
         }
     }
 
-    public static String adaptGirderUri(URI uri) {
+    public String adaptGirderUri(URI uri) {
         return DataManagerUtil.selectUriQueries(uri, "apiurl", "fileId");
     }
 
