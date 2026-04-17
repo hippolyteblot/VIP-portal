@@ -1,6 +1,7 @@
 package fr.insalyon.creatis.vip.api.business;
 
 import static fr.insalyon.creatis.vip.application.client.ApplicationConstants.INPUT_VALID_CHARS;
+import static fr.insalyon.creatis.vip.core.client.view.CoreConstants.RESULTS_DIRECTORY_PARAM_NAME;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -36,6 +37,8 @@ import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.CarminProperties;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
+import fr.insalyon.creatis.vip.datamanager.server.business.ExternalPlatformBusiness;
+import fr.insalyon.creatis.vip.datamanager.server.business.ShanoirStorageBusiness;
 
 @Service
 public class ExecutionBusiness {
@@ -139,72 +142,102 @@ public class ExecutionBusiness {
         return getExecutionFromSimulation(s, summarize);
     }
 
+    @SuppressWarnings("unchecked")
     private Execution getExecutionFromSimulation(Simulation s, boolean summarize) throws VipException {
         // Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
                 s.getSimulationName(),
                 pipelineBusiness.getPipelineIdentifier(s.getApplicationName(), s.getApplicationVersion()),
-                0, // timeout (no timeout set in VIP)
-                convertVIPtoCarminStatus(s.getStatus()),
+                0,// timeout (no timeout set in VIP)
+                s.getStatus() == null ? null : convertVIPtoCarminStatus(s.getStatus()),
                 null, // study identifier (not available in VIP yet)
-                null, // error codes and mesasges (not available in VIP yet)
+                null,// error codes and mesasges (not available in VIP yet)
                 s.getDate().getTime(),
-                null, // last status modification date (not available in VIP yet)
-                null // results location (not available in VIP yet)
+                null,// last status modification date (not available in VIP yet)
+                null// results location (not available in VIP yet)
         );
 
-        if(summarize) // don't look into inputs and outputs
-            return e;
+        if (summarize) 
+            {return e;}
 
-        // Inputs
-        List<InOutData> inputs = workflowBusiness.getInputData(
-            s.getID(), currentUserProvider.get().getFolder());
-        logger.debug("Execution has " + inputs.size() + " inputs ");
-        for (InOutData iod : inputs) {
-            e.getInputValues().put(iod.getProcessor(), iod.getPath());
-        }
+        //get the current user's folder to filter file access
+        String userFolder = currentUserProvider.get().getFolder();
 
-        // Outputs
-        List<InOutData> outputs = workflowBusiness.getOutputData(
-            s.getID(), currentUserProvider.get().getFolder());
-        for (InOutData iod : outputs) {
-            if (!e.getReturnedFiles().containsKey(iod.getProcessor())) {
-                 e.getReturnedFiles().put(iod.getProcessor(), new ArrayList<>());
+        // retrieves all input data associated with this simulation
+        List<InOutData> inputs = workflowBusiness.getInputData(s.getID(), userFolder);
+            for (InOutData iod : inputs) {
+                String key = iod.getProcessor(); 
+                String value = iod.getPath();
+
+                if (!e.getInputValues().containsKey(key)) {
+                    e.getInputValues().put(key, new ArrayList<>());
+                }
+                
+                ((List<Object>) e.getInputValues().get(key)).add(value);
             }
-            e.getReturnedFiles().get(iod.getProcessor()).add(iod.getPath());
+        // retrieves results directory
+        List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
+        if (resDirList == null) {
+                resDirList = new ArrayList<>();
+            }
+            if (!resDirList.isEmpty()) {
+                e.setResultsLocation(resDirList.get(0).toString());
+                e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
+            }
+        List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
+        for (InOutData iod : outputs) {
+            String key = iod.getProcessor();
+            String value = iod.getPath();
+        
+            if (!e.getReturnedFiles().containsKey(key)) {
+                e.getReturnedFiles().put(key, new ArrayList<Object>());
+            }
+            ((List<Object>) e.getReturnedFiles().get(key)).add(value);
         }
 
-        // Jobs
         List<Task> tasks = simulationBusiness.getJobsList(s.getID());
+        if (tasks == null) tasks = new ArrayList<>();
+
         Map<Integer, Task> latestTaskPerInvocation = new HashMap<>();
 
+        // Group tasks by invocation ID to keep only the most recent attempt for each job
         for (Task t : tasks) {
             int invId = t.getInvocationID();
             Task current = latestTaskPerInvocation.get(invId);
-
             if (current == null || t.getCreationDate().after(current.getCreationDate())) {
                 latestTaskPerInvocation.put(invId, t);
             }
         }
 
-        Map<Integer, Map<String, Object>> jobsMap = new HashMap<>();
+        Map<Integer, Map<String, Object>> jobsMap = new HashMap<>(); 
+        //  detailed job data including sanitized inputs and outputs
         for (Map.Entry<Integer, Task> entry : latestTaskPerInvocation.entrySet()) {
+            Integer invocationId = entry.getKey(); 
             Task t = entry.getValue();
-            Map<String, Object> jobInfo = new HashMap<>();
-            jobInfo.put("status", t.getStatus().toString());
-            jobInfo.put("exitCode", t.getExitCode());
-            jobInfo.put("exitMessage", t.getExitMessage());
-            jobsMap.put(entry.getKey(), jobInfo);
-        }
+            String jobName = t.getFileName(); 
 
+            List<String> jobInputs = new ArrayList<>();
+            List<String> jobOutputs = new ArrayList<>();
+
+            List<String> dbInputs = simulationBusiness.getJobInputs(s.getID(), jobName, userFolder);
+            List<String> dbOutputs = simulationBusiness.getJobOutputs(s.getID(), jobName, userFolder);
+
+            jobInputs.addAll(ExternalPlatformBusiness.sanitizePath(dbInputs));
+            jobOutputs.addAll(ExternalPlatformBusiness.sanitizePath(dbOutputs));
+
+            // Build the data structure 
+            Map<String, Object> jobData = new HashMap<>();
+            
+            jobData.put("status", t.getStatus().name());
+            jobData.put("exitCode", t.getExitCode());
+            jobData.put("jobName", jobName);
+            jobData.put("inputs", jobInputs);   
+            jobData.put("outputs", jobOutputs);
+            jobsMap.put(invocationId, jobData);
+        }
+        // Attach the compiled jobs map to the Execution object
         e.setJobs(jobsMap);
-
-
-        if (!(e.getStatus() == ExecutionStatus.FINISHED) && !(e.getStatus() == ExecutionStatus.KILLED) && e.getReturnedFiles().isEmpty()) {
-            e.clearReturnedFiles();
-        }
-
         return e;
     }
 

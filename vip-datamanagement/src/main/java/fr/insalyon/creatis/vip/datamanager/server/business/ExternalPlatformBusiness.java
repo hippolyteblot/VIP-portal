@@ -1,5 +1,8 @@
 package fr.insalyon.creatis.vip.datamanager.server.business;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -7,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import fr.insalyon.creatis.vip.datamanager.server.DataManagerUtil;
+import fr.insalyon.creatis.vip.datamanager.server.business.GirderStorageBusiness;
+import fr.insalyon.creatis.vip.datamanager.server.business.ShanoirStorageBusiness;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -108,5 +114,33 @@ public class ExternalPlatformBusiness {
             throw new VipException(e);
         }
     }
+    public  static String adaptUri(String value) {
+        if (value == null || value.isEmpty()) return value;
+        try {
+            URI uri = new URI(value);
+            String scheme = uri.getScheme();
+            
+            if (scheme == null) return value;
 
+            if ("shanoir".equals(scheme)) {
+                return ShanoirStorageBusiness.adaptShanoirUri(uri);
+            } else if ("girder".equals(scheme)) {
+                return GirderStorageBusiness.adaptGirderUri(uri); 
+            }
+        } catch (URISyntaxException ex) {
+            return value;
+        }
+        return value;
+    }
+
+    public static  List<String> sanitizePath(List<String> rawList) {
+        if (rawList == null) {
+            return new ArrayList<>();
+        }
+        List<String> cleanList = new ArrayList<>();
+        for (String value : rawList) {
+            cleanList.add(adaptUri(value));
+        }
+        return cleanList;
+    }
 }
