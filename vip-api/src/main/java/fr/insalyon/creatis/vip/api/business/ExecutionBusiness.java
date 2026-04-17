@@ -181,7 +181,7 @@ public class ExecutionBusiness {
                 resDirList = new ArrayList<>();
             }
             if (!resDirList.isEmpty()) {
-                e.setResultsLocation(resDirList.toString());
+                e.setResultsLocation(resDirList);
                 e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
             }
         List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
@@ -193,7 +193,6 @@ public class ExecutionBusiness {
             }
             e.getReturnedFiles().get(key).add(value);
         }
-
         List<Task> tasks = simulationBusiness.getJobsList(s.getID());
         if (tasks == null) tasks = new ArrayList<>();
 
@@ -207,7 +206,6 @@ public class ExecutionBusiness {
                 latestTaskPerInvocation.put(invId, t);
             }
         }
-
         Map<Integer, Map<String, Object>> jobsMap = new HashMap<>(); 
         //  detailed job data including sanitized inputs and outputs
         for (Map.Entry<Integer, Task> entry : latestTaskPerInvocation.entrySet()) {
