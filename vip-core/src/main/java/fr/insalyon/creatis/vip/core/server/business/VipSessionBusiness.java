@@ -35,19 +35,17 @@ import jakarta.servlet.http.HttpSession;
 @Service
 @Transactional
 @VIPCheckRemoval
-public class VipSessionBusiness {
+public class VipSessionBusiness{
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    protected Server server;
-    protected ConfigurationBusiness configurationBusiness;
-    private SessionBusiness sessionBusiness;
+    private final SessionBusiness sessionBusiness;
+    private final UserBusiness userBusiness;
 
     @Autowired
-    public VipSessionBusiness(Server server, ConfigurationBusiness configurationBusiness, SessionBusiness sessionBusiness) {
-        this.server = server;
-        this.configurationBusiness = configurationBusiness;
+    public VipSessionBusiness(SessionBusiness sessionBusiness, UserBusiness userBusiness) {
         this.sessionBusiness = sessionBusiness;
+        this.userBusiness = userBusiness;
     }
 
     public User getUserFromSession(HttpServletRequest request, HttpServletResponse response) throws CoreException {
@@ -113,7 +111,7 @@ public class VipSessionBusiness {
             // the cookies are there, verify them
             logger.info("Using cookies to reload session for {} ", email);
 
-            if (configurationBusiness.validateSession(email, sessionId)) {
+            if (sessionBusiness.validateSession(email, sessionId)) {
                 return setUserInSession(email, request.getSession());
             }
             return null;
@@ -146,7 +144,7 @@ public class VipSessionBusiness {
 
     private User setUserInSession(String  email, HttpSession session) throws CoreException {
         try {
-            User user = configurationBusiness.getUser(email);
+            User user = userBusiness.getUser(email);
             return setUserInSession(user, session);
         } catch (VipException e) {
             throw new CoreException(e);
@@ -157,7 +155,7 @@ public class VipSessionBusiness {
             throws CoreException {
         try {
             Map<Group, GROUP_ROLE> groups =
-                    configurationBusiness.getUserGroups(user.getEmail());
+                    userBusiness.getUserGroups(user.getEmail());
             user.setGroups(groups);
 
             session.setAttribute(CoreConstants.SESSION_USER, user);

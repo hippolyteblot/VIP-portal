@@ -26,50 +26,46 @@ import java.util.*;
 public class UserData extends JdbcDaoSupport implements UserDAO {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final String FIELDS = """
+        id, email, next_email, first_name, last_name, institution, 
+        code, confirmed, folder, session, registration, 
+        last_login, level, country_code, max_simulations, 
+        termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey 
+        """;
 
     @Autowired
     public void useDataSource(DataSource dataSource) {
         setDataSource(dataSource);
     }
 
-    /**
-     * Adds a user
-     *
-     * @param user
-     * @return
-     */
     @Override
     public void add(User user) throws DAOException {
+        String query =  "INSERT INTO VIPUsers(" + FIELDS + ") "
+        +               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try {
-            PreparedStatement ps = getConnection().prepareStatement(
-                    "INSERT INTO VIPUsers("
-                            + "email, pass, first_name, last_name, institution, "
-                            + "code, confirmed, folder, registration, last_login, level, "
-                            + "country_code, max_simulations, termsUse,lastUpdatePublications,"
-                            + "failed_authentications, account_locked) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-            ps.setString(1, user.getEmail());
-            ps.setString(2, user.getPassword());
-            ps.setString(3, user.getFirstName());
-            ps.setString(4, user.getLastName());
-            ps.setString(5, user.getInstitution());
-            ps.setString(6, user.getCode());
-            ps.setBoolean(7, user.isConfirmed());
-            ps.setString(8, user.getFolder());
-            ps.setTimestamp(9, new Timestamp(user.getRegistration().getTime()));
-            ps.setTimestamp(10, new Timestamp(user.getLastLogin().getTime()));
-            ps.setString(11, user.getLevel().name());
-            ps.setString(12, user.getCountryCode().name());
-            ps.setInt(13, user.getMaxRunningSimulations());
-            ps.setTimestamp(14, user.getTermsOfUse());
-            ps.setTimestamp(15, user.getLastUpdatePublications());
-            ps.setInt(16, 0);
-            ps.setBoolean(17, false);
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getNextEmail());
+            ps.setString(4, user.getFirstName());
+            ps.setString(5, user.getLastName());
+            ps.setString(6, user.getInstitution());
+            ps.setString(7, user.getCode());
+            ps.setBoolean(8, user.isConfirmed());
+            ps.setString(9, user.getFolder());
+            ps.setString(10, user.getSession());
+            ps.setTimestamp(11, new Timestamp(user.getRegistration().getTime()));
+            ps.setTimestamp(12, new Timestamp(user.getLastLogin().getTime()));
+            ps.setString(13, user.getLevel().name());
+            ps.setString(14, user.getCountryCode().name());
+            ps.setInt(15, user.getMaxRunningSimulations());
+            ps.setTimestamp(16, user.getTermsOfUse());
+            ps.setTimestamp(17, user.getLastUpdatePublications());
+            ps.setInt(18, user.getFailedAuthentications());
+            ps.setBoolean(19, user.isAccountLocked());
+            ps.setString(20, user.getApiKey());
 
             ps.execute();
-            ps.close();
 
         } catch (SQLException ex) {
             if (ex.getMessage().contains("Unique index or primary key violation") || ex.getMessage().contains("Duplicate entry ")) {
@@ -82,15 +78,8 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param password
-     * @return
-     * @throws DAOException
-     */
     @Override
     public boolean authenticate(String email, String password) throws DAOException {
-
         try {
             PreparedStatement ps = getConnection().prepareStatement("SELECT "
                     + "pass,account_locked FROM VIPUsers WHERE email=?");
@@ -112,12 +101,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param code
-     * @return
-     * @throws DAOException
-     */
     @Override
     public boolean activate(String email, String code) throws DAOException {
 
@@ -152,46 +135,16 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @return
-     * @throws DAOException
-     */
     @Override
-    public User getUser(String email) throws DAOException {
-
-        try {
-            PreparedStatement ps = getConnection().prepareStatement("SELECT "
-                    + "email, next_email, pass, first_name, last_name, institution, "
-                    + "code, confirmed, folder, session, registration, "
-                    + "last_login, level, country_code, max_simulations,termsUse,lastUpdatePublications,failed_authentications,account_locked "
-                    + "FROM VIPUsers "
-                    + "WHERE email=?");
-
+    public User get(String email) throws DAOException {
+        String query =  "SELECT " + FIELDS
+        +               "FROM VIPUsers WHERE email=?";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)){
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                User user = new User(
-                        rs.getString("first_name"), rs.getString("last_name"),
-                        rs.getString("email"), rs.getString("next_email"),
-                        rs.getString("institution"),
-                        rs.getString("pass") == null ? null : "",
-                        rs.getBoolean("confirmed"),
-                        rs.getString("code"), rs.getString("folder"),
-                        rs.getString("session"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        new Date(rs.getTimestamp("last_login").getTime()),
-                        UserLevel.valueOf(rs.getString("level")),
-                        CountryCode.valueOf(rs.getString("country_code")),
-                        rs.getInt("max_simulations"),
-                        rs.getTimestamp("termsUse"),
-                        rs.getTimestamp("lastUpdatePublications"),
-                        rs.getInt("failed_authentications"),
-                        rs.getBoolean("account_locked"));
-
-                ps.close();
-                return user;
+                return userFromRs(rs);
             }
 
             logger.error("There is no user registered with the e-mail {}", email);
@@ -203,42 +156,18 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @return @throws DAOException
-     */
     @Override
     public List<User> getUsers() throws DAOException {
+        String query =  "SELECT " + FIELDS
+        +               "FROM VIPUsers ORDER BY LOWER(first_name), LOWER(last_name)";
 
-        try {
-            PreparedStatement ps = getConnection().prepareStatement("SELECT "
-                    + "email, next_email, first_name, last_name, institution, "
-                    + "code, confirmed, folder, registration, last_login, "
-                    + "level, country_code, max_simulations, termsUse, lastUpdatePublications,"
-                    + "failed_authentications, account_locked "
-                    + "FROM VIPUsers "
-                    + "ORDER BY LOWER(first_name), LOWER(last_name)");
-
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             ResultSet rs = ps.executeQuery();
             List<User> users = new ArrayList<User>();
 
             while (rs.next()) {
-                users.add(new User(
-                        rs.getString("first_name"), rs.getString("last_name"),
-                        rs.getString("email"), rs.getString("next_email"),
-                        rs.getString("institution"),
-                        "", rs.getBoolean("confirmed"),
-                        rs.getString("code"), rs.getString("folder"), "",
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        new Date(rs.getTimestamp("last_login").getTime()),
-                        UserLevel.valueOf(rs.getString("level")),
-                        CountryCode.valueOf(rs.getString("country_code")),
-                        rs.getInt("max_simulations"),
-                        rs.getTimestamp("termsUse"),
-                        rs.getTimestamp("lastUpdatePublications"),
-                        rs.getInt("failed_authentications"),
-                        rs.getBoolean("account_locked")));
+                users.add(userFromRs(rs));
             }
-            ps.close();
             return users;
 
         } catch (SQLException ex) {
@@ -248,27 +177,23 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
     }
 
     @Override
-    public List<User> searchUsers(
-            UserSearchCriteria searchCriteria) throws DAOException {
+    public List<User> searchUsers(UserSearchCriteria searchCriteria) throws DAOException {
+        StringBuilder query =  new StringBuilder("SELECT "
+        +               "id, email, next_email, first_name, last_name, institution, "
+        +               "code, confirmed, folder, session, registration, "
+        +               "last_login, level, country_code, max_simulations, "
+        +               "termsUse, lastUpdatePublications, failed_authentications, account_locked, apikey "
+        +               "FROM VIPUsers");
+        List<Object> params = new ArrayList<>();
 
-        try {
-            StringBuilder query = new StringBuilder("SELECT "
-                    + "email, next_email, first_name, last_name, institution, "
-                    + "code, confirmed, folder, registration, last_login, "
-                    + "level, country_code, max_simulations, termsUse, lastUpdatePublications,"
-                    + "failed_authentications, account_locked "
-                    + "FROM VIPUsers ");
-            List<Object> params = new ArrayList<>();
+        buildSearchQuery(searchCriteria)
+                .ifPresent(queryEntry -> {
+                    query.append(queryEntry.getKey());
+                    params.addAll(queryEntry.getValue());
+                });
+        query.append("ORDER BY LOWER(registration)");
 
-            buildSearchQuery(searchCriteria)
-                    .ifPresent(queryEntry -> {
-                        query.append(queryEntry.getKey());
-                        params.addAll(queryEntry.getValue());
-                    });
-
-            query.append("ORDER BY LOWER(registration)");
-
-            PreparedStatement ps = getConnection().prepareStatement(query.toString());
+        try (PreparedStatement ps = getConnection().prepareStatement(query.toString())) {
             int paramIndex = 1;
             for (Object param : params) {
                 ps.setObject(paramIndex, param);
@@ -279,23 +204,8 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             List<User> users = new ArrayList<User>();
 
             while (rs.next()) {
-                users.add(new User(
-                        rs.getString("first_name"), rs.getString("last_name"),
-                        rs.getString("email"), rs.getString("next_email"),
-                        rs.getString("institution"),
-                        "", rs.getBoolean("confirmed"),
-                        rs.getString("code"), rs.getString("folder"), "",
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        new Date(rs.getTimestamp("last_login").getTime()),
-                        UserLevel.valueOf(rs.getString("level")),
-                        CountryCode.valueOf(rs.getString("country_code")),
-                        rs.getInt("max_simulations"),
-                        rs.getTimestamp("termsUse"),
-                        rs.getTimestamp("lastUpdatePublications"),
-                        rs.getInt("failed_authentications"),
-                        rs.getBoolean("account_locked")));
+                users.add(userFromRs(rs));
             }
-            ps.close();
             return users;
 
         } catch (SQLException ex) {
@@ -374,10 +284,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @throws DAOException
-     */
     @Override
     public void remove(String email) throws DAOException {
         try {
@@ -394,29 +300,37 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param user
-     * @throws DAOException
-     */
     @Override
     public void update(User user) throws DAOException {
+        String query =  "UPDATE VIPUsers SET "
+        +               "email = ?, next_email = ?, first_name = ?, last_name = ?, institution = ?, "
+        +               "code = ?, confirmed = ?, folder = ?, session = ?, registration = ?, last_login = ?, "
+        +               "level = ?, country_code = ?, max_simulations = ?, termsUse = ?, lastUpdatePublications = ?, "
+        +               "failed_authentications = ?, account_locked = ? "
+        +               "WHERE email = ?";
 
-        try {
-            PreparedStatement ps = getConnection().prepareStatement("UPDATE "
-                    + "VIPUsers SET "
-                    + "first_name = ?, last_name = ?, institution = ?, "
-                    + "folder = ?, country_code = ? "
-                    + "WHERE email = ?");
-
-            ps.setString(1, user.getFirstName());
-            ps.setString(2, user.getLastName());
-            ps.setString(3, user.getInstitution());
-            ps.setString(4, user.getFolder());
-            ps.setString(5, user.getCountryCode().name());
-            ps.setString(6, user.getEmail());
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, user.getEmail());
+            ps.setString(2, user.getNextEmail());
+            ps.setString(3, user.getFirstName());
+            ps.setString(4, user.getLastName());
+            ps.setString(5, user.getInstitution());
+            ps.setString(6, user.getCode());
+            ps.setBoolean(7, user.isConfirmed());
+            ps.setString(8, user.getFolder());
+            ps.setString(9, user.getSession());
+            ps.setTimestamp(10, user.getRegistration());
+            ps.setTimestamp(11, user.getLastLogin());
+            ps.setString(12, user.getLevel().name());
+            ps.setString(13, user.getCountryCode().name());
+            ps.setInt(14, user.getMaxRunningSimulations());
+            ps.setTimestamp(15, user.getTermsOfUse());
+            ps.setTimestamp(16, user.getLastUpdatePublications());
+            ps.setInt(17, user.getFailedAuthentications());
+            ps.setBoolean(18, user.isAccountLocked());
+            ps.setString(19, user.getEmail());
 
             ps.executeUpdate();
-            ps.close();
 
         } catch (SQLException ex) {
             logger.error("Error updating user {}", user.getEmail(), ex);
@@ -424,12 +338,34 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param currentPassword
-     * @param newPassword
-     * @throws DAOException
-     */
+    @Override
+    public void definePassword(String email, String password) throws DAOException {
+        String queryA = "SELECT pass FROM VIPUsers WHERE email = ?";
+        String queryB = "UPDATE VIPUsers SET pass = ? WHERE email = ?";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(queryA)){
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+
+            if ( ! rs.next()) {
+                logger.error("User not found for password creation ({})", email);
+                throw new DAOException("User not found for password creation!");
+            }
+            if (rs.getString("pass") != null) {
+                logger.error("Password already defined for {} use update method!", email);
+                throw new DAOException("Password already defined use update method!");
+            }
+            try (PreparedStatement ps2 = getConnection().prepareStatement(queryB)) {
+                ps2.setString(1, password);
+                ps2.setString(2, email);
+                ps2.executeUpdate();
+            }
+        } catch (SQLException e) {
+            logger.error("Error while creating user password for {}", email, e);
+            throw new DAOException(e);
+        }
+    }
+
     @Override
     public void updatePassword(String email, String currentPassword,
                                String newPassword) throws DAOException {
@@ -495,11 +431,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param session
-     * @throws DAOException
-     */
     @Override
     public void updateSession(String email, String session) throws DAOException {
 
@@ -519,12 +450,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param session
-     * @return
-     * @throws DAOException
-     */
     @Override
     public boolean verifySession(String email, String session) throws DAOException {
 
@@ -549,11 +474,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param lastLogin
-     * @throws DAOException
-     */
     @Override
     public void updateLastLogin(String email, Date lastLogin) throws DAOException {
 
@@ -592,45 +512,17 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param session
-     * @return
-     * @throws DAOException
-     */
     @Override
     public User getUserBySession(String session) throws DAOException {
+        String query =  "SELECT " + FIELDS
+        +               "FROM VIPUsers WHERE session=?";
 
-        try {
-            PreparedStatement ps = getConnection().prepareStatement("SELECT "
-                    + "email, next_email, first_name, last_name, institution, "
-                    + "code, confirmed, folder, session, registration, "
-                    + "last_login, level, country_code, max_simulations,"
-                    + "termsUse, lastUpdatePublications, failed_authentications, account_locked "
-                    + "FROM VIPUsers "
-                    + "WHERE session = ?");
-
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             ps.setString(1, session);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                User user = new User(
-                        rs.getString("first_name"), rs.getString("last_name"),
-                        rs.getString("email"), rs.getString("next_email"),
-                        rs.getString("institution"),
-                        "", rs.getBoolean("confirmed"),
-                        rs.getString("code"), rs.getString("folder"),
-                        rs.getString("session"),
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        new Date(rs.getTimestamp("last_login").getTime()),
-                        UserLevel.valueOf(rs.getString("level")),
-                        CountryCode.valueOf(rs.getString("country_code")),
-                        rs.getInt("max_simulations"),
-                        rs.getTimestamp("termsUse"),
-                        rs.getTimestamp("lastUpdatePublications"),
-                        rs.getInt("failed_authentications"),
-                        rs.getBoolean("account_locked"));
-                ps.close();
-                return user;
+                return userFromRs(rs);
             }
             return null;
         } catch (SQLException ex) {
@@ -639,43 +531,20 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @return @throws DAOException
-     */
     @Override
     public List<User> getAdministrators() throws DAOException {
+        String query =  "SELECT " + FIELDS
+        +               "FROM VIPUsers WHERE level = ? ORDER BY LOWER(first_name), LOWER(last_name)";
 
-        try {
-            PreparedStatement ps = getConnection().prepareStatement("SELECT "
-                    + "email, next_email, first_name, last_name, institution, "
-                    + "code, confirmed, folder, registration, last_login, "
-                    + "level, country_code, max_simulations, termsUse, "
-                    + " lastUpdatePublications, failed_authentications, account_locked "
-                    + "FROM VIPUsers WHERE level = ? "
-                    + "ORDER BY LOWER(first_name), LOWER(last_name)");
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             ps.setString(1, UserLevel.Administrator.name());
 
             ResultSet rs = ps.executeQuery();
             List<User> users = new ArrayList<User>();
 
             while (rs.next()) {
-                users.add(new User(
-                        rs.getString("first_name"), rs.getString("last_name"),
-                        rs.getString("email"), rs.getString("next_email"),
-                        rs.getString("institution"),
-                        "", rs.getBoolean("confirmed"),
-                        rs.getString("code"), rs.getString("folder"), "",
-                        new Date(rs.getTimestamp("registration").getTime()),
-                        new Date(rs.getTimestamp("last_login").getTime()),
-                        UserLevel.valueOf(rs.getString("level")),
-                        CountryCode.valueOf(rs.getString("country_code")),
-                        rs.getInt("max_simulations"),
-                        rs.getTimestamp("termsUse"),
-                        rs.getTimestamp("lastUpdatePublications"),
-                        rs.getInt("failed_authentications"),
-                        rs.getBoolean("account_locked")));
+                users.add(userFromRs(rs));
             }
-            ps.close();
             return users;
 
         } catch (SQLException ex) {
@@ -684,14 +553,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param level
-     * @param countryCode
-     * @param maxRunningSimulations
-     * @param locked
-     * @throws DAOException
-     */
     @Override
     public void update(String email, UserLevel level, CountryCode countryCode,
                        int maxRunningSimulations, boolean locked) throws DAOException {
@@ -715,11 +576,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param code
-     * @throws DAOException
-     */
     @Override
     public void updateCode(String email, String code) throws DAOException {
 
@@ -738,11 +594,6 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         }
     }
 
-    /**
-     * @param email
-     * @param newPassword
-     * @throws DAOException
-     */
     @Override
     public void resetPassword(String email, String newPassword) throws DAOException {
 
@@ -961,7 +812,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             if (rs.next()) {
                 String email = rs.getString("email");
                 ps.close();
-                return getUser(email);
+                return get(email);
             }
             ps.close();
             logger.info("There is no user registered with the key: " + apikey);
@@ -1017,5 +868,46 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             logger.error("Error updating {} api key to {}", email, newApikey, ex);
             throw new DAOException(ex);
         }
+    }
+
+    @Override
+    public User getById(String id) throws DAOException {
+        String query =  "SELECT " + FIELDS
+        +               "FROM VIPUsers WHERE id=?";
+        try (PreparedStatement ps = getConnection().prepareStatement(query)){
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return userFromRs(rs);
+            }
+
+            return null;
+
+        } catch (SQLException ex) {
+            logger.error("Error getting user with id {}", id, ex);
+            throw new DAOException(ex);
+        }
+    }
+
+    private User userFromRs(ResultSet rs) throws SQLException {
+        return new User(
+                rs.getString("id"),
+                rs.getString("first_name"), rs.getString("last_name"),
+                rs.getString("email"), rs.getString("next_email"),
+                rs.getString("institution"),
+                rs.getBoolean("confirmed"),
+                rs.getString("code"), rs.getString("folder"),
+                rs.getString("session"),
+                rs.getTimestamp("registration"),
+                rs.getTimestamp("last_login"),
+                UserLevel.valueOf(rs.getString("level")),
+                CountryCode.valueOf(rs.getString("country_code")),
+                rs.getInt("max_simulations"),
+                rs.getTimestamp("termsUse"),
+                rs.getTimestamp("lastUpdatePublications"),
+                rs.getInt("failed_authentications"),
+                rs.getBoolean("account_locked"),
+                rs.getString("apikey"));
     }
 }

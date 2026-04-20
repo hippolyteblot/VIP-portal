@@ -57,9 +57,9 @@ import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.datamanager.client.view.DataManagerException;
 import fr.insalyon.creatis.vip.datamanager.server.DataManagerUtil;
@@ -89,7 +89,7 @@ public class WorkflowBusiness {
     private final GRIDAClient gridaClient;
     private final ExternalPlatformBusiness externalPlatformBusiness;
     private final WorkflowExecutionBusiness workflowExecutionBusiness;
-    private final ConfigurationBusiness configurationBusiness;
+    private final UserBusiness userBusiness;
     private final BoutiquesBusiness boutiquesBusiness;
 
     @Autowired
@@ -102,8 +102,8 @@ public class WorkflowBusiness {
             LfcPathsBusiness lfcPathsBusiness, GRIDAPoolClient gridaPoolClient,
             GRIDAClient gridaClient, ExternalPlatformBusiness externalPlatformBusiness,
             ResourceBusiness resourceBusiness, AppVersionBusiness appVersionBusiness,
-            WorkflowExecutionBusiness workflowExecutionBusiness, ConfigurationBusiness configurationBusiness,
-            BoutiquesBusiness boutiquesBusiness) {
+            WorkflowExecutionBusiness workflowExecutionBusiness,
+            BoutiquesBusiness boutiquesBusiness, UserBusiness userBusiness) {
         this.server = server;
         this.simulationStatsDAO = simulationStatsDAO;
         this.workflowDAO = workflowDAO;
@@ -121,7 +121,7 @@ public class WorkflowBusiness {
         this.resourceBusiness = resourceBusiness;
         this.appVersionBusiness = appVersionBusiness;
         this.workflowExecutionBusiness = workflowExecutionBusiness;
-        this.configurationBusiness = configurationBusiness;
+        this.userBusiness = userBusiness;
         this.boutiquesBusiness = boutiquesBusiness;
     }
 
@@ -337,7 +337,7 @@ public class WorkflowBusiness {
         Set<Group> adminGroups = new HashSet<>();
         Set<String> adminApps = new HashSet<>();
 
-        configurationBusiness.getUserGroups(userEmail).forEach((group, role) -> {
+        userBusiness.getUserGroups(userEmail).forEach((group, role) -> {
             if (role.equals(GROUP_ROLE.Admin) && group.getType().equals(GroupType.APPLICATION)) {
                 adminGroups.add(group);
             }

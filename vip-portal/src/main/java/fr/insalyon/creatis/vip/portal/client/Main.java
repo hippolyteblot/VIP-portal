@@ -57,22 +57,6 @@ public class Main implements EntryPoint {
         configureVIP();
     }
 
-    //redirect to N4U CAS authentication
-    public void displayLoginView() {
-        ConfigurationService.Util.getInstance().getCASLoginPageUrl(new AsyncCallback<String>() {
-            @Override
-            public void onFailure(Throwable caught) {
-                Window.alert(caught.toString());
-            }
-
-            @Override
-            public void onSuccess(String url) {
-                // redirect to login page
-                Window.Location.replace(url);
-            }
-        });
-    }
-
     private void configureVIP() {
         final ConfigurationServiceAsync service = ConfigurationService.Util.getInstance();
         final AsyncCallback<User> callback = new AsyncCallback<User>() {

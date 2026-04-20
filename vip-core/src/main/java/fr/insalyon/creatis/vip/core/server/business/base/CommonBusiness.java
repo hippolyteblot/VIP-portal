@@ -2,6 +2,8 @@ package fr.insalyon.creatis.vip.core.server.business.base;
 
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
@@ -9,6 +11,8 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.PageBuilder;
 
 public abstract class CommonBusiness {
+
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected CorePermissions permissions;
     protected Supplier<User> userSupplier;

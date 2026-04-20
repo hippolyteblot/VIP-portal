@@ -34,13 +34,13 @@ class RegisterUserControllerIT extends BaseRestApiSpringIT {
                                 .accept(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isCreated());
-        User u = getConfigurationBusiness().getUserWithGroups(UserTestUtils.restUser1.getEmail());
+        User u = userBusiness.getUserWithGroups(UserTestUtils.restUser1.getEmail());
         Assertions.assertEquals(CountryCode.lc, u.getCountryCode());
         Assertions.assertEquals(UserLevel.Beginner, u.getLevel());
         Assertions.assertTrue(u.getGroups().isEmpty());
         Assertions.assertFalse(u.isConfirmed());
         Assertions.assertFalse(u.isAccountLocked());
-        Assertions.assertNotNull(getConfigurationBusiness().signin(
+        Assertions.assertNotNull(authenticationBusiness.signin(
                 UserTestUtils.restUser1.getEmail(), UserTestUtils.restUser1.getPassword()));
     }
 

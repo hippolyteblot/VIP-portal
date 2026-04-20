@@ -79,8 +79,6 @@ public interface ConfigurationServiceAsync {
 
     void updateLastUpdatePublication(AsyncCallback<Void> asyncCallback);
 
-    void getCASLoginPageUrl(AsyncCallback<String> asyncCallback);
-
     void getUsageStats(AsyncCallback<UsageStats> asyncCallback);
 
     void testLastUpdatePublication(AsyncCallback<Boolean> asyncCallback);

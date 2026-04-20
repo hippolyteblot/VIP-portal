@@ -1,5 +1,8 @@
 package fr.insalyon.creatis.vip.datamanager.server.business;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -7,6 +10,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import fr.insalyon.creatis.vip.datamanager.server.DataManagerUtil;
+import fr.insalyon.creatis.vip.datamanager.server.business.GirderStorageBusiness;
+import fr.insalyon.creatis.vip.datamanager.server.business.ShanoirStorageBusiness;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -64,8 +70,10 @@ public class ExternalPlatformBusiness {
         int indexOfColon = parameterValue.indexOf(':');
         String platformIdentifier = parameterValue.substring(0, indexOfColon);
 
+        // we support file: and http(s): protocols
         if ("file".equals(platformIdentifier)) {
-            // its a local file keep it as it is
+            return new ParseResult(true, parameterValue);
+        } else if ("http".equals(platformIdentifier) || "https".equals(platformIdentifier)) {
             return new ParseResult(true, parameterValue);
         }
 
@@ -106,5 +114,38 @@ public class ExternalPlatformBusiness {
             throw new VipException(e);
         }
     }
+    public String sanitizeUri(String uriString) {
+        if (uriString == null || uriString.isEmpty()) {
+            return uriString;
+        }
+        try {
+            URI uri = new URI(uriString);
+            String scheme = uri.getScheme();
+            
+            if (scheme == null) {
+                return uriString;
+            }
 
+            if ("shanoir".equals(scheme)) {
+                return shanoirStorageBusiness.adaptShanoirUri(uri);
+            } else if ("girder".equals(scheme)) {
+                return girderStorageBusiness.adaptGirderUri(uri); 
+            }
+        } catch (URISyntaxException ex) {
+            logger.warn("Abnormal URI to satinize : {}", uriString);
+            return uriString;
+        }
+        return uriString;
+    }
+
+    public List<String> sanitizeUriList(List<String> uriStringList) {
+        if (uriStringList == null) {
+            return new ArrayList<>();
+        }
+        List<String> cleanList = new ArrayList<>();
+        for (String value : uriStringList) {
+            cleanList.add(sanitizeUri(value));
+        }
+        return cleanList;
+    }
 }

@@ -28,7 +28,7 @@ public class CorsInternalApiIT extends BaseInternalApiSpringIT {
     @BeforeEach
     public void setUpTestUser() throws VipException, GRIDAClientException, DAOException {
         createUserWithPassword(emailUser2, "coucou");
-        sessionCode = getConfigurationBusiness().getUserWithSession(emailUser2).getSession();
+        sessionCode = userBusiness.getUserWithSession(emailUser2).getSession();
     }
 
     // without an Origin header, GET is ok

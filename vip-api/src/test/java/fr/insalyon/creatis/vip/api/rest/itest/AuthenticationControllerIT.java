@@ -33,7 +33,7 @@ public class AuthenticationControllerIT extends BaseRestApiSpringIT {
     @Test
     public void okAuthentication() throws Exception {
         createUserWithPassword(emailUser2, "coucou");
-        String apikey = getConfigurationBusiness().generateNewUserApikey(emailUser2);
+        String apikey = userBusiness.generateNewUserApikey(emailUser2);
 
         mockMvc.perform(
                 post("/rest/authenticate")

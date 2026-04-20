@@ -257,7 +257,7 @@
                         <id>generate-api-doc</id>
                         <phase>prepare-package</phase>
                         <configuration>
-                            <test>SwaggerDocGenerator</test>
+                            <test>*SwaggerDocGenerator</test>
                             <statelessTestsetReporter>
                                 <disable>true</disable>
                             </statelessTestsetReporter>
