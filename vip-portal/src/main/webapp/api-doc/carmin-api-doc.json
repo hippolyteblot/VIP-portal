@@ -7744,6 +7744,12 @@
           "error" : {
             "type" : "boolean"
           },
+          "is4xxClientError" : {
+            "type" : "boolean"
+          },
+          "is5xxServerError" : {
+            "type" : "boolean"
+          },
           "is1xxInformational" : {
             "type" : "boolean"
           },
@@ -7751,12 +7757,6 @@
             "type" : "boolean"
           },
           "is3xxRedirection" : {
-            "type" : "boolean"
-          },
-          "is4xxClientError" : {
-            "type" : "boolean"
-          },
-          "is5xxServerError" : {
             "type" : "boolean"
           }
         }
@@ -7784,16 +7784,10 @@
           "buffer" : {
             "type" : "string"
           },
+          "defaultContentType" : {
+            "type" : "string"
+          },
           "isXml" : {
-            "type" : "string"
-          },
-          "deferredSyntaxAllowedAsLiteral" : {
-            "type" : "string"
-          },
-          "trimDirectiveWhitespaces" : {
-            "type" : "string"
-          },
-          "errorOnELNotFound" : {
             "type" : "string"
           },
           "urlPatterns" : {
@@ -7803,6 +7797,9 @@
             }
           },
           "elIgnored" : {
+            "type" : "string"
+          },
+          "errorOnELNotFound" : {
             "type" : "string"
           },
           "pageEncoding" : {
@@ -7826,7 +7823,10 @@
           "errorOnUndeclaredNamespace" : {
             "type" : "string"
           },
-          "defaultContentType" : {
+          "deferredSyntaxAllowedAsLiteral" : {
+            "type" : "string"
+          },
+          "trimDirectiveWhitespaces" : {
             "type" : "string"
           }
         }
@@ -8017,9 +8017,6 @@
             "type" : "string"
           },
           "initParameterNames" : { },
-          "servletContextName" : {
-            "type" : "string"
-          },
           "defaultSessionTrackingModes" : {
             "type" : "array",
             "items" : {
@@ -8027,6 +8024,17 @@
               "enum" : [ "COOKIE", "URL", "SSL" ]
             },
             "uniqueItems" : true
+          },
+          "effectiveSessionTrackingModes" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "COOKIE", "URL", "SSL" ]
+            },
+            "uniqueItems" : true
+          },
+          "servletContextName" : {
+            "type" : "string"
           },
           "servletRegistrations" : {
             "type" : "object",
@@ -8052,14 +8060,6 @@
             "uniqueItems" : true,
             "writeOnly" : true
           },
-          "effectiveSessionTrackingModes" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string",
-              "enum" : [ "COOKIE", "URL", "SSL" ]
-            },
-            "uniqueItems" : true
-          },
           "virtualServerName" : {
             "type" : "string"
           },
@@ -8078,14 +8078,14 @@
       "ServletRegistration" : {
         "type" : "object",
         "properties" : {
-          "runAsRole" : {
-            "type" : "string"
-          },
           "mappings" : {
             "type" : "array",
             "items" : {
               "type" : "string"
             }
+          },
+          "runAsRole" : {
+            "type" : "string"
           },
           "name" : {
             "type" : "string"
