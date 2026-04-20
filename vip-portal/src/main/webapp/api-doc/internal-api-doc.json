@@ -1188,6 +1188,142 @@
         }
       }
     },
+    "/storage/operations/{operationId}" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "getOperationStatus",
+        "parameters" : [ {
+          "name" : "operationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StorageOperationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/downloads/{operationId}/content" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "getDownloadContent",
+        "parameters" : [ {
+          "name" : "operationId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "type" : "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storage/**" : {
+      "get" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "listStoragePath",
+        "parameters" : [ {
+          "name" : "refresh",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        } ],
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "oneOf" : [ {
+                    "type" : "string",
+                    "format" : "binary"
+                  }, {
+                    "type" : "array",
+                    "items" : {
+                      "$ref" : "#/components/schemas/Data"
+                    }
+                  } ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "storage-controller" ],
+        "operationId" : "deleteFile",
+        "responses" : {
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ErrorCodeAndMessage"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK"
+          }
+        }
+      }
+    },
     "/applications/versions" : {
       "get" : {
         "tags" : [ "app-version-controller" ],
@@ -1586,6 +1722,34 @@
           "total" : {
             "type" : "integer",
             "format" : "int32"
+          }
+        }
+      },
+      "Data" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string",
+            "enum" : [ "folder", "folderSync", "file", "fileSync" ]
+          },
+          "length" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "modificationDate" : {
+            "type" : "string"
+          },
+          "replicas" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "permissions" : {
+            "type" : "string"
           }
         }
       },
