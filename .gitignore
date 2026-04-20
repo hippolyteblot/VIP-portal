@@ -49,6 +49,9 @@ frontend/.vscode
 #vscode
 .vscode
 
+# api doc
+vip-portal/src/main/webapp/api-doc/*.json
+
 #node
 node_modules
 

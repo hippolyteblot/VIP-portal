@@ -12,9 +12,12 @@ public enum DefaultError implements VipError {
     BAD_INPUT_FIELD(8009, "Input field '{}' is not valid. Cause : {}", 2),
 
     // new errors can use the 1xxx appropriated error code (see VipError)
-    NOT_FOUND(1000, "Item {} not found", 1),
+    NOT_FOUND(1000, "Entity of type '{}' named '{}' not found", 2),
     ACCESS_DENIED(1001, "You do not have the right to do that!", 0),
-    UNAUTHENTIFIED_ONLY(1002, "You should not be authentified to do that!", 0);
+    // generic error for bad parameters
+    BAD_PARAMETERS(1002, "Bad parameters: {}", 1),
+    
+    UNAUTHENTIFIED_ONLY(1003, "You should not be authentified to do that!", 0);
 
     private final String message;
     private final Integer code;
