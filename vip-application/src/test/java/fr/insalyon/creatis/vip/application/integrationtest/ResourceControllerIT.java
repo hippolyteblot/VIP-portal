@@ -179,8 +179,8 @@ public class ResourceControllerIT extends BaseInternalApiSpringIT {
         Resource resource = new Resource("test");
 
         resource.setGroups(Set.of(groupPrivate, groupPublic));
-        configurationBusiness.addUserToGroup(emailUser2, "private");
-        developperUser = configurationBusiness.getUserWithGroups(emailUser2);
+        userBusiness.addUserToGroup(emailUser2, "private");
+        developperUser = userBusiness.getUserWithGroups(emailUser2);
 
         // create first
         mockMvc.perform(post("/internal/resources")

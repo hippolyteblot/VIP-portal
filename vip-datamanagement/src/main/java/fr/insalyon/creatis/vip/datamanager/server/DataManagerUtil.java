@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.datamanager.server;
 
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import java.io.File;
+import java.net.URI;
 import java.util.*;
 
 public class DataManagerUtil {
@@ -23,5 +24,25 @@ public class DataManagerUtil {
     public static String getCleanFilename(String fileName) {
         fileName = new File(fileName).getName().trim().replaceAll(" ", "_");
         return CoreUtil.getCleanStringAscii(fileName, "");
+    }
+
+    public static String selectUriQueries(URI uri, String... parametersToKeep) {
+        if (uri.getQuery() == null || uri.getQuery().isEmpty()) {
+            return uri.toString();
+        }
+        
+        List<String> whitelist = java.util.Arrays.asList(parametersToKeep);
+        String newQuery = java.util.Arrays.stream(uri.getQuery().split("&"))
+                .filter(q -> {
+                    int index = q.indexOf("=");
+                    return index > 0 && whitelist.contains(q.substring(0, index));
+                })
+                .collect(java.util.stream.Collectors.joining("&"));
+        
+        String uriStr = uri.toString();
+        int sep = uriStr.indexOf("?");
+        String base = (sep == -1) ? uriStr : uriStr.substring(0, sep);
+        
+        return newQuery.isEmpty() ? base : base + "?" + newQuery;
     }
 }

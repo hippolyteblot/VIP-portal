@@ -1,7 +1,11 @@
 package fr.insalyon.creatis.vip.core.server.model;
 
+import com.fasterxml.jackson.annotation.JsonView;
+
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import jakarta.validation.constraints.NotNull;
 
+@JsonView(DataViews.User.class)
 public class ErrorCodeAndMessage {
 
     @NotNull private Integer errorCode;

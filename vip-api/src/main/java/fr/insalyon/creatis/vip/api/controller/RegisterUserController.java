@@ -1,6 +1,6 @@
 package fr.insalyon.creatis.vip.api.controller;
 
-import java.util.Date;
+import java.sql.Timestamp;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +16,7 @@ import fr.insalyon.creatis.vip.api.business.ApiUserBusiness;
 import fr.insalyon.creatis.vip.api.model.SignUpUserDTO;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import jakarta.validation.Valid;
 
 @RestController
@@ -44,18 +45,21 @@ public class RegisterUserController extends ApiController {
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<?> signup(@RequestBody @Valid SignUpUserDTO signUpUser) throws VipException {
         logMethodInvocation(logger,"signup", signUpUser.getEmail());
-        User user = new User(signUpUser.getFirstName(),
+        User user = new User(CoreUtil.createUUID(), 
+                signUpUser.getFirstName(),
                 signUpUser.getLastName(),
                 signUpUser.getEmail(),
                 signUpUser.getInstitution(),
-                signUpUser.getPassword(),
                 signUpUser.getCountryCode(),
                 null
                 );
-        user.setRegistration(new Date());
-        user.setLastLogin(new Date());
+        user.setPassword(signUpUser.getPassword());
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        user.setRegistration(now);
+        user.setLastLogin(now);
         this.apiUserBusiness.signup(user, signUpUser.getComments());
-        return new ResponseEntity(HttpStatus.CREATED);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
 }

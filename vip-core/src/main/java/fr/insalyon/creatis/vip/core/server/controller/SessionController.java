@@ -14,9 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
-import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.business.SessionBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.model.AuthenticationCredentials;
 import fr.insalyon.creatis.vip.core.server.model.Session;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,14 +27,14 @@ import jakarta.validation.Valid;
 public class SessionController {
 
     private final SessionBusiness sessionBusiness;
-    private final ConfigurationBusiness configurationBusiness;
+    private final UserBusiness userBusiness;
     final private Supplier<User> userProvider;
 
     @Autowired
-    public SessionController(SessionBusiness sessionBusiness, Supplier<User> userProvider, ConfigurationBusiness configurationBusiness) {
+    public SessionController(SessionBusiness sessionBusiness, Supplier<User> userProvider, UserBusiness userBusiness) {
         this.sessionBusiness = sessionBusiness;
+        this.userBusiness = userBusiness;
         this.userProvider = userProvider;
-        this.configurationBusiness = configurationBusiness;
     }
 
     @GetMapping
@@ -46,7 +45,7 @@ public class SessionController {
         try {
             // renew existing cookies
             sessionBusiness.createLoginCookies(request, response, session);
-            configurationBusiness.updateUserLastLogin(user.getEmail());
+            userBusiness.updateUserLastLogin(user.getEmail());
 
             return session;
         } catch (UnsupportedEncodingException e) {

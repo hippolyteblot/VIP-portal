@@ -8,9 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -42,16 +39,19 @@ import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
-import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import fr.insalyon.creatis.vip.core.integrationtest.utils.JndiTestConfigLoader;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.SpringCoreConfig;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
+import fr.insalyon.creatis.vip.core.server.business.ProxyBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.business.TermsOfUseBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticationProvider;
 
@@ -81,7 +81,9 @@ import fr.insalyon.creatis.vip.core.server.security.session.SessionAuthenticatio
 @ActiveProfiles({"jndi-db", "test"}) // to use default jndi datasource but avoid default server config
 public class SpringJndiIT {
 
-    @Autowired private ConfigurationBusiness configurationBusiness;
+    @Autowired private ProxyBusiness configurationBusiness;
+    @Autowired private UserBusiness userBusiness;
+    @Autowired private TermsOfUseBusiness termsOfUseBusiness;
     @Autowired private DataSource dataSource;
     @Autowired private PlatformTransactionManager transactionManager;
     @Autowired private DataSource lazyDataSource;
@@ -89,10 +91,11 @@ public class SpringJndiIT {
     @Autowired private GRIDAClient gridaClient;
     @Autowired private GroupBusiness groupBusiness;
     @Autowired private Server server;
+    @Autowired private AuthenticationBusiness authenticationBusiness;
 
     public void setAdminContext() throws VipException, GRIDAClientException {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
-        User adminUser = configurationBusiness.getUserWithGroups(server.getAdminEmail());
+        User adminUser = userBusiness.getUserWithGroups(server.getAdminEmail());
 
         SecurityContextHolder.getContext().setAuthentication(provider.createAuthenticationFromUser(adminUser));
     }
@@ -184,6 +187,7 @@ public class SpringJndiIT {
 
     private void testRollbackInTransaction(
             Exception exception, boolean shouldRollback) throws VipException, GRIDAClientException, DAOException {
+        setAdminContext();
 
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         Supplier<Integer> countUser = () -> JdbcTestUtils.countRowsInTable(jdbcTemplate, "VIPUsers");        
@@ -191,7 +195,7 @@ public class SpringJndiIT {
 
         String testEmail = "test@email.fr";
         assertEquals(1, countUser.get());
-        createUser(testEmail);
+        User user = createUser(testEmail);
         // verify initial user + new one are there
         assertEquals(2, countUser.get());
         // Now we will remove an user, and throw an exception when an email is sent at the end
@@ -204,7 +208,7 @@ public class SpringJndiIT {
 
         Exception exceptionCatched = null;
         try {
-            configurationBusiness.removeUser(testEmail, true);
+            userBusiness.remove(user.getId(), true);
         } catch (Exception ex) {
             exceptionCatched = ex;
         }
@@ -213,18 +217,19 @@ public class SpringJndiIT {
         assertEquals(shouldRollback ? 2:1, countUser.get());
         if (shouldRollback) {
             // clean if necessary
-            configurationBusiness.removeUser(testEmail, false);
+            userBusiness.remove(user.getId(), false);
         }
         assertEquals(1, countUser.get());
     }
 
-    private void createUser(String testEmail) throws GRIDAClientException, VipException {
-        User newUser = new User("firstName", "LastName",
+    private User createUser(String testEmail) throws GRIDAClientException, VipException {
+        User newUser = new User(CoreUtil.createUUID(), "firstName", "LastName",
                 testEmail, "Test institution",
-                "testPassword", CountryCode.fr,
-                null);
+                CountryCode.fr, null);
+        newUser.setPassword("testPassword");
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        configurationBusiness.signup(newUser, "", (Group) null);
+        authenticationBusiness.signup(newUser, "", (Group) null);
+        return newUser;
     }
 
     @Test
@@ -236,17 +241,6 @@ public class SpringJndiIT {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         // close the datasource to make the next request fail
         try { jdbcTemplate.execute("SHUTDOWN"); } catch (Exception e) {e.printStackTrace();}
-        assertThrows(VipException.class, () -> configurationBusiness.addTermsUse());
-    }
-
-    @Test
-    @Order(8)
-    public void connectionShouldBeLazyInTransaction() throws SQLException, MalformedURLException, URISyntaxException {
-        JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
-        // close the datasource to make the next request fail
-        try { jdbcTemplate.execute("SHUTDOWN"); } catch (Exception e) {e.printStackTrace();}
-        // getConnection throw an exception but should not be called as 'getLoginUrlCas' do not need db access
-        String res = configurationBusiness.getLoginUrlCas(new URI("file:/plop").toURL());
-        assertEquals(ServerMockConfig.TEST_CAS_URL + "/login?service=file:/plop", res);
+        assertThrows(VipException.class, () -> termsOfUseBusiness.add());
     }
 }

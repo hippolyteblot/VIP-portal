@@ -4,6 +4,7 @@ import fr.insalyon.creatis.vip.core.server.SpringInternalApiConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.ContextHierarchy;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Base Class to test the internal API with mocked http requests
@@ -17,12 +18,8 @@ import org.springframework.test.context.ContextHierarchy;
 @ContextHierarchy(
         @ContextConfiguration(name="internal-api", classes = SpringInternalApiConfig.class)
 )
+@TestPropertySource(properties = {"test.servletPath=internal"})
 abstract public class BaseInternalApiSpringIT extends BaseWebSpringIT {
-
-    @Override
-    protected String getServletPath() {
-        return "internal";
-    }
 
     @BeforeEach
     @Override

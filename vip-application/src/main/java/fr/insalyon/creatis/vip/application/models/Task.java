@@ -191,8 +191,8 @@ public class Task implements IsSerializable {
     public int getInvocationID() {
         return invocationID;
     }
-
-    public void setInvocationID(int jobID) {
+    
+   public void setInvocationID(int invocationID) {
         this.invocationID = invocationID;
     }
 
@@ -200,9 +200,8 @@ public class Task implements IsSerializable {
         return creationDate;
     }
 
-    public void setCreationDate(int jobID) {
+    public void setCreationDate(Date creationDate) {
         this.creationDate = creationDate;
     }
-
     public String getExitMessage() { return GaswExitCode.fromCode(this.exitCode).getMessage(); }
 }

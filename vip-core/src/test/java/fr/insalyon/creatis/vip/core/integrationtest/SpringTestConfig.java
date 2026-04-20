@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
+import fr.insalyon.creatis.sma.client.SMAClient;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.proxy.ProxyClient;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,9 @@ import org.springframework.stereotype.Component;
 @Configuration
 @Profile("test")
 public class SpringTestConfig {
+
+    @Autowired EmailBusiness emailBusiness;
+    
 
     @Component
     public static class CoreTestConfigurer implements TestConfigurer {
@@ -44,7 +48,7 @@ public class SpringTestConfig {
     public GRIDAPoolClient testGridaPoolClient() {return Mockito.mock(GRIDAPoolClient.class);}
 
     @Bean @Primary
-    public EmailBusiness testEmailBusiness() {return Mockito.mock(EmailBusiness.class);}
+    public EmailBusiness testEmailBusiness() {return Mockito.spy(emailBusiness);}
 
     @Bean @Primary
     public ProxyClient testProxyClient() {return Mockito.mock(ProxyClient.class);}

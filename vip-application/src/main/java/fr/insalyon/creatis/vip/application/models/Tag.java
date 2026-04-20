@@ -1,9 +1,13 @@
 package fr.insalyon.creatis.vip.application.models;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import java.util.Objects;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+
+@JsonView(DataViews.User.class)
 public class Tag implements IsSerializable {
 
     public enum ValueType {

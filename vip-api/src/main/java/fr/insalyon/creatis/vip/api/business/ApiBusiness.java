@@ -2,14 +2,16 @@ package fr.insalyon.creatis.vip.api.business;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.model.AuthenticationCredentials;
 import fr.insalyon.creatis.vip.core.server.model.AuthenticationInfo;
 
@@ -19,11 +21,14 @@ public class ApiBusiness {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Server server;
-    private final ConfigurationBusiness configurationBusiness;
+    private final AuthenticationBusiness authenticationBusiness;
+    private final UserBusiness userBusiness;
 
-    public ApiBusiness(final Server server, final ConfigurationBusiness configurationBusiness) {
+    @Autowired
+    public ApiBusiness(final Server server, final AuthenticationBusiness authenticationBusiness, final UserBusiness userBusiness) {
         this.server = server;
-        this.configurationBusiness = configurationBusiness;
+        this.authenticationBusiness = authenticationBusiness;
+        this.userBusiness = userBusiness;
     }
 
     public AuthenticationInfo authenticate(AuthenticationCredentials authCreds) throws VipException {
@@ -55,8 +60,7 @@ public class ApiBusiness {
     private User signin(String username, String password) throws VipException {
         try {
             // we do not care about the session, we're not in browser action
-            User user = configurationBusiness
-                    .signin(username, password);
+            User user = authenticationBusiness.signin(username, password);
             logger.info("Credentials OK for " + username);
             return user;
         } catch (VipException e) {
@@ -72,10 +76,10 @@ public class ApiBusiness {
 
         if (generateNewApiKey) {
             logger.info("generating a new apikey for " + email);
-            return configurationBusiness.generateNewUserApikey(email);
+            return userBusiness.generateNewUserApikey(email);
         } else {
             logger.debug("keeping the current api key for " + email);
-            return configurationBusiness.getUserApikey(email);
+            return userBusiness.getUserApikey(email);
         }
     }
 }

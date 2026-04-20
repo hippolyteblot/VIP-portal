@@ -17,7 +17,7 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.ConfigurationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.security.common.AbstractAuthenticationProvider;
 import fr.insalyon.creatis.vip.core.server.security.common.SpringPrincipalUser;
@@ -34,8 +34,12 @@ public class ApikeyAuthenticationProvider extends AbstractAuthenticationProvider
     // ~ Instance fields
     // ================================================================================================
 
+    private final UserBusiness userBusiness;
+
     @Autowired
-    private ConfigurationBusiness configurationBusiness;
+    public ApikeyAuthenticationProvider(UserBusiness userBusiness) {
+        this.userBusiness = userBusiness;
+    }
 
     @Override
     public boolean supports(Class<?> authentication) {
@@ -72,7 +76,7 @@ public class ApikeyAuthenticationProvider extends AbstractAuthenticationProvider
         UserDetails springUser;
         try {
             Map<Group, CoreConstants.GROUP_ROLE> groups =
-                configurationBusiness.getUserGroups(vipUser.getEmail());
+                userBusiness.getUserGroups(vipUser.getEmail());
             vipUser.setGroups(groups);
             springUser = new SpringPrincipalUser(vipUser);
         } catch (VipException e) {

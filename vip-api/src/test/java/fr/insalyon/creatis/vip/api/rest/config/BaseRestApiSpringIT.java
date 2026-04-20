@@ -41,6 +41,7 @@ import fr.insalyon.creatis.vip.core.server.business.util.FileUtil;
 import fr.insalyon.creatis.vip.datamanager.server.business.LFCBusiness;
 import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness;
 import fr.insalyon.creatis.vip.datamanager.server.business.TransferPoolBusiness;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Base Class to test the Rest API with mocked http requests
@@ -51,6 +52,7 @@ import fr.insalyon.creatis.vip.datamanager.server.business.TransferPoolBusiness;
 @ContextHierarchy(
         @ContextConfiguration(name="rest-api", classes = SpringRestApiConfig.class)
 )
+@TestPropertySource(properties = {"test.servletPath=rest"})
 abstract public class BaseRestApiSpringIT extends BaseWebSpringIT {
 
     @Autowired
@@ -73,11 +75,6 @@ abstract public class BaseRestApiSpringIT extends BaseWebSpringIT {
     @Autowired protected EngineBusiness engineBusiness;
     @Autowired protected AppVersionBusiness appVersionBusiness;
     @Autowired protected FileUtil fileUtil;
-
-    @Override
-    protected String getServletPath() {
-        return "rest";
-    }
 
     @BeforeEach
     @Override
