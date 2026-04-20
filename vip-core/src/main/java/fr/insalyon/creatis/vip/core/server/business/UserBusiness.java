@@ -186,7 +186,7 @@ public class UserBusiness extends CommonBusiness {
         User user = get(id);
 
         if (user == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
         }
         if ( ! getUserLevel().equals(UserLevel.Administrator)) {
             if (user.getId() != getUser().getId()) {
@@ -245,7 +245,6 @@ public class UserBusiness extends CommonBusiness {
                 lastName.trim(),
                 email.trim(),
                 institution.trim(),
-                "0000",
                 cc, new Timestamp(System.currentTimeMillis()));
     }
 

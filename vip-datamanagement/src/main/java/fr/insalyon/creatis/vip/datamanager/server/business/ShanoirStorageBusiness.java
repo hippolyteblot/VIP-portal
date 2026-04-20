@@ -3,6 +3,7 @@ package fr.insalyon.creatis.vip.datamanager.server.business;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,9 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.datamanager.models.ExternalPlatform;
 import fr.insalyon.creatis.vip.datamanager.models.ExternalPlatform.Type;
+import fr.insalyon.creatis.vip.datamanager.server.DataManagerUtil;
+
+
 
 @Service
 public class ShanoirStorageBusiness {
@@ -184,4 +188,10 @@ public class ShanoirStorageBusiness {
             throw new VipException("Cannot get " + urlKey.errorKey + " from the uri");
         }
     }
+
+    public String adaptShanoirUri(URI uri) {
+        return DataManagerUtil.selectUriQueries(uri, "apiUrl", "upload_url", "resourceId", "type", "format", "keycloak_client_id", "converterId");
+    }
+
+
 }

@@ -33,10 +33,12 @@ public class GroupController {
     }
 
     @GetMapping
-    public PrecisePage<Group> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
+    public PrecisePage<Group> list(@RequestParam(defaultValue = "false") boolean onlyApplications,
+            @RequestParam(defaultValue = "false") boolean onlyResources,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity)
             throws VipException {
-        return groupBusiness.get(offset, quantity);
+        return groupBusiness.get(onlyApplications, onlyResources, offset, quantity);
     }
 
     @GetMapping(value = "{id}")
@@ -44,7 +46,7 @@ public class GroupController {
         Group group = groupBusiness.get(id);
 
         if (group == null) {
-        throw new VipException(DefaultError.NOT_FOUND, id);
+        throw new VipException(DefaultError.NOT_FOUND, Group.class.getSimpleName(), id);
         } else {
             return group;
         }
@@ -55,7 +57,7 @@ public class GroupController {
         Group group = groupBusiness.get(id);
 
         if (group == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, Group.class.getSimpleName(), id);
         } else {
             groupBusiness.remove(id);
         }

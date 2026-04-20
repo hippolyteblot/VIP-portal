@@ -123,8 +123,7 @@ public abstract class BaseSpringIT {
     protected Group group2;
     protected User nonExistentUser = new User(CoreUtil.createUUID(), "test firstName suffix0",
             "test lastName suffix0", "unexisting_user@test.fr", "institution",
-            "testPassword", CountryCode.fr,
-            null);
+            CountryCode.fr, null);
 
     @BeforeEach
     protected void setUp() throws Exception {
@@ -164,8 +163,8 @@ public abstract class BaseSpringIT {
     protected User createUser(String testEmail, String nameSuffix, String password) throws GRIDAClientException, VipException {
         User newUser = new User(CoreUtil.createUUID(), "test firstName " + nameSuffix,
                 "test lastName " + nameSuffix, testEmail, "test institution",
-                password, CountryCode.fr,
-                null);
+                CountryCode.fr, null);
+        newUser.setPassword(password);
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
 
         authenticationBusiness.signup(newUser, "", (Group) null);
@@ -225,8 +224,8 @@ public abstract class BaseSpringIT {
     protected User createUserInGroups(String userEmail, String nameSuffix, String... groupNames) throws VipException, GRIDAClientException {
         User newUser = new User(CoreUtil.createUUID(), "test firstName " + nameSuffix,
                 "test lastName " + nameSuffix, userEmail, "test institution",
-                "testPassword", CountryCode.fr,
-                null);
+                CountryCode.fr, null);
+        newUser.setPassword("testPassword");
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
         authenticationBusiness.signup(newUser, "", false, true, new HashSet<>());
 

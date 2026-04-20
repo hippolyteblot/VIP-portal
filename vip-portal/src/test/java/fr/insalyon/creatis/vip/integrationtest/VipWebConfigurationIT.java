@@ -73,8 +73,8 @@ public class VipWebConfigurationIT {
         Mockito.doReturn(new String[]{"test@admin.test"}).when(emailBusiness).getAdministratorsEmails();
         User newUser = new User(CoreUtil.createUUID(), "firstName",
                 "LastName", "testEmail@test.tst", "Test institution",
-                "testPassword", CountryCode.fr,
-                null);
+                CountryCode.fr, null);
+        newUser.setPassword("testPassword");
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
         authenticationBusiness.signup(newUser, "", (Group) null);
         mockMvc.perform(get("/rest/pipelines")
