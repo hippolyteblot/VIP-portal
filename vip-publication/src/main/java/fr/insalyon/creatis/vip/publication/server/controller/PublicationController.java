@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,11 +20,12 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.publication.models.Publication;
 import fr.insalyon.creatis.vip.publication.server.business.PublicationBusiness;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/publications")
 public class PublicationController {
+
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final PublicationBusiness publicationBusiness;
     private final Supplier<User> userProvider;
@@ -49,19 +52,32 @@ public class PublicationController {
     }
 
     @PostMapping
-    public void create(@RequestBody @Valid Publication publication) throws VipException {
+    public void create(@RequestBody Publication publication) throws VipException {
+        if (publication == null) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "publication", "Publication payload is required");
+        }
+
         User currentUser = userProvider.get();
         publication.setVipAuthor(currentUser.getEmail());
+        logger.info("Create publication request: title='{}', vipAuthor='{}', vipApplication='{}'",
+                publication.getTitle(), publication.getVipAuthor(), publication.getVipApplication());
         publicationBusiness.addPublication(publication);
     }
 
     @PutMapping("{id}")
-    public void update(@PathVariable Long id, @RequestBody @Valid Publication publication) throws VipException {
+    public void update(@PathVariable Long id, @RequestBody Publication publication) throws VipException {
         ensureAdmin();
+
+        if (publication == null) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "publication", "Publication payload is required");
+        }
 
         if (publication.getId() == null || !id.equals(publication.getId())) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "Publication id do not match!");
         }
+
+        logger.info("Update publication request: id='{}', title='{}', vipApplication='{}'",
+            id, publication.getTitle(), publication.getVipApplication());
 
         Publication existing = publicationBusiness.getPublication(id);
         if (existing == null) {

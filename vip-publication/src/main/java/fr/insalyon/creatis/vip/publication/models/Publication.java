@@ -1,11 +1,15 @@
 package fr.insalyon.creatis.vip.publication.models;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
+
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 /**
  *
  * @author Nouha Boujelben
  */
+@JsonView(DataViews.User.class)
 public class Publication implements IsSerializable {
     
 

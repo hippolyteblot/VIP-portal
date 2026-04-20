@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
@@ -54,8 +55,16 @@ public class PublicationBusiness {
         try {
             assertDataIsOK(pub);
             publicationDAO.add(pub);
+            logger.info("Publication created: title='{}', vipAuthor='{}', vipApplication='{}'",
+                    pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication());
         } catch (DAOException ex) {
+            logger.error("Publication persistence failed on create: title='{}', vipAuthor='{}', vipApplication='{}'",
+                pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication(), ex);
             throw new VipException(ex);
+        } catch (VipException ex) {
+            logger.warn("Publication validation failed on create: title='{}', vipAuthor='{}', vipApplication='{}', cause='{}'",
+                    pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication(), ex.getMessage());
+            throw ex;
         }
     }
 
@@ -70,16 +79,37 @@ public class PublicationBusiness {
     }
 
     private void assertDataIsOK(Publication publication) throws VipException {
-        if (publication.getTitle() == null || publication.getTitle().isEmpty()) {
-            throw new VipException("Wrong publication : no title !");
+        logger.info("Publication payload values before validation: title='{}' (len={}), authors='{}' (len={}), date='{}', doi='{}', type='{}', typeName='{}', vipApplication='{}'",
+                publication.getTitle(),
+                publication.getTitle() == null ? -1 : publication.getTitle().length(),
+                publication.getAuthors(),
+                publication.getAuthors() == null ? -1 : publication.getAuthors().length(),
+                publication.getDate(),
+                publication.getDoi(),
+                publication.getType(),
+                publication.getTypeName(),
+                publication.getVipApplication());
+
+        if (publication.getTitle() == null || publication.getTitle().trim().isEmpty()) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "title", "Title is required");
         }
-        if (publication.getAuthors() == null || publication.getAuthors().isEmpty()) {
-            throw new VipException("Wrong publication : no author !");
+        if (publication.getAuthors() == null || publication.getAuthors().trim().isEmpty()) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "authors", "Authors are required");
         }
-        CoreUtil.assertOnlyLatin1Characters(publication.getTitle());
-        CoreUtil.assertOnlyLatin1Characters(publication.getDoi());
-        if (publication.getDoi() != null) {
-            CoreUtil.assertOnlyLatin1Characters(publication.getAuthors());
+
+        // Only latin1 characters are allowed (assert better compatibility with database)
+        assertLatin1("title", publication.getTitle());
+        assertLatin1("authors", publication.getAuthors());
+        if (publication.getDoi() != null && !publication.getDoi().trim().isEmpty()) {
+            assertLatin1("doi", publication.getDoi());
+        }
+    }
+
+    private void assertLatin1(String field, String value) throws VipException {
+        try {
+            CoreUtil.assertOnlyLatin1Characters(value);
+        } catch (VipException ex) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, field, ex.getMessage());
         }
     }
 
