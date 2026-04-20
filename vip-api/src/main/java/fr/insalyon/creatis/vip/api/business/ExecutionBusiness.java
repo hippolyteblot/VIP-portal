@@ -38,7 +38,6 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.CarminProperties;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.datamanager.server.business.ExternalPlatformBusiness;
-import fr.insalyon.creatis.vip.datamanager.server.business.ShanoirStorageBusiness;
 
 @Service
 public class ExecutionBusiness {
@@ -54,19 +53,23 @@ public class ExecutionBusiness {
     private final WorkflowBusiness workflowBusiness;
     private final PipelineBusiness pipelineBusiness;
     private final UserBusiness userBusiness;
+    private final ExternalPlatformBusiness externalPlatformBusiness;
 
     @Autowired
     public ExecutionBusiness(Supplier<User> currentUserProvider,
                              SimulationBusiness simulationBusiness,
                              WorkflowBusiness workflowBusiness,
                              PipelineBusiness pipelineBusiness,
-                             DataApiBusiness dataApiBusiness, UserBusiness userBusiness) {
+                             DataApiBusiness dataApiBusiness,
+                             UserBusiness userBusiness,
+                             ExternalPlatformBusiness externalPlatformBusiness) {
         this.currentUserProvider = currentUserProvider;
         this.simulationBusiness = simulationBusiness;
         this.workflowBusiness = workflowBusiness;
         this.pipelineBusiness = pipelineBusiness;
         this.dataApiBusiness = dataApiBusiness;
         this.userBusiness = userBusiness;
+        this.externalPlatformBusiness = externalPlatformBusiness;
     }
 
     public String getLog(String executionId, String type) throws VipException {
@@ -160,30 +163,30 @@ public class ExecutionBusiness {
 
         if (summarize) {
                 return e;
-            }
+        }
 
         //get the current user's folder to filter file access
         String userFolder = currentUserProvider.get().getFolder();
 
         // retrieves all input data associated with this simulation
         List<InOutData> inputs = workflowBusiness.getInputData(s.getID(), userFolder);
-            for (InOutData iod : inputs) {
-                String key = iod.getProcessor(); 
-                String value = iod.getPath();
-                if (!e.getInputValues().containsKey(key)) {
-                    e.getInputValues().put(key, new ArrayList<>());
-                }
-                ((List<Object>) e.getInputValues().get(key)).add(value);
+        for (InOutData iod : inputs) {
+            String key = iod.getProcessor();
+            String value = iod.getPath();
+            if (e.getInputValues().containsKey(key)) {
+                e.getInputValues().put(key, new ArrayList<>());
             }
+            ((List<Object>) e.getInputValues().get(key)).add(value);
+        }
         // retrieves results directory
         List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
         if (resDirList == null) {
-                resDirList = new ArrayList<>();
-            }
-            if (!resDirList.isEmpty()) {
-                e.setResultsLocation(resDirList);
-                e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
-            }
+            resDirList = new ArrayList<>();
+        }
+        if (!resDirList.isEmpty()) {
+            e.setResultsLocation(resDirList);
+            e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
+        }
         List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
         for (InOutData iod : outputs) {
             String key = iod.getProcessor();
@@ -211,23 +214,20 @@ public class ExecutionBusiness {
         for (Map.Entry<Integer, Task> entry : latestTaskPerInvocation.entrySet()) {
             Integer invocationId = entry.getKey(); 
             Task t = entry.getValue();
-            String jobName = t.getFileName(); 
-
-            List<String> jobInputs = new ArrayList<>();
-            List<String> jobOutputs = new ArrayList<>();
+            String jobName = t.getFileName();
 
             List<String> dbInputs = simulationBusiness.getJobInputs(s.getID(), jobName, userFolder);
             List<String> dbOutputs = simulationBusiness.getJobOutputs(s.getID(), jobName, userFolder);
 
-            jobInputs.addAll(ExternalPlatformBusiness.sanitizeUriList(dbInputs));
-            jobOutputs.addAll(ExternalPlatformBusiness.sanitizeUriList(dbOutputs));
+            List<String> jobInputs = externalPlatformBusiness.sanitizeUriList(dbInputs);
+            List<String> jobOutputs = externalPlatformBusiness.sanitizeUriList(dbOutputs);
 
             // Build the data structure 
             Map<String, Object> jobData = new HashMap<>();
             
             jobData.put("status", t.getStatus().name());
             jobData.put("exitCode", t.getExitCode());
-            jobData.put("jobName", jobName);
+            jobData.put("exitMessage", t.getExitMessage());
             jobData.put("inputs", jobInputs);   
             jobData.put("outputs", jobOutputs);
             jobsMap.put(invocationId, jobData);

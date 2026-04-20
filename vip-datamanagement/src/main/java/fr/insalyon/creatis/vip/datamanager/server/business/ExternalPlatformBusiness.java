@@ -114,33 +114,36 @@ public class ExternalPlatformBusiness {
             throw new VipException(e);
         }
     }
-    public static String sanitizeUri(String value) {
-        if (value == null || value.isEmpty()) return value;
+    public String sanitizeUri(String uriString) {
+        if (uriString == null || uriString.isEmpty()) {
+            return uriString;
+        }
         try {
-            URI uri = new URI(value);
+            URI uri = new URI(uriString);
             String scheme = uri.getScheme();
             
-            if (scheme == null) return value;
+            if (scheme == null) {
+                return uriString;
+            }
 
             if ("shanoir".equals(scheme)) {
-                ShanoirStorageBusiness shanoirStorageBusiness = new ShanoirStorageBusiness();
                 return shanoirStorageBusiness.adaptShanoirUri(uri);
             } else if ("girder".equals(scheme)) {
-                GirderStorageBusiness girderStorageBusiness = new GirderStorageBusiness(null, null);
                 return girderStorageBusiness.adaptGirderUri(uri); 
             }
         } catch (URISyntaxException ex) {
-            return value;
+            logger.warn("Abnormal URI to satinize : {}", uriString);
+            return uriString;
         }
-        return value;
+        return uriString;
     }
 
-    public static  List<String> sanitizeUriList(List<String> rawList) {
-        if (rawList == null) {
+    public List<String> sanitizeUriList(List<String> uriStringList) {
+        if (uriStringList == null) {
             return new ArrayList<>();
         }
         List<String> cleanList = new ArrayList<>();
-        for (String value : rawList) {
+        for (String value : uriStringList) {
             cleanList.add(sanitizeUri(value));
         }
         return cleanList;

@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.api.business;
 
 import java.sql.Timestamp;
 
+import fr.insalyon.creatis.vip.core.models.Group;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
