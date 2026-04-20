@@ -398,4 +398,36 @@ public class SimulationBusiness extends CommonBusiness {
             throw new VipException(ex);
         }
     }
+
+  public List<String> getJobInputs(String simulationID, String jobName, String currentUserFolder) throws VipException {
+        try {
+            List<String> rawInputs = getSimulationDAO(simulationID).getInputData(jobName);
+            List<String> cleanedInputs = new ArrayList<>();
+            
+            for (String rawPath : rawInputs) {
+                String vipPath = lfcPathsBusiness.parseRealDir(rawPath, currentUserFolder);
+                cleanedInputs.add(vipPath);
+            }
+            return cleanedInputs;
+            
+        } catch (DAOException | DataManagerException ex) {
+            throw new VipException(ex);
+        }
+    }
+
+    public List<String> getJobOutputs(String simulationID, String jobName, String currentUserFolder) throws VipException {
+        try {
+            List<String> rawOutputs = getSimulationDAO(simulationID).getOutputData(jobName);
+            List<String> cleanedOutputs = new ArrayList<>();
+            
+            for (String rawPath : rawOutputs) {
+                String vipPath = lfcPathsBusiness.parseRealDir(rawPath, currentUserFolder);
+                cleanedOutputs.add(vipPath);
+            }
+            return cleanedOutputs;
+            
+        } catch (DAOException | DataManagerException ex) {
+            throw new VipException(ex);
+        }
+    }
 }

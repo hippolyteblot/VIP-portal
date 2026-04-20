@@ -102,11 +102,12 @@ public class CoreDataInitializer extends JdbcDaoSupport {
                                 server.getAdminEmail(),
                                 null,
                                 server.getAdminInstitution(),
-                                MD5.get(server.getAdminPassword()),
                                 true,
                                 UUID.randomUUID().toString(), folder, "",
                                 now, now, UserLevel.Administrator,
                                 CountryCode.fr, 100, null,null,0,false, null));
+
+                userDAO.definePassword(server.getAdminEmail(), MD5.get(server.getAdminPassword()));
 
             } catch (DAOException | NoSuchAlgorithmException | UnsupportedEncodingException ex) {
                 logger.error("Error creating VIPUsers table", ex);

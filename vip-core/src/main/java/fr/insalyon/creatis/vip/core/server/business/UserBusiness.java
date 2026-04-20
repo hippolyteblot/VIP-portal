@@ -245,7 +245,6 @@ public class UserBusiness extends CommonBusiness {
                 lastName.trim(),
                 email.trim(),
                 institution.trim(),
-                "0000",
                 cc, new Timestamp(System.currentTimeMillis()));
     }
 

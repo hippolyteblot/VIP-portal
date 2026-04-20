@@ -60,7 +60,6 @@
         <module>vip-social</module>
         <module>vip-api</module>
         <module>vip-visualization</module>
-        <module>coverage</module>
     </modules>
 
     <dependencyManagement>

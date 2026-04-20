@@ -144,6 +144,43 @@ public class LFCBusiness {
         }
     }
 
+    public void ensureDirectoryExists(User user, String path) throws VipException {
+        try {
+            String parsedPath = lfcPathsBusiness.parseBaseDir(user, path);
+            ensureParsedDirectoryExists(parsedPath);
+        } catch (GRIDAClientException ex) {
+            logger.error("Error ensuring directory {} exists for {}", path, user, ex);
+            throw new VipException(ex);
+        } catch (DataManagerException ex) {
+            throw new VipException(ex);
+        }
+    }
+
+    private void ensureParsedDirectoryExists(String parsedPath) throws GRIDAClientException {
+        if (gridaClient.exist(parsedPath)) {
+            return;
+        }
+
+        int lastSlashIndex = parsedPath.lastIndexOf('/');
+        if (lastSlashIndex <= 0 || lastSlashIndex == parsedPath.length() - 1) {
+            throw new GRIDAClientException("Invalid folder path: " + parsedPath);
+        }
+
+        String parentPath = parsedPath.substring(0, lastSlashIndex);
+        String folderName = parsedPath.substring(lastSlashIndex + 1);
+
+        ensureParsedDirectoryExists(parentPath);
+
+        try {
+            gridaClient.createFolder(parentPath, folderName);
+        } catch (GRIDAClientException ex) {
+            // Another request may have created it in the meantime.
+            if (!gridaClient.exist(parsedPath)) {
+                throw ex;
+            }
+        }
+    }
+
     public long getModificationDate(User user, String path) throws VipException {
 
         try {
