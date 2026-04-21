@@ -33,6 +33,16 @@ const form = reactive<PublicationInput>({
 
 const isAdmin = computed(() => authStore.session?.userlevel === 'Administrator')
 const hasApplicationOptions = computed(() => appOptions.value.length > 0)
+const currentUserEmail = computed(() => (authStore.user?.email ?? '').trim().toLowerCase())
+
+function isPublicationAuthor(publication: Publication): boolean {
+  return currentUserEmail.value.length > 0
+    && (publication.vipAuthor ?? '').trim().toLowerCase() === currentUserEmail.value
+}
+
+function canManagePublication(publication: Publication): boolean {
+  return isAdmin.value || isPublicationAuthor(publication)
+}
 
 function badgeVariant(type: string | null | undefined): 'primary' | 'info' | 'success' | 'warning' | 'gray' {
   const normalized = (type ?? '').toLowerCase()
@@ -105,7 +115,7 @@ function closeModal() {
 }
 
 function openEditModal(publication: Publication) {
-  if (!isAdmin.value) {
+  if (!canManagePublication(publication)) {
     return
   }
 
@@ -132,8 +142,9 @@ async function submit() {
     const payload = buildPayload()
 
     if (isEditing.value && editingId.value !== null) {
-      if (!isAdmin.value) {
-        notificationsStore.error('Only administrators can edit publications.')
+      const existingPublication = publicationsStore.publications.find((publication) => publication.id === editingId.value)
+      if (!existingPublication || !canManagePublication(existingPublication)) {
+        notificationsStore.error('Only administrators or publication authors can edit this publication.')
         return
       }
       await publicationsStore.updatePublication(editingId.value, payload)
@@ -151,8 +162,9 @@ async function submit() {
 }
 
 async function removePublication(id: number) {
-  if (!isAdmin.value) {
-    notificationsStore.error('Only administrators can delete publications.')
+  const publication = publicationsStore.publications.find((entry) => entry.id === id)
+  if (!publication || !canManagePublication(publication)) {
+    notificationsStore.error('Only administrators or publication authors can delete this publication.')
     return
   }
 
@@ -199,7 +211,7 @@ onMounted(async () => {
     <div>
       <h1 class="text-2xl font-bold text-gray-900">Publications</h1>
       <p class="mt-1 text-sm text-gray-500">
-        Browse the publication catalog and add new entries. Edit and delete actions are reserved to administrators.
+        Browse the publication catalog and add new entries. Edit and delete actions are available to administrators and publication authors.
       </p>
       <AppButton class="mt-3" @click="openCreateModal">
         <Plus class="h-4 w-4" />
@@ -260,7 +272,7 @@ onMounted(async () => {
           </a>
         </div>
 
-        <div v-if="isAdmin" class="flex items-center gap-2 pt-1">
+        <div v-if="canManagePublication(pub)" class="flex items-center gap-2 pt-1">
           <AppButton variant="secondary" size="sm" @click="openEditModal(pub)">
             <Pencil class="h-3.5 w-3.5" />
             Edit
@@ -318,7 +330,6 @@ onMounted(async () => {
           </AppButton>
           <AppButton
             :loading="isSaving"
-            :disabled="isEditing && !isAdmin"
             @click="submit"
           >
             {{ isEditing ? 'Update publication' : 'Create publication' }}
