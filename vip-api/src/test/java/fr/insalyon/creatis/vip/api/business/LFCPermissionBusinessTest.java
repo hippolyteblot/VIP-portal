@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import fr.insalyon.creatis.vip.api.data.UserTestUtils;
@@ -17,6 +18,7 @@ import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness
 public class LFCPermissionBusinessTest {
 
     @AfterEach
+    @BeforeEach
     protected void tearDown() {
         // to reset user groups
         UserTestUtils.reset();
