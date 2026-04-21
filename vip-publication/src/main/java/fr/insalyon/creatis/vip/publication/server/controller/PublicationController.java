@@ -66,8 +66,6 @@ public class PublicationController {
 
     @PutMapping("{id}")
     public void update(@PathVariable Long id, @RequestBody Publication publication) throws VipException {
-        ensureAdmin();
-
         if (publication == null) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "publication", "Publication payload is required");
         }
@@ -84,25 +82,39 @@ public class PublicationController {
             throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), id.toString());
         }
 
+        ensureAdminOrAuthor(existing);
+        // Keep creator immutable to avoid ownership spoofing from request payload.
+        publication.setVipAuthor(existing.getVipAuthor());
+
         publicationBusiness.updatePublication(publication);
     }
 
     @DeleteMapping("{id}")
     public void delete(@PathVariable Long id) throws VipException {
-        ensureAdmin();
-
         Publication existing = publicationBusiness.getPublication(id);
         if (existing == null) {
             throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), id.toString());
         }
 
+        ensureAdminOrAuthor(existing);
+
         publicationBusiness.removePublication(id);
     }
 
-    private void ensureAdmin() throws VipException {
+    private void ensureAdminOrAuthor(Publication publication) throws VipException {
         User currentUser = userProvider.get();
-        if (!currentUser.isSystemAdministrator()) {
+        if (currentUser == null) {
             throw new VipException(DefaultError.ACCESS_DENIED);
         }
+
+        if (!currentUser.isSystemAdministrator() && !isAuthor(currentUser, publication)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+    }
+
+    private boolean isAuthor(User currentUser, Publication publication) {
+        return currentUser.getEmail() != null
+                && publication.getVipAuthor() != null
+                && currentUser.getEmail().equalsIgnoreCase(publication.getVipAuthor());
     }
 }
