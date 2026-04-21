@@ -109,7 +109,7 @@ public class VipSessionBusiness{
             String email = cookies.get(CoreConstants.COOKIES_USER);
             String sessionId = cookies.get(CoreConstants.COOKIES_SESSION);
             // the cookies are there, verify them
-            logger.info("Using cookies to reload session for {} ", email);
+            logger.info("Using cookies to reload session for {} ", email.replaceAll("[\\n\\r]", "_"));
 
             if (sessionBusiness.validateSession(email, sessionId)) {
                 return setUserInSession(email, request.getSession());

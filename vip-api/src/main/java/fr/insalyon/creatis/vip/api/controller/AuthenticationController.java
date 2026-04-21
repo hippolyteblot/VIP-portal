@@ -51,10 +51,10 @@ public class AuthenticationController extends ApiController{
         logMethodInvocation(logger, "resetPassword", resetPassword.getEmail());
         if (resetPassword.getActivationCode() == null) {
             apiUserBusiness.sendResetCode(resetPassword.getEmail());
-            logger.info("reset code of  " + resetPassword.getEmail());
+            logger.info("reset code of  " + resetPassword.getEmail().replaceAll("[\\n\\r]", "_"));
         } else {
             apiUserBusiness.resetPassword(resetPassword.getEmail(), resetPassword.getActivationCode(), resetPassword.getNewPassword());
-            logger.info("reset password with activation code: " + resetPassword.getActivationCode());
+            logger.info("reset password with activation code: " + resetPassword.getActivationCode().replaceAll("[\\n\\r]", "_"));
         }
 
     }

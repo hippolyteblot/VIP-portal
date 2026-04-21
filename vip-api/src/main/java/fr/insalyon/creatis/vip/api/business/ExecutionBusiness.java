@@ -282,8 +282,8 @@ public class ExecutionBusiness {
             throw new VipException("Update of execution timeout is not supported.");
         }
         checkInputExecNameIsValid(execution.getName());
-        logger.info("updating execution " + execution.getIdentifier()
-                + " name to " + execution.getName());
+        logger.info("updating execution " + execution.getIdentifier().replaceAll("[\\n\\r]", "_")
+                + " name to " + execution.getName().replaceAll("[\\n\\r]", "_"));
         workflowBusiness.updateDescription(execution.getIdentifier(), execution.getName());
     }
 

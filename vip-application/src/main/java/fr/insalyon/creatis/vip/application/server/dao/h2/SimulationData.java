@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -448,21 +449,41 @@ public class SimulationData extends AbstractJobData implements SimulationDAO {
     }
 
     private List<String> getHistogramTimes(int binSize, String startField, String endField)
-            throws DAOException {
+        throws DAOException {
+
+        //the method :Whitelist;to prevent SQL injection
+        // accepts only the allowed fields, and throws an exception if the fields are not in the allowed list
+        List<String> allowedFields = Arrays.asList("running", "upload", "download", "end_e");
+
+        // if the fields are not in the allowed list, we log an error and throw an exception
+        if (!allowedFields.contains(startField) || !allowedFields.contains(endField)) {
+            logger.error("Tentative d'injection SQL détectée avec les champs : " + startField + " / " + endField);
+            throw new DAOException("Accès non autorisé aux colonnes spécifiées.");
+        }
 
         try {
             List<String> list = new ArrayList<String>();
-            PreparedStatement ps = connection.prepareStatement("SELECT "
-                    + "TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")/" + binSize + "*" + binSize + " AS execut, "
+            
+            // prepare the query with placeholders for the binsize and the status, and for the fields which are validated by the whitelist
+            String query = "SELECT "
+                    + "TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")/?*? AS execut, "
                     + "COUNT(id) AS num, "
                     + "MIN(TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")) AS mini, "
                     + "MAX(TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")) AS maxi, "
                     + "SUM(TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")) AS som "
                     + "FROM JOBS "
                     + "WHERE STATUS = ? AND TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ") >= 0 "
-                    + "GROUP BY TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")/" + binSize + "*" + binSize + " "
-                    + "ORDER BY EXECUT");
-            ps.setString(1, TaskStatus.COMPLETED.name());
+                    + "GROUP BY TIMESTAMPDIFF('SECOND', " + startField + ", " + endField + ")/?*? "
+                    + "ORDER BY EXECUT";
+
+            PreparedStatement ps = connection.prepareStatement(query);
+            
+            // Binding the parameters for the binsize and the status, and for the fields which are validated by the whitelist
+            ps.setInt(1, binSize);
+            ps.setInt(2, binSize);
+            ps.setString(3, TaskStatus.COMPLETED.name()); 
+            ps.setInt(4, binSize);
+            ps.setInt(5, binSize);
 
             ResultSet rs = ps.executeQuery();
 
@@ -483,7 +504,7 @@ public class SimulationData extends AbstractJobData implements SimulationDAO {
             close(logger);
         }
     }
-
+    
     private int parseMinorStatus(String minorStatus) {
 
         if (minorStatus == null || minorStatus.isEmpty()) {

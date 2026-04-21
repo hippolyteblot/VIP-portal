@@ -36,16 +36,16 @@ public class ApiUserBusiness {
                 false,
                 true,
                 new HashSet<>());
-        logger.info("Signing up with the " + user.getEmail());
+        logger.info("Signing up with the " + user.getEmail().replaceAll("[\\n\\r]", "_"));
     }
 
     public void sendResetCode(String email) throws VipException {
         emailBusiness.sendResetCode(email);
-        logger.info("Sending reset code for user with email: " + email);
+        logger.info("Sending reset code for user with email: " + email.replaceAll("[\\n\\r]", "_"));
     }
 
     public void resetPassword(String email, String code, String password) throws VipException {
         passwordBusiness.reset(email, code, password);
-        logger.info("Resetting password for user with email: " + email);
+        logger.info("Resetting password for user with email: " + email.replaceAll("[\\n\\r]", "_"));
     }
 }
