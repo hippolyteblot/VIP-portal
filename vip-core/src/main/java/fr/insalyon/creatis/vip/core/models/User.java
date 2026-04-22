@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -41,6 +42,8 @@ public class User implements IsSerializable {
     private String code;
     private String folder;
     private String session;
+    @JsonView(DataViews.User.class)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private int failedAuthentications;
 

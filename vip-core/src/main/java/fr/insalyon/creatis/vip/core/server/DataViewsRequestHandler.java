@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.function.Supplier;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJacksonInputMessage;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAdapter;
 
@@ -18,6 +21,8 @@ import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 @RestControllerAdvice
 public class DataViewsRequestHandler extends RequestBodyAdviceAdapter {
+
+    private static final Logger logger = LoggerFactory.getLogger(DataViewsRequestHandler.class);
 
     private final Supplier<User> supplier;
 
@@ -50,6 +55,15 @@ public class DataViewsRequestHandler extends RequestBodyAdviceAdapter {
                     break;
                 default:
                     break;
+            }
+        }
+
+        if (inputMessage instanceof ServletServerHttpRequest request) {
+            String path = request.getServletRequest().getRequestURI();
+            if ("POST".equalsIgnoreCase(request.getServletRequest().getMethod())
+                    && path != null && path.contains("/users")) {
+                logger.info("DataView input filtering for signup path='{}' uses view={} (authenticatedUser={})",
+                        path, view.getSimpleName(), currentUser != null);
             }
         }
 

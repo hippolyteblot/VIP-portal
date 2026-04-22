@@ -1,5 +1,8 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +29,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     private final UserBusiness userBusiness;
     private final AuthenticationBusiness authenticationBusiness;
@@ -71,10 +76,31 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody @Valid SignUpForm form) throws VipException {
+        final String email = form != null && form.user != null ? form.user.getEmail() : null;
+        final String countryCode = form != null && form.user != null && form.user.getCountryCode() != null
+                ? form.user.getCountryCode().name()
+                : null;
+        final boolean hasPassword = form != null && form.user != null
+                && form.user.getPassword() != null && !form.user.getPassword().isBlank();
+        final int groupsCount = form != null && form.user != null && form.user.getGroups() != null
+                ? form.user.getGroups().size()
+                : -1;
+
+        logger.info("Signup request received: email='{}', country='{}', hasPassword={}, groupsCount={}",
+                email, countryCode, hasPassword, groupsCount);
+
         if (form.user.getId() != null) {
+            logger.warn("Signup rejected: id must be null for email='{}'", email);
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "ID must be empty!");
         }
-        // the returned data may be partial, but enough for the frontend to do it own stuff!
-        return authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+        try {
+            // the returned data may be partial, but enough for the frontend to do it own stuff!
+            User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+            logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
+            return createdUser;
+        } catch (VipException ex) {
+            logger.error("Signup failed for email='{}': {}", email, ex.getMessage(), ex);
+            throw ex;
+        }
     }
 }
