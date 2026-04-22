@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { sessionApi } from '@/api/session.api'
-import type { VipSession, LoginCredentials, User } from '@/types/auth.types'
+import { usersApi } from '@/api/users.api'
+import type { VipSession, LoginCredentials, RegisterPayload, User } from '@/types/auth.types'
 
 
 
@@ -61,8 +62,13 @@ export const useAuthStore = defineStore('auth', () => {
     initialized.value = false
   }
 
-  async function register(_payload: unknown) {
-    await new Promise((resolve) => setTimeout(resolve, 500))
+  async function register(payload: RegisterPayload) {
+    isLoading.value = true
+    try {
+      await usersApi.register(payload)
+    } finally {
+      isLoading.value = false
+    }
   }
 
   return {

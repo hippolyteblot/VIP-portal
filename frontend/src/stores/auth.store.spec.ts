@@ -6,6 +6,7 @@ const mocked = vi.hoisted(() => ({
   getSession: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+  register: vi.fn(),
 }))
 
 vi.mock('@/api/session.api', () => ({
@@ -13,6 +14,12 @@ vi.mock('@/api/session.api', () => ({
     getSession: mocked.getSession,
     login: mocked.login,
     logout: mocked.logout,
+  },
+}))
+
+vi.mock('@/api/users.api', () => ({
+  usersApi: {
+    register: mocked.register,
   },
 }))
 
@@ -93,5 +100,31 @@ describe('useAuthStore', () => {
     expect(store.session).toBeNull()
     expect(store.user).toBeNull()
     expect(store.initialized).toBe(false)
+  })
+
+  it('registers user through /internal/users and resets loading state', async () => {
+    mocked.register.mockResolvedValue(undefined)
+    const store = useAuthStore()
+
+    await store.register({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      password: 'secret',
+      countryCode: 'FR',
+      institution: 'VIP Lab',
+      comments: 'test',
+    })
+
+    expect(mocked.register).toHaveBeenCalledWith({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@example.com',
+      password: 'secret',
+      countryCode: 'FR',
+      institution: 'VIP Lab',
+      comments: 'test',
+    })
+    expect(store.isLoading).toBe(false)
   })
 })
