@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.models.SignUpForm;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
+import fr.insalyon.creatis.vip.core.server.controller.dto.SignUpForm;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;

@@ -23,7 +23,8 @@ import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
-import fr.insalyon.creatis.vip.core.models.SignUpForm;
+import fr.insalyon.creatis.vip.core.server.controller.dto.SignUpForm;
+import fr.insalyon.creatis.vip.core.server.controller.dto.SignUpUser;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
@@ -32,7 +33,7 @@ public class UserControllerIT extends BaseInternalApiSpringIT {
     private User adminUser;
     private User developperUser;
     private User basicUser;
-    private User testUser;
+        private SignUpUser testUser;
     private Group privateGroup;
     private Group publicGroup;
     private SignUpForm form;
@@ -54,9 +55,10 @@ public class UserControllerIT extends BaseInternalApiSpringIT {
             publicGroup = groupBusiness.get("public");
         });
 
-        testUser = new User(CoreUtil.createUUID(), "test", "test", "test@insa.fr", "test", UserLevel.Beginner,
+        testUser = new SignUpUser(CoreUtil.createUUID(), "test", "test", "test@insa.fr", "test", UserLevel.Beginner,
                 CountryCode.fr);
         testUser.setId(null);
+        testUser.setPassword("testPassword");
         form = new SignUpForm();
         form.comment = "test";
         form.user = testUser;

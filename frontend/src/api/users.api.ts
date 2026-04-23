@@ -1,18 +1,21 @@
 import { backendClient } from './client'
 import type { RegisterPayload } from '@/types/auth.types'
+import type { Group } from '@/types/group.types'
 import type { ProfileUpdatePayload, ProfileUser } from '@/types/profile.types'
 
+interface SignUpUserPayload {
+  id: null
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+  countryCode: string
+  institution: string
+  groups: Group[]
+}
+
 interface SignUpFormPayload {
-  user: {
-    id: null
-    firstName: string
-    lastName: string
-    email: string
-    password: string
-    countryCode: string
-    institution: string
-    groups: unknown[]
-  }
+  user: SignUpUserPayload
   comment: string
 }
 
