@@ -13,5 +13,5 @@ export const sessionApi = {
     backendClient.delete<void>('/internal/session').then((r) => r.data),
 
   getUser: () =>
-    backendClient.get('/internal/user').then((r) => r.data),
+    backendClient.get('/internal/users/me').then((r) => r.data),
 }

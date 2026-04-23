@@ -57,6 +57,12 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Create Application' },
     },
     {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true, title: 'My account' },
+    },
+    {
       path: '/',
       name: 'home',
       component: () => import('@/views/LandingView.vue'),
