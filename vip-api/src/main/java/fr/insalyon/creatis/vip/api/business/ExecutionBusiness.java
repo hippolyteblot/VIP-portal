@@ -170,14 +170,17 @@ public class ExecutionBusiness {
 
         // retrieves all input data associated with this simulation
         List<InOutData> inputs = workflowBusiness.getInputData(s.getID(), userFolder);
-        for (InOutData iod : inputs) {
-            String key = iod.getProcessor();
-            String value = iod.getPath();
-            if (e.getInputValues().containsKey(key)) {
-                e.getInputValues().put(key, new ArrayList<>());
-            }
-            ((List<Object>) e.getInputValues().get(key)).add(value);
-        }
+
+        if (inputs != null && e != null && e.getInputValues() != null) {
+                    for (InOutData iod : inputs) {
+                        if (iod != null && iod.getProcessor() != null) {
+                            String key = iod.getProcessor();
+                            String value = iod.getPath(); 
+                            Object list = e.getInputValues().computeIfAbsent(key, k -> new ArrayList<Object>());
+                            if (list instanceof List) {
+                                ((List<Object>) list).add(value);
+                            }
+    }}}
         // retrieves results directory
         List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
         if (resDirList == null) {
