@@ -11,6 +11,14 @@ public class StorageCreateDirectoryRequest {
     @JsonView(DataViews.User.class)
     private String name;
 
+    public StorageCreateDirectoryRequest() {
+    }
+
+    public StorageCreateDirectoryRequest(String path, String name) {
+        this.path = path;
+        this.name = name;
+    }
+
     public String getPath() {
         return path;
     }

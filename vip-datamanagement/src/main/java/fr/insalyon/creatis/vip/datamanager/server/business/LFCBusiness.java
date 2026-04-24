@@ -115,9 +115,8 @@ public class LFCBusiness {
     }
 
     public boolean exists(User user, String path) throws VipException {
-
         try {
-            return gridaClient.exist(lfcPathsBusiness.parseBaseDir(user, path));
+            return gridaClient.getPathInfo(lfcPathsBusiness.parseBaseDir(user, path)).exist();
         } catch (GRIDAClientException ex) {
             logger.error("Error checking file {} existance for {}",
                     path, user,ex);

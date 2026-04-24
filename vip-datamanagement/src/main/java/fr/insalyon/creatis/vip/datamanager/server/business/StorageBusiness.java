@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
+import fr.insalyon.creatis.vip.datamanager.models.VipStoragePath;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.slf4j.Logger;
@@ -85,6 +87,8 @@ public class StorageBusiness {
     }
 
     public List<Data> listDir(String path) throws VipException {
+        VipStoragePath vipPath = VipStoragePath.of(currentUserProvider.get(), path);
+
         checkReadPermission(path);
         if (path.equals(ROOT)) {
             return getRootDirectoriesName().stream()

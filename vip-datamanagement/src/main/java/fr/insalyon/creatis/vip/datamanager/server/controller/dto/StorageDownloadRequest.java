@@ -9,6 +9,13 @@ public class StorageDownloadRequest {
     @JsonView(DataViews.User.class)
     private String path;
 
+    public StorageDownloadRequest() {
+    }
+
+    public StorageDownloadRequest(String path) {
+        this.path = path;
+    }
+
     public String getPath() {
         return path;
     }
