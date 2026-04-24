@@ -5,6 +5,7 @@ import static fr.insalyon.creatis.vip.core.client.view.CoreConstants.RESULTS_DIR
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,6 +149,7 @@ public class ExecutionBusiness {
     @SuppressWarnings("unchecked")
     private Execution getExecutionFromSimulation(Simulation s, boolean summarize) throws VipException {
         // Build Carmin's execution object
+//  / Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
                 s.getSimulationName(),
@@ -164,7 +166,6 @@ public class ExecutionBusiness {
         if (summarize) {
                 return e;
         }
-
         //get the current user's folder to filter file access
         String userFolder = currentUserProvider.get().getFolder();
 
@@ -173,10 +174,8 @@ public class ExecutionBusiness {
         for (InOutData iod : inputs) {
             String key = iod.getProcessor();
             String value = iod.getPath();
-            if (e.getInputValues().containsKey(key)) {
-                e.getInputValues().put(key, new ArrayList<>());
-            }
-            ((List<Object>) e.getInputValues().get(key)).add(value);
+            
+            ((List<Object>) e.getInputValues().computeIfAbsent(key, k -> new ArrayList<>())).add(value);
         }
         // retrieves results directory
         List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
