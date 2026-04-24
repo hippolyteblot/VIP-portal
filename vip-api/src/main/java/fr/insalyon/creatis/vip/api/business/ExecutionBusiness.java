@@ -5,6 +5,7 @@ import static fr.insalyon.creatis.vip.core.client.view.CoreConstants.RESULTS_DIR
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,6 +149,7 @@ public class ExecutionBusiness {
     @SuppressWarnings("unchecked")
     private Execution getExecutionFromSimulation(Simulation s, boolean summarize) throws VipException {
         // Build Carmin's execution object
+//  / Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
                 s.getSimulationName(),
@@ -164,23 +166,17 @@ public class ExecutionBusiness {
         if (summarize) {
                 return e;
         }
-
         //get the current user's folder to filter file access
         String userFolder = currentUserProvider.get().getFolder();
 
         // retrieves all input data associated with this simulation
         List<InOutData> inputs = workflowBusiness.getInputData(s.getID(), userFolder);
-
-        if (inputs != null && e != null && e.getInputValues() != null) {
-                    for (InOutData iod : inputs) {
-                        if (iod != null && iod.getProcessor() != null) {
-                            String key = iod.getProcessor();
-                            String value = iod.getPath(); 
-                            Object list = e.getInputValues().computeIfAbsent(key, k -> new ArrayList<Object>());
-                            if (list instanceof List) {
-                                ((List<Object>) list).add(value);
-                            }
-    }}}
+        for (InOutData iod : inputs) {
+            String key = iod.getProcessor();
+            String value = iod.getPath();
+            
+            ((List<Object>) e.getInputValues().computeIfAbsent(key, k -> new ArrayList<>())).add(value);
+        }
         // retrieves results directory
         List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
         if (resDirList == null) {
