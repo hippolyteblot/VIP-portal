@@ -1,14 +1,8 @@
-package fr.insalyon.creatis.vip.datamanager.server.controller.dto;
-
-import com.fasterxml.jackson.annotation.JsonView;
-
-import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+package fr.insalyon.creatis.vip.datamanager.models;
 
 public class StorageCreateDirectoryRequest {
 
-    @JsonView(DataViews.User.class)
     private String path;
-    @JsonView(DataViews.User.class)
     private String name;
 
     public StorageCreateDirectoryRequest() {

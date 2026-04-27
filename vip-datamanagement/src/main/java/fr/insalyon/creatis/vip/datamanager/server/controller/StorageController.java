@@ -20,9 +20,9 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 import fr.insalyon.creatis.vip.datamanager.models.Data;
 import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageCreateDirectoryRequest;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageDownloadRequest;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageOperationResponse;
+import fr.insalyon.creatis.vip.datamanager.models.StorageCreateDirectoryRequest;
+import fr.insalyon.creatis.vip.datamanager.models.StorageDownloadRequest;
+import fr.insalyon.creatis.vip.datamanager.models.StorageOperationResponse;
 import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
 
 @RestController

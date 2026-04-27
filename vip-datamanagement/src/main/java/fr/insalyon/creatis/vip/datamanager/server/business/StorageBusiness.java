@@ -60,6 +60,7 @@ public class StorageBusiness {
     private final TransferPoolBusiness transferPoolBusiness;
     private final DataManagerBusiness dataManagerBusiness;
     private final ScheduledExecutorService scheduler;
+    private final VipStoragePathFactory vipStoragePathFactory;
 
     @Autowired
     public StorageBusiness(
@@ -70,7 +71,8 @@ public class StorageBusiness {
             GroupDAO groupDAO,
             ScheduledExecutorService scheduler,
             TransferPoolBusiness transferPoolBusiness,
-            DataManagerBusiness dataManagerBusiness) {
+            DataManagerBusiness dataManagerBusiness,
+            VipStoragePathFactory vipStoragePathFactory) {
         this.server = server;
         this.lfcBusiness = lfcBusiness;
         this.lfcPermissionBusiness = lfcPermissionBusiness;
@@ -79,6 +81,7 @@ public class StorageBusiness {
         this.scheduler = scheduler;
         this.transferPoolBusiness = transferPoolBusiness;
         this.dataManagerBusiness = dataManagerBusiness;
+        this.vipStoragePathFactory = vipStoragePathFactory;
     }
 
     public boolean doesFileExist(String path) throws VipException {
@@ -87,7 +90,8 @@ public class StorageBusiness {
     }
 
     public List<Data> listDir(String path) throws VipException {
-        VipStoragePath vipPath = VipStoragePath.of(currentUserProvider.get(), path);
+        VipStoragePath vipPath = vipStoragePathFactory.create(currentUserProvider.get(), path);
+        path = vipPath.getVipPath();
 
         checkReadPermission(path);
         if (path.equals(ROOT)) {

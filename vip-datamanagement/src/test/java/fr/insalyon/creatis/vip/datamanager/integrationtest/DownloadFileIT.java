@@ -4,7 +4,8 @@ import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageDownloadRequest;
+import fr.insalyon.creatis.vip.datamanager.models.StorageDownloadRequest;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
