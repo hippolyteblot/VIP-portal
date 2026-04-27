@@ -12,7 +12,6 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -85,13 +84,13 @@ public class StorageBusiness {
     }
 
     public boolean doesFileExist(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkReadPermission(path);
         return path.equals(ROOT) || lfcBusiness.exists(currentUserProvider.get(), path);
     }
 
     public List<Data> listDir(String path) throws VipException {
-        VipStoragePath vipPath = vipStoragePathFactory.create(currentUserProvider.get(), path);
-        path = vipPath.getVipPath();
+        path = normalizeVipPath(path);
 
         checkReadPermission(path);
         if (path.equals(ROOT)) {
@@ -118,6 +117,7 @@ public class StorageBusiness {
     }
 
     public Optional<Data.Type> getPathInfo(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkReadPermission(path);
         if (path.equals(ROOT)) {
             return Optional.of(Data.Type.folder);
@@ -126,6 +126,7 @@ public class StorageBusiness {
     }
 
     public List<Data> getFileData(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkReadPermission(path);
         if (path.equals(ROOT)) {
             return listDir(path);
@@ -134,6 +135,7 @@ public class StorageBusiness {
     }
 
     public Long getModificationDate(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkReadPermission(path);
         if (path.equals(ROOT)) {
             return null;
@@ -142,6 +144,7 @@ public class StorageBusiness {
     }
 
     public void deletePath(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkPermission(path, LFCAccessType.DELETE);
         if (!lfcBusiness.exists(currentUserProvider.get(), path)) {
             logger.error("trying to delete a non-existing file : {}", path);
@@ -151,7 +154,7 @@ public class StorageBusiness {
     }
 
     public void createDirectory(String parentPath, String name) throws VipException {
-        String normalizedParent = normalizeDirectoryPath(parentPath);
+        String normalizedParent = normalizeVipPath(parentPath);
         String normalizedName = name == null ? "" : name.trim();
 
         if (normalizedName.isEmpty() || normalizedName.contains("/")) {
@@ -167,6 +170,7 @@ public class StorageBusiness {
     }
 
     public File getFile(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkDownloadPermission(path);
         String downloadOperationId = downloadFileToLocalStorage(path);
         return getDownloadFile(downloadOperationId);
@@ -194,6 +198,7 @@ public class StorageBusiness {
     }
 
     public String submitDownload(String path) throws VipException {
+        path = normalizeVipPath(path);
         checkDownloadPermission(path);
         return transferPoolBusiness.downloadFile(currentUserProvider.get(), path);
     }
@@ -292,19 +297,9 @@ public class StorageBusiness {
         checkPermission(path, LFCAccessType.READ);
     }
 
-    private String normalizeDirectoryPath(String path) {
-        if (path == null || path.isBlank()) {
-            return ROOT;
-        }
-
-        String normalized = path.trim().replaceAll("/{2,}", "/");
-        if (!normalized.startsWith("/")) {
-            normalized = "/" + normalized;
-        }
-        if (normalized.length() > 1 && normalized.endsWith("/")) {
-            normalized = normalized.substring(0, normalized.length() - 1);
-        }
-        return normalized;
+    private String normalizeVipPath(String path) {
+        VipStoragePath vipPath = vipStoragePathFactory.create(currentUserProvider.get(), path);
+        return vipPath.getVipPath();
     }
 
     private boolean isValidGroupPath(String path) throws VipException {
