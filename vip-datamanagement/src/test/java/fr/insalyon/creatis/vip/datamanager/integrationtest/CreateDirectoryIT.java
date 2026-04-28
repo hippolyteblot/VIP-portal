@@ -5,15 +5,16 @@ import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
-import fr.insalyon.creatis.vip.datamanager.models.StorageCreateDirectoryRequest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.web.util.UriUtils;
 
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -48,29 +49,34 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
     }
 
     public void expectOkOnUserPath(User user, String newDirPath) throws Exception {
-        Path path = Path.of("/vip/Home", newDirPath);
-        mockMvc.perform(post("/internal/storage/directories")
+        String fullPath = Path.of("/vip/Home", newDirPath).toString();
+        URI uri = URI.create("/internal/storage/directories"
+                + UriUtils.encodePath(fullPath, StandardCharsets.UTF_8));
+
+        var result = mockMvc.perform(post(uri)
                         .with(getUserSecurityMock(user))
-                        .with(SecurityMockMvcRequestPostProcessors.csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(new StorageCreateDirectoryRequest(
-                                path.getParent().toString(),
-                                path.getFileName().toString()))))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andDo(print())
-                .andExpect(status().isCreated());
+                .andReturn();
+
+        int status = result.getResponse().getStatus();
+        String responseBody = result.getResponse().getContentAsString();
+
+        if (status != 201) {
+            throw new AssertionError("Expected status 201 but got " + status + ". Response: " + responseBody);
+        }
 
         utils.verifyCreateFolderForUser(user, newDirPath, 1);
     }
 
     public void expectOkOnGroupPath(User user, Group group, String newDirPath) throws Exception {
-        Path path = Path.of("/vip",  group.getName() + DataManagerConstants.GROUP_APPEND, newDirPath);
-        mockMvc.perform(post("/internal/storage/directories")
+        String fullPath = Path.of("/vip", group.getName() + DataManagerConstants.GROUP_APPEND, newDirPath).toString();
+        URI uri = URI.create("/internal/storage/directories"
+                + UriUtils.encodePath(fullPath, StandardCharsets.UTF_8));
+
+        mockMvc.perform(post(uri)
                         .with(getUserSecurityMock(user))
-                        .with(SecurityMockMvcRequestPostProcessors.csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(new StorageCreateDirectoryRequest(
-                                path.getParent().toString(),
-                                path.getFileName().toString()))))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andDo(print())
                 .andExpect(status().isCreated());
 
@@ -78,14 +84,12 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
     }
 
     public void expectBadRequestOnPath(User user, String newDirPath, Integer expectedErrorCode) throws Exception {
-        Path path = Path.of(newDirPath);
-        mockMvc.perform(post("/internal/storage/directories")
+        URI uri = URI.create("/internal/storage/directories"
+                + UriUtils.encodePath(newDirPath, StandardCharsets.UTF_8));
+
+        mockMvc.perform(post(uri)
                         .with(getUserSecurityMock(user))
-                        .with(SecurityMockMvcRequestPostProcessors.csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(new StorageCreateDirectoryRequest(
-                                path.getParent().toString(),
-                                path.getFileName().toString()))))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
@@ -94,14 +98,12 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
     }
 
     public void expectForbiddenOnPath(User user, String newDirPath, Integer expectedErrorCode) throws Exception {
-        Path path = Path.of(newDirPath);
-        mockMvc.perform(post("/internal/storage/directories")
+        URI uri = URI.create("/internal/storage/directories"
+                + UriUtils.encodePath(newDirPath, StandardCharsets.UTF_8));
+
+        mockMvc.perform(post(uri)
                         .with(getUserSecurityMock(user))
-                        .with(SecurityMockMvcRequestPostProcessors.csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(new StorageCreateDirectoryRequest(
-                                path.getParent().toString(),
-                                path.getFileName().toString()))))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andDo(print())
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
@@ -112,6 +114,8 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
     // Creating in Home
     @Test
     public void testDirectoryCreationInHome() throws Exception {
+        // Configure that Home folder exists and is a folder
+        utils.configureFolderForUser(basicUser, "");
         utils.configureNonExistingElementForUser(basicUser, "newDir");
 
         expectOkOnUserPath(basicUser, "newDir");

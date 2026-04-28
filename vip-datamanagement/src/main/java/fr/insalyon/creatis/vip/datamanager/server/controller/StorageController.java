@@ -20,7 +20,6 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 import fr.insalyon.creatis.vip.datamanager.models.Data;
 import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
-import fr.insalyon.creatis.vip.datamanager.models.StorageCreateDirectoryRequest;
 import fr.insalyon.creatis.vip.datamanager.models.StorageDownloadRequest;
 import fr.insalyon.creatis.vip.datamanager.models.StorageOperationResponse;
 import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
@@ -75,18 +74,18 @@ public class StorageController {
                 .body(new StorageOperationResponse(operationId, PoolOperation.Status.Queued.name()));
     }
 
-    @PostMapping(value = "/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/directories/{*path}")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createDirectory(
-            @RequestBody StorageCreateDirectoryRequest request) throws VipException {
-        if (request == null || request.getPath() == null || request.getPath().isBlank()) {
-            throw new VipException("Directory path is required");
-        }
-        if (request.getName() == null || request.getName().isBlank()) {
-            throw new VipException("Directory name is required");
-        }
+    public void createDirectory(@PathVariable String path) throws VipException {
+        String decoded = URLDecoder.decode(path, StandardCharsets.UTF_8);
+        String normalized = decoded.replaceAll("/{2,}", "/");
+        String fullPath = normalized.startsWith("/") ? normalized : "/" + normalized;
 
-        storageBusiness.createDirectory(request.getPath(), request.getName());
+        java.nio.file.Path javaPath = java.nio.file.Path.of(fullPath);
+        String parentPath = javaPath.getParent() != null ? javaPath.getParent().toString() : "/";
+        String name = javaPath.getFileName() != null ? javaPath.getFileName().toString() : "";
+
+        storageBusiness.createDirectory(parentPath, name);
     }
 
     @GetMapping(value = "/operations/{operationId}")
@@ -111,14 +110,14 @@ public class StorageController {
 
     @GetMapping(value = "/downloads/{operationId}/content")
     public ResponseEntity<?> getDownloadContent(@PathVariable String operationId) throws VipException {
-        PoolOperation.Status status = storageBusiness.getOperationStatus(operationId);
-        if (!PoolOperation.Status.Done.equals(status)) {
+        File file = storageBusiness.getDownloadFileIfReady(operationId);
+        if (file == null) {
+            PoolOperation.Status status = storageBusiness.getDownloadOperationStatus(operationId);
             return ResponseEntity
                     .status(HttpStatus.ACCEPTED)
                     .body(new StorageOperationResponse(operationId, status.name()));
         }
 
-        File file = storageBusiness.getDownloadFileByOperationId(operationId);
         Resource resource = new FileSystemResource(file);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)

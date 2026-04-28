@@ -46,20 +46,21 @@ public class VipStoragePath {
         if (secondFolder.endsWith(DataManagerConstants.GROUP_APPEND)) {
             return;
         }
-        if (user != null && user.isSystemAdministrator() &&
-            (secondFolder.equals(DataManagerConstants.VO_ROOT_FOLDER) || 
-            secondFolder.equals(DataManagerConstants.USERS_FOLDER))) {
+        if (secondFolder.equals(DataManagerConstants.VO_ROOT_FOLDER) ||
+            secondFolder.equals(DataManagerConstants.USERS_FOLDER)) {
+            // These paths are valid for all users; permission is enforced separately
             return;
         }
         throw new IllegalArgumentException("Vip path should start with /vip/Home or /vip/Groups or /vip/VoRoot or /vip/Users");
     }
 
     public void checkCharacters(Path vipPath) {
-        // only alphanumeric, dash, underscore and slash are allowed in path
+        // Allow alphanumeric, dot, dash, underscore, space and parentheses in path parts
         for (Path part : vipPath) {
             String partStr = part.toString();
-            if (!partStr.matches("[a-zA-Z0-9._\\-]+")) {
-                throw new IllegalArgumentException("Vip path should only contain alphanumeric characters, dots, dashes, underscores and slashes");
+            if (!partStr.matches("[a-zA-Z0-9._\\- ()]+")) {
+                throw new IllegalArgumentException(
+                        "Vip path should only contain alphanumeric characters, dots, dashes, underscores, spaces and parentheses");
             }
         }
     }
