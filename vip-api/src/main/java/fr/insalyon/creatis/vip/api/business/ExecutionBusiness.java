@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,17 +177,19 @@ public class ExecutionBusiness {
             String value = iod.getPath();
             for (Map<String, Object> inputMap : e.getInputValues()) {
                 ((List<Object>) inputMap.computeIfAbsent(key, k -> new ArrayList<>())).add(value);
+
+                // retrieves results directory
+                List<Object> resDirList = (List<Object>) inputMap.get(RESULTS_DIRECTORY_PARAM_NAME);
+                if (resDirList == null) {
+                    resDirList = new ArrayList<>();
+                }
+                if (!resDirList.isEmpty()) {
+                    e.setResultsLocation(resDirList);
+                    inputMap.remove(RESULTS_DIRECTORY_PARAM_NAME);
+                }
             }
         }
-        // retrieves results directory
-        List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
-        if (resDirList == null) {
-            resDirList = new ArrayList<>();
-        }
-        if (!resDirList.isEmpty()) {
-            e.setResultsLocation(resDirList);
-            e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
-        }
+
         List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
         for (InOutData iod : outputs) {
             String key = iod.getProcessor();
@@ -318,9 +321,15 @@ public class ExecutionBusiness {
     public String initExecution(Execution execution) throws VipException {
         List<Map<String, String>> inputMaps = new ArrayList<>();
         Object resultsLocation = execution.getResultsLocation();
+        boolean isInputMapList = execution.getInputValues().size() > 1;
         for (Map<String, Object> inputValuesMap : execution.getInputValues()) {
             Map<String, String> inputMap = new HashMap<>();
             for (Entry<String, Object> restInput : inputValuesMap.entrySet()) {
+                if (isInputMapList && restInput.getValue() instanceof List) {
+                    throw new VipException(
+                        "Parameter '" + restInput.getKey() + "' contains a list, it should only have a single value when providing a list of input maps.");
+                }
+
                 inputMap.put(
                         restInput.getKey(),
                         handleRestParameter(restInput.getKey(), restInput.getValue()));
@@ -405,25 +414,31 @@ public class ExecutionBusiness {
             if (pp.isReturnedValue()) {
                 continue;
             }
+
+            List<Map<String, String>> mapsWithoutKey = inputValues.stream()
+                    .filter(inputMap -> !inputMap.containsKey(pp.getName()))
+                    .toList();
+
             // ok if input is present
-            if (inputValues.stream().allMatch(inputMap -> inputMap.containsKey(pp.getName()))) {
+            if (mapsWithoutKey.isEmpty()) {
                 continue;
             }
-            // then ok if input has a default value (and we set it)
-            if (pp.getDefaultValue() != null) {
-                for (Map<String, String> inputMap : inputValues) {
+
+            for (Map<String, String> inputMap : mapsWithoutKey) {
+                // then ok if input has a default value (and we set it)
+                if (pp.getDefaultValue() != null) {
                     inputMap.put(pp.getName(), pp.getDefaultValue().toString());
+                    continue;
+                }
+                // then ok if it is optional
+                if (pp.isOptional()) {
+                    continue;
                 }
 
-                continue;
+                // error : pp is an empty input with no default value and it is not optional
+                logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
+                throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
             }
-            // then ok if it is optional
-            if (pp.isOptional()) {
-                continue;
-            }
-            // error : pp is an empty input with no default value and it is not optional
-            logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
-            throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
         }
 
         // fill in overriddenInputs from explicit inputs

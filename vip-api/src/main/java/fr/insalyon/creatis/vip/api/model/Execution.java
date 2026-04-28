@@ -1,7 +1,12 @@
 package fr.insalyon.creatis.vip.api.model;
 
 import java.util.*;
+
 import jakarta.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import fr.insalyon.creatis.vip.api.model.serializing.InputValuesDeserializer;
 
 public class Execution {
 
@@ -13,6 +18,7 @@ public class Execution {
     private int timeout;
     private ExecutionStatus status;
     @NotNull
+    @JsonDeserialize(using = InputValuesDeserializer.class)
     private List<Map<String, Object>> inputValues;
     private Map<String, List<java.lang.Object>> returnedFiles;
 
