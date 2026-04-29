@@ -51,5 +51,6 @@ public class DataManagerConstants {
     public static final String GROUP_APPEND = " (group)";
     public static final int MAX_OPERATIONS_LIMIT = 10;
     public static final String DOWNLOAD_FOLDER = "downloads";
-
+    // Regex
+    public static final String VALID_PATH_CHARS = "^[a-zA-Z0-9._\\- ()]+$";
 }

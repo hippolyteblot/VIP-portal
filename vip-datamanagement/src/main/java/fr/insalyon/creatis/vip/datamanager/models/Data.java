@@ -11,23 +11,18 @@ import fr.insalyon.creatis.vip.core.server.inter.DataViews;
  *
  * @author Rafael Silva
  */
+@JsonView(DataViews.User.class)
 public class Data implements IsSerializable {
 
     public enum Type {
 
         folder, folderSync, file, fileSync
     };
-    @JsonView(DataViews.User.class)
     private String name;
-    @JsonView(DataViews.User.class)
     private Type type;
-    @JsonView(DataViews.User.class)
     private long length;
-    @JsonView(DataViews.User.class)
     private String modificationDate;
-    @JsonView(DataViews.User.class)
     private List<String> replicas;
-    @JsonView(DataViews.User.class)
     private String permissions;
 
     public Data() {

@@ -102,7 +102,7 @@ public class DirectoryListIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4001));
     }
 
     // Listing admin-only stuff
@@ -125,7 +125,7 @@ public class DirectoryListIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4001));
     }
 
     @Test
@@ -145,7 +145,7 @@ public class DirectoryListIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4002));
 
         Mockito.reset(gridaClient);
 
@@ -156,7 +156,7 @@ public class DirectoryListIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4000));
 
         Mockito.reset(gridaClient);
 
@@ -165,28 +165,28 @@ public class DirectoryListIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4000));
 
         // trying to list on unknown root folder
         mockMvc.perform(get("/internal/storage/directories/vip/NOTAGROUP")
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(4001));
 
         // trying to list on unknown group
         mockMvc.perform(get("/internal/storage/directories/vip/UNKNOWNGROUP (group)")
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4000));
 
         // trying to hack with ..
         mockMvc.perform(get("/internal/storage/directories/vip/../../file_to_hack.txt")
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4000));
     }
 
 }

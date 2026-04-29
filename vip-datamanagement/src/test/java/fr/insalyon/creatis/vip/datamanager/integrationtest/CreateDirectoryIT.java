@@ -133,7 +133,7 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
     // Forbidden for basic user in group
     @Test
     public void testDirectoryCreationKoInGroupForBeginner() throws Exception {
-        expectForbiddenOnPath(basicUser, "/vip/groupTest1 (group)/newDir", 9999);
+        expectForbiddenOnPath(basicUser, "/vip/groupTest1 (group)/newDir", 4001);
     }
 
     // allowed for advanced user in group
@@ -150,7 +150,7 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
         // but only in its group
         Mockito.reset(gridaClient);
 
-        expectForbiddenOnPath(basicUser, "/vip/groupTest2 (group)/newDir", 9999);
+        expectForbiddenOnPath(basicUser, "/vip/groupTest2 (group)/newDir", 4001);
     }
 
      /*
@@ -169,14 +169,14 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
         // dir already exist
         utils.configureFolderForUser(basicUser, "newDir", (String) null);
 
-        expectBadRequestOnPath(basicUser, "/vip/Home/newDir", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/newDir", 4000);
 
         // dir already exist as a file
         Mockito.reset(gridaClient);
 
         utils.configureFileForUser(basicUser, "newDir");
 
-        expectBadRequestOnPath(basicUser, "/vip/Home/newDir", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/newDir", 4000);
 
         // Parent dir does not exist
         Mockito.reset(gridaClient);
@@ -184,7 +184,7 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
         utils.configureNonExistingElementForUser(basicUser, "path/to");
         utils.configureNonExistingElementForUser(basicUser, "path/to/newDir");
 
-        expectBadRequestOnPath(basicUser, "/vip/Home/path/to/newDir", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/path/to/newDir", 4000);
 
         // Parent dir exist as a file
         Mockito.reset(gridaClient);
@@ -192,36 +192,36 @@ public class CreateDirectoryIT extends BaseInternalApiSpringIT {
         utils.configureFileForUser(basicUser, "path/to");
         utils.configureNonExistingElementForUser(basicUser, "path/to/newDir");
 
-        expectBadRequestOnPath(basicUser, "/vip/Home/path/to/newDir", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/path/to/newDir", 4000);
     }
 
 
     @Test
     public void testOtherErrorCases() throws Exception {
         // creating /vip
-        expectBadRequestOnPath(basicUser, "/vip", 9999);
+        expectBadRequestOnPath(basicUser, "/vip", 4000);
 
         // creating /vip/Home
         Mockito.reset(gridaClient);
-        expectBadRequestOnPath(basicUser, "/vip/Home", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home", 4000);
 
         // creating /vip/group (group)
         Mockito.reset(gridaClient);
-        expectBadRequestOnPath(basicUser, "/vip/groupTest1 (group)", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/groupTest1 (group)", 4000);
         Mockito.reset(gridaClient);
-        expectBadRequestOnPath(basicUser, "/vip/unknownGroup (group)", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/unknownGroup (group)", 4000);
 
         // creating /vip/Anything
         Mockito.reset(gridaClient);
-        expectBadRequestOnPath(basicUser, "/vip/Anything", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Anything", 4000);
 
         // creating /NOTVIP
         Mockito.reset(gridaClient);
-        expectBadRequestOnPath(basicUser, "/NOTVIP/Home", 9999);
+        expectBadRequestOnPath(basicUser, "/NOTVIP/Home", 4000);
 
         // creating /vip/../../something
         Mockito.reset(gridaClient);
-        expectBadRequestOnPath(basicUser, "/vip/Home/../../../secret_stuff.txt", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/../../../secret_stuff.txt", 4000);
     }
 
 }

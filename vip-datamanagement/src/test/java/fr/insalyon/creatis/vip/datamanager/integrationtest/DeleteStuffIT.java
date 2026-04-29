@@ -119,7 +119,7 @@ public class DeleteStuffIT extends BaseInternalApiSpringIT {
     // Deleting Forbidden for basic user in group
     @Test
     public void testDeleteKoInGroupForBeginner() throws Exception {
-        expectForbiddenOnPath(basicUser,"vip/groupTest1 (group)/someFolder", 9999);
+        expectForbiddenOnPath(basicUser,"vip/groupTest1 (group)/someFolder", 4001);
     }
 
     // Deleting allowed for advanced user in group
@@ -135,7 +135,7 @@ public class DeleteStuffIT extends BaseInternalApiSpringIT {
 
         // but only in its group
         resetGridaMocks();
-        expectForbiddenOnPath(basicUser,"vip/groupTest2 (group)/someFolder", 9999);
+        expectForbiddenOnPath(basicUser,"vip/groupTest2 (group)/someFolder", 4001);
     }
 
      /*
@@ -151,33 +151,33 @@ public class DeleteStuffIT extends BaseInternalApiSpringIT {
 
         // dir does not exist exist
         utils.configureNonExistingElementForUser(basicUser, "somefile");
-        expectBadRequestOnPath(basicUser, "/vip/Home/somefile", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/somefile", 4000);
 
         // deleting /vip
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip", 9999);
+        expectBadRequestOnPath(basicUser, "/vip", 4000);
 
         // deleting /vip/Home
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/Home", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home", 4000);
 
         // deleting /vip/group (group)
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/groupTest1 (group)", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/groupTest1 (group)", 4000);
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/unknownGroup (group)", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/unknownGroup (group)", 4000);
 
         // deleting /vip/Anything
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/Anything", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Anything", 4000);
 
         // deleting /NOTVIP
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/NOTVIP/Home", 9999);
+        expectBadRequestOnPath(basicUser, "/NOTVIP/Home", 4000);
 
         // deleting /vip/../../something
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/Home/../../../secret_stuff.txt", 9999);
+        expectBadRequestOnPath(basicUser, "/vip/Home/../../../secret_stuff.txt", 4000);
     }
 
 

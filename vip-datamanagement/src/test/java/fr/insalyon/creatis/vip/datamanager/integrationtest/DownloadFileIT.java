@@ -123,7 +123,7 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(print())
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.errorCode").value(9999));
+                .andExpect(jsonPath("$.errorCode").value(4001));
     }
 
     // TODO : error cases : unknown operation

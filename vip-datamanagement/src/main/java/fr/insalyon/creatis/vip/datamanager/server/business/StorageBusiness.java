@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import fr.insalyon.creatis.vip.datamanager.models.StorageError;
+import fr.insalyon.creatis.vip.datamanager.models.DataManagementError;
 import fr.insalyon.creatis.vip.datamanager.models.VipStoragePath;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
@@ -108,11 +108,11 @@ public class StorageBusiness {
         }
         if (type.isEmpty()) {
             logger.error("Trying to list a non-existing path ({})", path);
-            throw new VipException("Path does not exist: " + path, StorageError.STORAGE_NOT_FOUND_ERROR);
+            throw new VipException("Path does not exist: " + path, DataManagementError.STORAGE_NOT_FOUND_ERROR);
         }
         if (!type.get().equals(Data.Type.folder)) {
             logger.error("Trying to list {} , but is a file :", path);
-            throw new VipException("Path is not a directory: " + path, StorageError.STORAGE_VALIDATION_ERROR);
+            throw new VipException("Path is not a directory: " + path, DataManagementError.STORAGE_VALIDATION_ERROR);
         }
         return lfcBusiness.listDir(currentUserProvider.get(), path, true);
     }
@@ -149,18 +149,33 @@ public class StorageBusiness {
         checkPermission(path, LFCAccessType.DELETE);
         if (!lfcBusiness.exists(currentUserProvider.get(), path)) {
             logger.error("trying to delete a non-existing file : {}", path);
-            throw new VipException("Path does not exist: " + path, StorageError.STORAGE_VALIDATION_ERROR);
+            throw new VipException("Path does not exist: " + path, DataManagementError.STORAGE_VALIDATION_ERROR);
         }
         transferPoolBusiness.delete(currentUserProvider.get(), path);
     }
 
-    public void createDirectory(String parentPath, String name) throws VipException {
+    public void createDirectory(String fullPath) throws VipException {
+        String normalizedFullPath = normalizeVipPath(fullPath);
+        java.nio.file.Path javaPath = java.nio.file.Path.of(normalizedFullPath);
+        String parentPath = javaPath.getParent() != null ? javaPath.getParent().toString() : "/";
+        String name = javaPath.getFileName() != null ? javaPath.getFileName().toString() : "";
+        createDirectoryInternal(parentPath, name);
+    }
+
+    public void createDirectory(VipStoragePath vipStoragePath) throws VipException {
+        if (vipStoragePath == null) {
+            throw new VipException("Storage path is required", DataManagementError.STORAGE_VALIDATION_ERROR);
+        }
+        createDirectory(vipStoragePath.getVipPath());
+    }
+
+    private void createDirectoryInternal(String parentPath, String name) throws VipException {
         String normalizedParent = normalizeVipPath(parentPath);
         String normalizedName = name == null ? "" : name.trim();
 
         if (normalizedName.isEmpty() || normalizedName.contains("/")) {
             throw new VipException("Directory name is invalid: " + normalizedName,
-                    StorageError.STORAGE_VALIDATION_ERROR);
+                    DataManagementError.STORAGE_VALIDATION_ERROR);
         }
 
         String targetPath = normalizedParent.endsWith("/")
@@ -173,7 +188,7 @@ public class StorageBusiness {
         Optional<Data.Type> targetInfo = lfcBusiness.getPathInfo(currentUserProvider.get(), targetPath);
         if (targetInfo.isPresent()) {
             throw new VipException("Path already exists: " + targetPath,
-                    StorageError.STORAGE_VALIDATION_ERROR);
+                    DataManagementError.STORAGE_VALIDATION_ERROR);
         }
 
         // Parent must exist and be a directory (group roots are auto-managed and not checked)
@@ -182,11 +197,11 @@ public class StorageBusiness {
                     currentUserProvider.get(), normalizedParent);
             if (parentInfo.isEmpty()) {
                 throw new VipException("Parent directory does not exist: " + normalizedParent,
-                        StorageError.STORAGE_VALIDATION_ERROR);
+                        DataManagementError.STORAGE_VALIDATION_ERROR);
             }
             if (!parentInfo.get().equals(Data.Type.folder)) {
                 throw new VipException("Parent path is not a directory: " + normalizedParent,
-                        StorageError.STORAGE_VALIDATION_ERROR);
+                        DataManagementError.STORAGE_VALIDATION_ERROR);
             }
         }
 
@@ -317,14 +332,14 @@ public class StorageBusiness {
         rootDir.add(USERS_HOME);
 
         List<Group> groups;
-        if (currentUserProvider.get().isGroupAdmin()) {
+        if (currentUserProvider.get().isSystemAdministrator()) {
             groups = groupDAO.get();
         } else {
             groups = new ArrayList<>(currentUserProvider.get().getGroups());
         }
 
         for (Group group : groups) {
-            logger.info("Adding group {} to root dir", group.getName());
+            logger.debug("Adding group {} to root dir", group.getName());
             rootDir.add(group.getName() + GROUP_APPEND);
         }
         return rootDir;
@@ -340,7 +355,7 @@ public class StorageBusiness {
             return vipPath.getVipPath();
         } catch (IllegalArgumentException e) {
             logger.error("Invalid VIP path: {}", path, e);
-            throw new VipException("Invalid path: " + path, StorageError.STORAGE_VALIDATION_ERROR);
+            throw new VipException("Invalid path: " + path, DataManagementError.STORAGE_VALIDATION_ERROR);
         }
     }
 
@@ -369,12 +384,12 @@ public class StorageBusiness {
         checkReadPermission(path);
         if (path.equals(ROOT)) {
             logger.error("cannot download root ({})", path);
-            throw new VipException("Illegal data API access");
+            throw new VipException("Cannot download root directory", DataManagementError.STORAGE_VALIDATION_ERROR);
         }
         Optional<Data.Type> type = lfcBusiness.getPathInfo(currentUserProvider.get(), path);
         if (type.isEmpty()) {
             logger.error("Trying to download a non-existing path ({})", path);
-            throw new VipException("Illegal data API access");
+            throw new VipException("Path does not exist: " + path, DataManagementError.STORAGE_NOT_FOUND_ERROR);
         }
 
         // Size check only applies to files (folders have no single size to check)
@@ -384,7 +399,7 @@ public class StorageBusiness {
                 List<Data> fileData = lfcBusiness.listDir(currentUserProvider.get(), path, true);
                 if (!fileData.isEmpty() && fileData.get(0).getLength() > maxSize) {
                     logger.error("Trying to download a file too big ({})", path);
-                    throw new VipException("Illegal data API access");
+                    throw new VipException("File size exceeds maximum allowed size", DataManagementError.STORAGE_VALIDATION_ERROR);
                 }
             }
         }
@@ -397,7 +412,7 @@ public class StorageBusiness {
                 || normalizedPath.lastIndexOf('/') == ROOT.length();
         if (unwritable && accessType != LFCAccessType.READ) {
             throw new VipException("Path is protected and cannot be modified: " + path,
-                    StorageError.STORAGE_VALIDATION_ERROR);
+                    DataManagementError.STORAGE_VALIDATION_ERROR);
         }
 
         // If the path refers to a group folder, verify the group exists in the system
@@ -406,7 +421,7 @@ public class StorageBusiness {
         if (!lfcPermissionBusiness.isLFCPathAllowed(
                 currentUserProvider.get(), path, accessType, true)) {
             throw new VipException("Permission denied for path " + path,
-                    StorageError.STORAGE_PERMISSION_ERROR);
+                    DataManagementError.STORAGE_PERMISSION_ERROR);
         }
     }
 
@@ -425,7 +440,7 @@ public class StorageBusiness {
         if (!groupExists) {
             logger.error("Access to unknown group path: {}", normalizedPath);
             throw new VipException("Unknown group: " + groupName,
-                    StorageError.STORAGE_VALIDATION_ERROR);
+                    DataManagementError.STORAGE_VALIDATION_ERROR);
         }
     }
 
@@ -459,7 +474,7 @@ public class StorageBusiness {
         String currentUserEmail = currentUserProvider.get().getEmail();
         if (operation.getUser() == null || !operation.getUser().equals(currentUserEmail)) {
             logger.error("Operation {} does not belong to current user {}", operationId, currentUserEmail);
-            throw new VipException("Operation not accessible", StorageError.STORAGE_PERMISSION_ERROR);
+            throw new VipException("Operation not accessible", DataManagementError.STORAGE_PERMISSION_ERROR);
         }
     }
 

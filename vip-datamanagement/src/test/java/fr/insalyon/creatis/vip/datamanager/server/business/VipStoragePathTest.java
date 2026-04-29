@@ -1,5 +1,6 @@
 package fr.insalyon.creatis.vip.datamanager.server.business;
 
+import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.datamanager.models.VipStoragePath;
 import org.junit.jupiter.api.Assertions;
@@ -10,7 +11,7 @@ import java.nio.file.Path;
 public class VipStoragePathTest {
 
     @Test
-    public void testVipPathStorageNormalization() {
+    public void testVipPathStorageNormalization() throws VipException {
         // nothing to do
         assertVipPath("/vip/Home/dir", "/vip/Home/dir");
         // managed ..
@@ -21,7 +22,7 @@ public class VipStoragePathTest {
 
     }
 
-    public void assertVipPath(String original, String expected) {
+    public void assertVipPath(String original, String expected) throws VipException {
         User user = new User();
         user.setFolder("test-user");
 
@@ -36,7 +37,7 @@ public class VipStoragePathTest {
         user.setFolder("test-user");
 
         Assertions.assertThrows(
-                IllegalArgumentException.class,
+                VipException.class,
                 () -> new VipStoragePath(user, Path.of(original), "/users", "/groups", "/voroot")
         );
     }
