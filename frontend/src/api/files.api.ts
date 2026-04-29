@@ -85,19 +85,11 @@ export const filesApi = {
   async uploadFile(destinationPath: string, file: File): Promise<void> {
     const formData = new FormData()
     formData.append('file', file)
-
-    const normalizedDirectoryPath = destinationPath.endsWith('/')
-      ? destinationPath
-      : `${destinationPath}/`
+    formData.append('destination', destinationPath)
 
     const submitResponse = await backendClient.post<StorageOperationResponse>(
       '/internal/storage/uploads',
       formData,
-      {
-        params: {
-          path: normalizedDirectoryPath,
-        },
-      },
     )
 
     await waitForOperationCompletion(submitResponse.data.operationId)
@@ -122,7 +114,10 @@ export const filesApi = {
   },
 
   async createDirectory(path: string, name: string): Promise<void> {
-    await backendClient.post('/internal/storage/directories', { path, name })
+    const fullPath = path.endsWith('/') ? `${path}${name}` : `${path}/${name}`
+    const normalizedPath = toStorageUrlPath(fullPath)
+
+    await backendClient.post(`/internal/storage/directories/${normalizedPath}`)
   }
 }
 
