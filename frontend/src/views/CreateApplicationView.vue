@@ -163,6 +163,29 @@ async function checkDescriptorAndExistence() {
       versionExists.value = false
     }
 
+    // If the version already exists, try to fetch its data and prefill tags
+    if (versionExists.value) {
+      try {
+        const existing = await appVersionsApi.getByVersion(identity.name, identity.version)
+        const existingTagKeys = (existing.tags ?? []).map((t) => t.key).filter(Boolean)
+
+        // Ensure available tags include existing keys
+        for (const k of existingTagKeys) {
+          if (!availableTags.value.includes(k)) {
+            availableTags.value.push(k)
+          }
+        }
+
+        // Keep available tags sorted and unique
+        availableTags.value = Array.from(new Set(availableTags.value)).sort((a, b) => a.localeCompare(b))
+
+        // Prefill selected tags with existing version's tags
+        selectedTags.value = existingTagKeys
+      } catch {
+        // Ignore errors while fetching existing version; user can still proceed
+      }
+    }
+
     checksDone.value = true
   } catch {
     errorMessage.value = 'Impossible de vérifier le fichier Boutiques.'
