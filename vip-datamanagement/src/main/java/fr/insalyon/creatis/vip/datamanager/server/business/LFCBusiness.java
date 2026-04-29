@@ -116,8 +116,7 @@ public class LFCBusiness {
 
     public boolean exists(User user, String path) throws VipException {
         try {
-            GridPathInfo pathInfo = gridaClient.getPathInfo(lfcPathsBusiness.parseBaseDir(user, path));
-            return pathInfo != null && pathInfo.exist();
+            return gridaClient.getPathInfo(lfcPathsBusiness.parseBaseDir(user, path)).exist();
         } catch (GRIDAClientException ex) {
             logger.error("Error checking file {} existance for {}",
                     path, user,ex);
@@ -131,10 +130,11 @@ public class LFCBusiness {
         try {
             // convert GridPathInfo to an Optional<Data.Type> to avoid a new structure in vip.datamanager
             GridPathInfo pathInfo = gridaClient.getPathInfo(lfcPathsBusiness.parseBaseDir(user, path));
-            if (pathInfo == null || !pathInfo.exist()) {
+            if (pathInfo.exist()) {
+                return Optional.of(Data.Type.valueOf(pathInfo.getType().name().toLowerCase()));
+            } else {
                 return Optional.empty();
             }
-            return Optional.of(Data.Type.valueOf(pathInfo.getType().name().toLowerCase()));
         } catch (GRIDAClientException ex) {
             logger.error("Error getting path info {} for {}", path, user, ex);
             throw new VipException(ex);
