@@ -14,6 +14,7 @@ import {
 
 import { getGroupBadgeColor } from '@/utils/groupColor'
 import AppBadge from '@/components/ui/AppBadge.vue'
+import { applicationsApi } from '@/api/applications.api'
 
 const stats = [
   { value: '30+', label: 'Applications' },
@@ -22,51 +23,36 @@ const stats = [
   { value: '15+', label: 'Years of experience' },
 ]
 
-// For now we fake apps (need a popular apps public route)
-const topApplications = [
-  {
-    name: 'FreeSurfer',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Neuroimaging',
-    version: '7.3.2',
-  },
-  {
-    name: 'CQuest',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Spectroscopy',
-    version: '7.3.2',
-  },
-  {
-    name: 'LCModel',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Spectroscopy',
-    version: '7.3.2',
-  },
-  {
-    name: 'BraTS',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Neuroimaging',
-    version: '7.3.2',
-  },
-  {
-    name: 'Gate',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Simulation',
-    version: '7.3.2',
-  },
-  {
-    name: 'FreeSurfer',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Neuroimaging',
-    version: '7.3.2',
-  },
-]
+interface TopApp {
+  name: string
+  description: string
+  executions: number
+  category: string
+  version: string
+}
+
+const topApplications = ref<TopApp[]>([])
+
+async function loadPublicApplications() {
+  try {
+    const apps = await applicationsApi.getPublic()
+    topApplications.value = apps.map((app) => {
+      const description = app.citation ?? app.fullName ?? app.note ?? 'No description available'
+      const firstGroup = (app.groups && app.groups.length > 0) ? app.groups[0] : undefined
+      const category = firstGroup?.name ?? 'Uncategorized'
+      return {
+        name: app.name,
+        description,
+        executions: 0, // Not available in Application model
+        category,
+        version: '1.0', // Not available in Application model
+      }
+    })
+  } catch (error) {
+    console.error('Failed to load public applications:', error)
+    // Keep empty array on error
+  }
+}
 
 // Same for publications and team members, we should have public routes for that
 const publications = [
@@ -225,6 +211,7 @@ function updateNavbarState() {
 }
 
 onMounted(() => {
+  loadPublicApplications()
   updateNavbarState()
   window.addEventListener('scroll', updateNavbarState, { passive: true })
   window.addEventListener('resize', updateNavbarState)

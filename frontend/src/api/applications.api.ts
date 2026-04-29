@@ -28,6 +28,11 @@ export const applicationsApi = {
       .then((r) => r.data)
   },
 
+  getPublic: () =>
+    backendClient
+      .get<BackendApplication[]>('/internal/applications', { params: { public: 'true' } })
+      .then((r) => r.data),
+
   getById: (id: string) =>
     backendClient
       .get<BackendApplication>(`/internal/applications/${encodeURIComponent(id)}`)
