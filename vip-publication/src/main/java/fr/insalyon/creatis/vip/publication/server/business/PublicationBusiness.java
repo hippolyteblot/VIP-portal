@@ -55,7 +55,7 @@ public class PublicationBusiness {
         try {
             assertDataIsOK(pub);
             publicationDAO.add(pub);
-            logger.info("Publication created: title='{}', vipAuthor='{}', vipApplication='{}'",
+            logger.debug("Publication created: title='{}', vipAuthor='{}', vipApplication='{}'",
                     pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication());
         } catch (DAOException ex) {
             logger.error("Publication persistence failed on create: title='{}', vipAuthor='{}', vipApplication='{}'",
@@ -79,7 +79,7 @@ public class PublicationBusiness {
     }
 
     private void assertDataIsOK(Publication publication) throws VipException {
-        logger.info("Publication payload values before validation: title='{}' (len={}), authors='{}' (len={}), date='{}', doi='{}', type='{}', typeName='{}', vipApplication='{}'",
+        logger.debug("Publication payload values before validation: title='{}' (len={}), authors='{}' (len={}), date='{}', doi='{}', type='{}', typeName='{}', vipApplication='{}'",
                 publication.getTitle(),
                 publication.getTitle() == null ? -1 : publication.getTitle().length(),
                 publication.getAuthors(),
