@@ -92,26 +92,21 @@ public class PublicationBusiness {
 
         if (publication.getTitle() == null || publication.getTitle().trim().isEmpty()) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "title", "Title is required");
+        } else {
+            CoreUtil.assertOnlyLatin1Characters(publication.getTitle());
         }
         if (publication.getAuthors() == null || publication.getAuthors().trim().isEmpty()) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "authors", "Authors are required");
+        } else {
+            CoreUtil.assertOnlyLatin1Characters(publication.getAuthors());
         }
-
-        // Only latin1 characters are allowed (assert better compatibility with database)
-        assertLatin1("title", publication.getTitle());
-        assertLatin1("authors", publication.getAuthors());
         if (publication.getDoi() != null && !publication.getDoi().trim().isEmpty()) {
-            assertLatin1("doi", publication.getDoi());
+            CoreUtil.assertOnlyLatin1Characters(publication.getDoi());
         }
+        
     }
 
-    private void assertLatin1(String field, String value) throws VipException {
-        try {
-            CoreUtil.assertOnlyLatin1Characters(value);
-        } catch (VipException ex) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, field, ex.getMessage());
-        }
-    }
+    
 
     public Publication getPublication(Long id)
             throws VipException {
