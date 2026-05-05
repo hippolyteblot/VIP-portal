@@ -67,7 +67,7 @@ public class AuthenticationBusiness extends CommonBusiness {
             throws VipException {
         // should be unauthentified or admin (related to internal methods with asAdminContext)
         if (getUser() != null && ! getUserLevel().equals(UserLevel.Administrator)) { 
-            throw new VipException(DefaultError.UNAUTHENTIFIED_ONLY);
+            throw new VipException(DefaultError.UNAUTHENTICATED_ONLY);
         }
         if ( ! user.getGroups().stream().allMatch(Group::isPublicGroup)) {
             throw new VipException(DefaultError.ACCESS_DENIED);

@@ -26,6 +26,7 @@ import fr.insalyon.creatis.vip.datamanager.server.business.LFCBusiness;
 public class DataConfigurator {
 
     public static void configureFS(BaseRestApiSpringIT testSuite) throws VipException {
+        /*
         // exists
         // getModifDate
         // listDir
@@ -112,6 +113,8 @@ public class DataConfigurator {
                 eq("/vip/Home/testDir1/testFile5.zip"),
                 eq(true)))
             .thenReturn(Collections.singletonList(testFile5));
+
+         */
     }
 
 }

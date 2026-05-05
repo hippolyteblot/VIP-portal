@@ -132,12 +132,6 @@ public class SpringCoreConfig {
         return Jackson2ObjectMapperBuilder.json().build();
     }
 
-    @Bean(destroyMethod = "shutdown")
-    public ScheduledExecutorService scheduledExecutorService() {
-        // Shared scheduler for polling/background checks in service beans.
-        return Executors.newScheduledThreadPool(4);
-    }
-
     // to verify the @Value injection existence
     @Bean
     public static PropertySourcesPlaceholderConfigurer properties(){

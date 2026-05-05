@@ -1,19 +1,23 @@
 package fr.insalyon.creatis.vip.datamanager.integrationtest;
 
+import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.grida.common.bean.Operation;
 import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
 import fr.insalyon.creatis.vip.datamanager.models.StorageDownloadRequest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
@@ -64,6 +68,42 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
                 .andExpectAll(utils.getOperationMatcher(operationId, operationStatus));
     }
 
+    public void expectDownloadOperationInGroup(User user, Group group, String groupPath, String operationId) throws Exception {
+        String operationStatus = "Queued";
+        Path path = Path.of("/vip", group.getName() + DataManagerConstants.GROUP_APPEND, groupPath);
+        mockMvc.perform(post("/internal/storage/downloads")
+                        .with(getUserSecurityMock(user))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(new StorageDownloadRequest(
+                                path.toString()))))
+                .andDo(print())
+                .andExpect(status().isAccepted())
+                .andExpectAll(utils.getOperationMatcher(operationId, operationStatus));
+    }
+
+    public void expectForbiddenForDownload(User user, String path, int expectedErrorCode) throws Exception {
+        mockMvc.perform(post("/internal/storage/downloads")
+                        .with(getUserSecurityMock(user))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(new StorageDownloadRequest(path))))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
+    }
+
+    public void expectBadRequestForDownload(User user, String path, int expectedErrorCode) throws Exception {
+        mockMvc.perform(post("/internal/storage/downloads")
+                        .with(getUserSecurityMock(user))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(new StorageDownloadRequest(path))))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
+    }
+
     public void expectOperation(User user, String operationId, String operationStatus) throws Exception {
         mockMvc.perform(get("/internal/storage/operations/" + operationId)
                         .with(getUserSecurityMock(user)))
@@ -102,6 +142,67 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
         expectDownloadOperationInHome(basicUser, "path/to/somefolder", "test-operation-id");
     }
 
+    // Download group
+    @Test
+    public void testDownloadInGroup() throws Exception {
+        utils.configureFileForGroup(groupTest1, "file.txt");
+        utils.configureOperationForElementInGroup(basicUser, groupTest1, "file.txt", "test-operation-id");
+
+        expectDownloadOperationInGroup(basicUser, groupTest1, "file.txt", "test-operation-id");
+
+        // also ok in subdir
+        resetGridaMocks();
+        utils.configureFileForGroup(groupTest1, "path/to/file.txt");
+        utils.configureOperationForElementInGroup(basicUser, groupTest1,"path/to/file.txt", "test-operation-id");
+
+        expectDownloadOperationInGroup(basicUser, groupTest1, "path/to/file.txt", "test-operation-id");
+
+        // same for folder
+        resetGridaMocks();
+        utils.configureFolderInGroup(groupTest1, "somefolder", (String) null);
+        utils.configureOperationForElementInGroup(basicUser, groupTest1, "somefolder", "test-operation-id");
+
+        expectDownloadOperationInGroup(basicUser, groupTest1, "somefolder", "test-operation-id");
+
+        // also ok for folder in subdir
+        resetGridaMocks();
+        utils.configureFolderInGroup(groupTest1, "path/to/somefolder", (String) null);
+        utils.configureOperationForElementInGroup(basicUser, groupTest1, "path/to/somefolder", "test-operation-id");
+
+        expectDownloadOperationInGroup(basicUser, groupTest1, "path/to/somefolder", "test-operation-id");
+
+        // Fail in unauthorized group
+        resetGridaMocks();
+        expectForbiddenForDownload(basicUser, "/vip/groupTest2 (group)/somepath", 4001);
+    }
+
+    @Test
+    public void testDownloadErrorCases() throws Exception {
+        // /vip
+        expectForbiddenForDownload(basicUser, "/vip", 4001);
+        // admin area
+        expectForbiddenForDownload(basicUser, "/vip/VO root folder", 4001);
+        // admin area
+        expectForbiddenForDownload(basicUser, "/vip/Users", 4001);
+        // not existing stuff
+        utils.configureNonExistingElementForUser(basicUser, "testfile.txt");
+        expectBadRequestForDownload(basicUser, "/vip/Home/testfile.txt", 4007);
+        resetGridaMocks();
+        utils.configureNonExistingElementForGroup(groupTest1, "testfile.txt");
+        expectBadRequestForDownload(basicUser, "/vip/groupTest1 (group)/testfile.txt", 4007);
+        resetGridaMocks();
+        // /vip/something
+        expectBadRequestForDownload(basicUser, "/vip/something", 4000);
+        // /something
+        expectBadRequestForDownload(basicUser, "/something", 4000);
+        // /
+        expectBadRequestForDownload(basicUser, "", 4000);
+        // /vip/../stuff
+        expectBadRequestForDownload(basicUser, "/vip/../stuff", 4000);
+    }
+
+
+
     @Test
     public void testGetOperation() throws Exception {
         utils.configureOperation(basicUser, "test-operation-id", Operation.Status.Running);
@@ -123,15 +224,25 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
                         .with(getUserSecurityMock(basicUser)))
                 .andDo(print())
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.errorCode").value(4001));
+                .andExpect(jsonPath("$.errorCode").value(4006));
     }
 
-    // TODO : error cases : unknown operation
+    @Test
+    public void testGetNotExistingOperation() throws Exception {
+        Mockito.when(gridaPoolClient.getOperationById(ArgumentMatchers.anyString()))
+                        .thenThrow(new GRIDAClientException(new IOException("Error getting operation")));
+
+        mockMvc.perform(get("/internal/storage/operations/test-operation-id")
+                        .with(getUserSecurityMock(basicUser)))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value(9000))
+                .andExpect(jsonPath("$.errorMessage").value("Error : Error getting operation (Error code 9000)"));
+    }
 
     @Test
     public void testDownloadContent() throws Exception {
         Resource testFileResource = getResourceFromClasspath("filesForDownload/testFile.txt");
-        // TODO : verify it's actually called only once
         utils.configureOperationWithContent(basicUser, "test-operation-id", testFileResource.getFile().toPath());
 
         String operationId = "test-operation-id";
@@ -142,9 +253,11 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andExpect(header().string("Content-Disposition", "attachment; filename=\"testFile.txt\""))
                 .andExpect(content().string(testFileResource.getContentAsString(StandardCharsets.UTF_8)));
 
         Mockito.verify(gridaPoolClient, Mockito.times(1)).getOperationById(Mockito.anyString());
     }
 
+    // TODO : error cases
 }

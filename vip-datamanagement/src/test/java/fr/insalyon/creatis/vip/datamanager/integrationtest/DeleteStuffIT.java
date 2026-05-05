@@ -89,6 +89,17 @@ public class DeleteStuffIT extends BaseInternalApiSpringIT {
         utils.verifyNoDelete();
     }
 
+    public void expectNotFoundRequestOnPath(User user, String pathToDelete, Integer expectedErrorCode) throws Exception {
+        mockMvc.perform(delete("/internal/storage/" + pathToDelete)
+                        .with(getUserSecurityMock(user))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
+
+        utils.verifyNoDelete();
+    }
+
     // deleting in Home
     @Test
     public void testDeletingFileInHome() throws Exception {
@@ -149,23 +160,23 @@ public class DeleteStuffIT extends BaseInternalApiSpringIT {
     @Test
     public void testSomeErrorCases() throws Exception {
 
-        // dir does not exist exist
+        // dir does not exist
         utils.configureNonExistingElementForUser(basicUser, "somefile");
-        expectBadRequestOnPath(basicUser, "/vip/Home/somefile", 4000);
+        expectNotFoundRequestOnPath(basicUser, "/vip/Home/somefile", 4002);
 
         // deleting /vip
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip", 4000);
+        expectForbiddenOnPath(basicUser, "/vip", 4001);
 
         // deleting /vip/Home
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/Home", 4000);
+        expectForbiddenOnPath(basicUser, "/vip/Home", 4001);
 
         // deleting /vip/group (group)
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/groupTest1 (group)", 4000);
+        expectForbiddenOnPath(basicUser, "/vip/groupTest1 (group)", 4001);
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/unknownGroup (group)", 4000);
+        expectForbiddenOnPath(basicUser, "/vip/unknownGroup (group)", 4001);
 
         // deleting /vip/Anything
         resetGridaMocks();
@@ -177,7 +188,7 @@ public class DeleteStuffIT extends BaseInternalApiSpringIT {
 
         // deleting /vip/../../something
         resetGridaMocks();
-        expectBadRequestOnPath(basicUser, "/vip/Home/../../../secret_stuff.txt", 4000);
+        expectBadRequestOnPath(basicUser, "/vip/Home/../../../secret_stuff.txt", 9000);
     }
 
 

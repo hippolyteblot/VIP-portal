@@ -19,7 +19,10 @@ public class VipStoragePathTest {
         // handle several slashes and trailing slashes
         assertVipPath("/vip///Home/dir/", "/vip/Home/dir");
         assertInvalidVipPath("/vip/../../../dir");
-
+        User user = new User();
+        user.setFolder("test-user");
+        System.out.println(new VipStoragePath(user, Path.of("/vip/Home/coucou.txt"), "/users", "/groups", "/voroot"));
+        System.out.println(new VipStoragePath(user, Path.of("/vip/Home"), "/users", "/groups", "/voroot"));
     }
 
     public void assertVipPath(String original, String expected) throws VipException {
@@ -27,7 +30,7 @@ public class VipStoragePathTest {
         user.setFolder("test-user");
 
         Assertions.assertEquals(
-            new VipStoragePath(user, Path.of(original), "/users", "/groups", "/voroot").getVipPath(),
+            new VipStoragePath(user, Path.of(original), "/users", "/groups", "/voroot").getVipPathString(),
                 expected
         );
     }

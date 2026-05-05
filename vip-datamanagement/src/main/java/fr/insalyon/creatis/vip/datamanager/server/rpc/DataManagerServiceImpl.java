@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 
+import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ public class DataManagerServiceImpl extends AbstractRemoteServiceServlet impleme
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private DataManagerBusiness dataManagerBusiness;
     private LFCBusiness lfcBusiness;
+    private StorageBusiness storageBusiness;
     private TransferPoolBusiness transferPoolBusiness;
     private Server server;
 
@@ -36,14 +38,13 @@ public class DataManagerServiceImpl extends AbstractRemoteServiceServlet impleme
         lfcBusiness = getBean(LFCBusiness.class);
         dataManagerBusiness = getBean(DataManagerBusiness.class);
         server = getBean(Server.class);
+        storageBusiness = getBean(StorageBusiness.class);
     }
 
     @Override
     public List<Data> listDir(String baseDir, boolean refresh) throws DataManagerException {
         try {
-            List<Data> data = lfcBusiness.listDir(getSessionUser(), baseDir, refresh);
-
-            return data;
+            return storageBusiness.listDir(baseDir, refresh);
         } catch (VipException ex) {
             throw new DataManagerException(ex);
         }
@@ -75,7 +76,7 @@ public class DataManagerServiceImpl extends AbstractRemoteServiceServlet impleme
     public void createDir(String baseDir, String name) throws DataManagerException {
         try {
             trace(logger, "Creating folder: " + baseDir + "/" + name);
-            lfcBusiness.createDir(getSessionUser(), baseDir, name);
+            storageBusiness.createDirectory(baseDir + "/" + name);
         } catch (VipException ex) {
             throw new DataManagerException(ex);
         }
@@ -269,8 +270,7 @@ public class DataManagerServiceImpl extends AbstractRemoteServiceServlet impleme
     public boolean exists(String remoteFile) throws DataManagerException {
         try {
             trace(logger, "Test if file '" + remoteFile + " exists");
-            User user = getSessionUser();
-            return lfcBusiness.exists(user, remoteFile);
+            return storageBusiness.doesPathExist(remoteFile);
         } catch (VipException ex) {
             throw new DataManagerException(ex);
         }

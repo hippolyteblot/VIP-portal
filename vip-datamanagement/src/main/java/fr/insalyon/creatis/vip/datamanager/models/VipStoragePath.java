@@ -3,10 +3,14 @@ package fr.insalyon.creatis.vip.datamanager.models;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 
 public class VipStoragePath {
+
+    private static final Logger logger = LoggerFactory.getLogger(VipStoragePath.class);
 
     private final User user;
 
@@ -16,9 +20,13 @@ public class VipStoragePath {
 
     private final String voRoot;
 
-    private Path vipPath;
+    private final Path vipPath;
+    private String groupName;
+    private Path relativePath;
 
-    private Path realPath;
+    private final Path realPath;
+
+    private VipPathType type;
 
     private enum VipPathType {
         VIP_ROOT,
@@ -28,6 +36,34 @@ public class VipStoragePath {
         VO_ROOT
     }
 
+    public boolean isRootPath() {
+        return type == VipPathType.VIP_ROOT;
+    }
+
+    public boolean isHomePath() {
+        return type == VipPathType.USERS_HOME;
+    }
+
+    public boolean isGroupPath() {
+        return type == VipPathType.GROUP;
+    }
+
+    public boolean impossibleToRemove() {
+        return vipPath.getNameCount() <= 2;
+    }
+
+    public boolean isAdminArea() {
+        return type == VipPathType.USERS_FOLDER || type == VipPathType.VO_ROOT;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public Path getRelativePath() {
+        return relativePath;
+    }
+
     public VipStoragePath(User user, Path vipPath, String usersHome, String groupsHome, String voRoot) throws VipException {
         this.user = user;
         this.usersHome = usersHome;
@@ -35,49 +71,67 @@ public class VipStoragePath {
         this.voRoot = voRoot;
         this.vipPath = vipPath.normalize().toAbsolutePath();
 
-        if (!this.vipPath.startsWith(DataManagerConstants.ROOT)) {
-            throw new VipException(DataManagementError.STORAGE_VALIDATION_ERROR, "Vip path should start with /vip");
+        if ( ! this.vipPath.startsWith(DataManagerConstants.ROOT)) {
+            logger.info("invalid storage path, does not begin with /vip : {}", this.vipPath);
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH, this.vipPath, "must start with /vip");
         }
-        checkSecondFolder();
-        checkCharacters(this.vipPath);
+        determinePathElements();
         // convert to realPath
         realPath = convertToRealPath(this.vipPath);
     }
 
-    public void checkSecondFolder() throws VipException {
+    private void determinePathElements() throws VipException {
         if (vipPath.getNameCount() < 1) {
-            throw new VipException(DataManagementError.STORAGE_VALIDATION_ERROR, "Vip path is invalid");
+            logger.info("invalid storage path : {}", vipPath);
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH, vipPath, "must start with '/vip");
         }
-        VipPathType type = detectSecondFolderType(vipPath);
-        if (type == VipPathType.VIP_ROOT ||
-                type == VipPathType.USERS_HOME || type == VipPathType.GROUP ||
-                type == VipPathType.VO_ROOT || type == VipPathType.USERS_FOLDER) {
-            // valid prefixes; permission checks are enforced elsewhere
+        if (vipPath.getNameCount() == 1) {
+            type = VipPathType.VIP_ROOT;
             return;
         }
-        throw new VipException(DataManagementError.STORAGE_VALIDATION_ERROR, "Vip path should start with /vip/Home or /vip/Groups or /vip/VoRoot or /vip/Users");
+        String secondFolder = vipPath.getName(1).toString();
+        if (secondFolder.equals(DataManagerConstants.USERS_HOME)) {
+            setAndCheckRelativePath();
+            type = VipPathType.USERS_HOME;
+        }
+        else if (secondFolder.endsWith(DataManagerConstants.GROUP_APPEND)) {
+            groupName = secondFolder.substring(0, secondFolder.length()-DataManagerConstants.GROUP_APPEND.length());
+            setAndCheckRelativePath();
+            type = VipPathType.GROUP;
+        }
+        else if (secondFolder.equals(DataManagerConstants.USERS_FOLDER)) {
+            type = VipPathType.USERS_FOLDER;
+        }
+        else if (secondFolder.equals(DataManagerConstants.VO_ROOT_FOLDER)) {
+            type = VipPathType.VO_ROOT;
+        }
+        else {
+            logger.info("invalid storage path : {}", vipPath);
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH, vipPath, "must start with /vip/Home or /vip/xxx (Group)");
+        }
     }
 
-    public void checkCharacters(Path vipPath) throws VipException {
+    private void setAndCheckRelativePath() throws VipException {
+        if (vipPath.getNameCount() <= 2) {
+            relativePath = Path.of("");
+            return;
+        }
+        relativePath = vipPath.subpath(2, vipPath.getNameCount());
         // Allow alphanumeric, dot, dash, underscore, space and parentheses in path parts
-        for (Path part : vipPath) {
+        for (Path part : relativePath) {
             String partStr = part.toString();
             if (!partStr.matches(DataManagerConstants.VALID_PATH_CHARS)) {
-                throw new VipException(DataManagementError.STORAGE_VALIDATION_ERROR, "Vip path should only contain alphanumeric characters, dots, dashes, underscores, spaces and parentheses");
+                throw new VipException(DataManagementError.INVALID_STORAGE_PATH, vipPath, "must not contain invalid character");
             }
         }
     }
 
     public Path convertToRealPath(Path vipPath) throws VipException {
         Path rootPath;
-        VipPathType type = detectSecondFolderType(vipPath);
         switch (type) {
             case VIP_ROOT -> rootPath = Path.of(DataManagerConstants.ROOT);
             case USERS_HOME -> rootPath = Path.of(usersHome).resolve(resolveUserFolder());
             case GROUP -> {
-                String secondFolder = vipPath.getName(1).toString();
-                String groupName = secondFolder.substring(0,
-                        secondFolder.length() - DataManagerConstants.GROUP_APPEND.length());
                 rootPath = Path.of(groupsHome).resolve(groupName.replace(" ", "_"));
             }
             case USERS_FOLDER -> rootPath = Path.of(usersHome);
@@ -93,41 +147,31 @@ public class VipStoragePath {
         return result.normalize();
     }
 
-    private VipPathType detectSecondFolderType(Path vipPath) throws VipException {
-        if (vipPath.getNameCount() < 1) {
-            throw new VipException(DataManagementError.STORAGE_VALIDATION_ERROR, "Vip path is invalid");
-        }
-        if (vipPath.getNameCount() == 1) {
-            return VipPathType.VIP_ROOT;
-        }
-        String secondFolder = vipPath.getName(1).toString();
-        if (secondFolder.equals(DataManagerConstants.USERS_HOME)) {
-            return VipPathType.USERS_HOME;
-        }
-        if (secondFolder.endsWith(DataManagerConstants.GROUP_APPEND)) {
-            return VipPathType.GROUP;
-        }
-        if (secondFolder.equals(DataManagerConstants.USERS_FOLDER)) {
-            return VipPathType.USERS_FOLDER;
-        }
-        if (secondFolder.equals(DataManagerConstants.VO_ROOT_FOLDER)) {
-            return VipPathType.VO_ROOT;
-        }
-        return VipPathType.VIP_ROOT;
-    }
-
     private String resolveUserFolder() throws VipException {
         if (user == null || user.getFolder() == null || user.getFolder().isBlank()) {
-            throw new VipException(DataManagementError.STORAGE_VALIDATION_ERROR, "User folder is not defined");
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH, "User folder is not defined");
         }
         return user.getFolder();
     }
 
-    public String getVipPath() {
+    public String getVipPathString() {
         return vipPath.toString();
     }
 
-    public String getRealPath() {
+    public Path getVipPath() {
+        return vipPath;
+    }
+
+    public String getRealPathString() {
         return realPath.toString();
+    }
+
+    public Path getRealPath() {
+        return realPath;
+    }
+
+    @Override
+    public String toString() {
+        return vipPath.toString();
     }
 }

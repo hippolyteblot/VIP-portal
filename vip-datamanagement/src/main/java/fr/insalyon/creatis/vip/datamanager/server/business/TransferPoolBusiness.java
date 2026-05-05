@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
+import fr.insalyon.creatis.vip.datamanager.models.DataManagementError;
+import fr.insalyon.creatis.vip.datamanager.models.VipStoragePath;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,18 +42,18 @@ import fr.insalyon.creatis.vip.datamanager.models.PoolOperation.Type;
 
 @Service
 @Transactional
-public class TransferPoolBusiness {
+public class TransferPoolBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private Server serverConfiguration;
     private LFCBusiness lfcBusiness;
     private GRIDAPoolClient gridaPoolClient;
     private LfcPathsBusiness lfcPathsBusiness;
+    private VipStoragePathFactory vipStoragePathFactory;
 
     @Autowired
-    public TransferPoolBusiness(Server serverConfiguration, LFCBusiness lfcBusiness, GRIDAPoolClient gridaPoolClient, LfcPathsBusiness lfcPathsBusiness) {
-        this.serverConfiguration = serverConfiguration;
+    public TransferPoolBusiness(LFCBusiness lfcBusiness, GRIDAPoolClient gridaPoolClient, LfcPathsBusiness lfcPathsBusiness, VipStoragePathFactory vipStoragePathFactory) {
+        this.vipStoragePathFactory = vipStoragePathFactory;
         this.lfcBusiness = lfcBusiness;
         this.gridaPoolClient = gridaPoolClient;
         this.lfcPathsBusiness = lfcPathsBusiness;
@@ -112,7 +115,7 @@ public class TransferPoolBusiness {
             throw new VipException(ex);
         } catch (GRIDAClientException ex) {
             logger.error("Error getting operation {}", operationId, ex);
-            throw new VipException(ex);
+            throw new VipException(ex.getCause() != null ? ex.getCause() : ex);
         }
     }
 
@@ -122,7 +125,7 @@ public class TransferPoolBusiness {
             Operation operation = gridaPoolClient.getOperationById(operationId);
             if (operation.getType() != Operation.Type.Download) {
                 logger.error("Not a download operation {}", operationId);
-                throw new VipException("Wrong operation type for download");
+                throw new VipException(DataManagementError.INVALID_OPERATION, operationId, "Not a download operation");
             }
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d, yyyy HH:mm");
             PoolOperation.Status status = PoolOperation.Status.valueOf(operation.getStatus().name());
@@ -204,20 +207,24 @@ public class TransferPoolBusiness {
         }
     }
 
-    public String downloadFile(User user, String remoteFile) throws VipException {
+
+    public String downloadFile(User user, String path) throws VipException {
+        return downloadFile(vipStoragePathFactory.create(path));
+    }
+
+    public String downloadFile(VipStoragePath path) throws VipException {
 
         try {
-            lfcBusiness.getModificationDate(user, remoteFile);
+            lfcBusiness.getModificationDate(path);
 
-            String remotePath = lfcPathsBusiness.parseBaseDir(user, remoteFile);
+            String remotePath = path.getRealPathString();
             String localDirPath = lfcPathsBusiness.getLocalDirForGridaFileDownload(remotePath);
 
-            return gridaPoolClient.downloadFile(remotePath, localDirPath, user.getEmail());
-
+            return gridaPoolClient.downloadFile(remotePath, localDirPath, getUserEmail());
         } catch (DataManagerException ex) {
             throw new VipException(ex);
         } catch (GRIDAClientException ex) {
-            logger.error("Error downloading file {} for {}", remoteFile, user, ex);
+            logger.error("Error downloading file {} for {}", path, getUserEmail(), ex);
             throw new VipException(ex);
         }
     }
@@ -267,35 +274,39 @@ public class TransferPoolBusiness {
         }
     }
 
-    public String uploadFile(User user, String localFilePath, String remoteFile)
+
+    public String uploadFile(User user, String localFilePath, String remoteFile) throws VipException {
+        return uploadFile(localFilePath, vipStoragePathFactory.create(remoteFile));
+    }
+
+    public String uploadFile(String localFilePath, VipStoragePath remotePath)
             throws VipException {
 
         try {
-            String remotePath = lfcPathsBusiness.parseBaseDir(user, remoteFile);
-            return gridaPoolClient.uploadFile(localFilePath, remotePath, user.getEmail());
-        } catch (DataManagerException ex) {
-            throw new VipException(ex);
+            String remotePathString = remotePath.getRealPathString();
+            return gridaPoolClient.uploadFile(localFilePath, remotePathString, getUserEmail());
         } catch (GRIDAClientException ex) {
             logger.error("Error uploading file {} to {} for {}",
-                    localFilePath, remoteFile, user, ex);
+                    localFilePath, remotePath, getUserEmail(), ex);
             throw new VipException(ex);
         }
     }
 
-    public void delete(User user, String... paths)
-        throws VipException {
+    public void delete(User user, String... pathStrings) throws VipException {
+        List<VipStoragePath> paths = new ArrayList<>();
+        for (String pathString : pathStrings) {
+            paths.add(vipStoragePathFactory.create(pathString));
+        }
+        delete(paths.toArray(new VipStoragePath[]{}));
+    }
 
+    public void delete(VipStoragePath... paths) throws VipException {
         try {
-
-            for (String path : paths) {
-                String remotePath = lfcPathsBusiness.parseBaseDir(user, path);
-                gridaPoolClient.delete(remotePath, user.getEmail());
+            for (VipStoragePath path : paths) {
+                gridaPoolClient.delete(path.getRealPathString(), getUserEmail());
             }
-        } catch (DataManagerException ex) {
-            throw new VipException(ex);
         } catch (GRIDAClientException ex) {
-            logger.error("Error deleting files {} for {}",
-                    Arrays.toString(paths), user, ex);
+            logger.error("Error deleting files {} for {}", Arrays.toString(paths), getUserEmail(), ex);
             throw new VipException(ex);
         }
     }

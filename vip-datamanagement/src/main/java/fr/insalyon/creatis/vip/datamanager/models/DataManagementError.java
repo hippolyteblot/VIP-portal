@@ -4,22 +4,19 @@ import fr.insalyon.creatis.vip.core.client.VipError;
 
 /**
  * Error codes for storage operations.
- * 
- * STORAGE_VALIDATION_ERROR (4000): Invalid path structure or business constraint violation.
- *   Parameters: {0} = error details (e.g., "Path is not a direcPtory: /path/to/file")
- * 
- * STORAGE_PERMISSION_ERROR (4001): User lacks permission to perform the operation.
- *   Parameters: {0} = operation type (e.g., "read", "write", "delete")
- * 
- * STORAGE_NOT_FOUND_ERROR (4002): Path or resource does not exist.
- *   Parameters: {0} = path that was not found (e.g., "/vip/Home/missing/path")
  */
 public enum DataManagementError implements VipError {
 
-    STORAGE_VALIDATION_ERROR(4000, "Storage validation error: %s", 1, 400),
-    STORAGE_PERMISSION_ERROR(4001, "Storage permission denied for %s operation", 1, 403),
-    STORAGE_NOT_FOUND_ERROR(4002, "Storage resource not found: %s", 1, 404),
-    OPERATION_NOT_READY(4003, "Operation is not ready yet", 0, 202);
+    INVALID_STORAGE_PATH(4000, "The provided path ({}) is invalid because : {}", 2),
+    STORAGE_PERMISSION_ERROR(4001, "Permission denied for '{}' : '{}'", 2, 403),
+    RESOURCE_NOT_FOUND_ERROR(4002, "File or directory not found: {}", 1, 404),
+    INVALID_OPERATION(4003, "Issue with operation {}, {}", 2),
+    INVALID_DIRECTORY_LISTING(4004, "Error listing directory {} : {}", 2),
+    INVALID_DIRECTORY_CREATION(4005, "Error creating directory {} : {}", 2),
+    OPERATION_PERMISSION_ERROR(4006, "Permission denied for operation {}", 1, 403),
+    INVALID_DOWNLOAD(4007, "Error downloading {} : {}", 2),
+    INVALID_UPLOAD(4008, "Error uploading to {} : {}", 2),
+    FILE_TOO_BIG(4009, "File too big. Max size : {}", 1);
 
     private final Integer code;
     private final String message;
@@ -31,6 +28,10 @@ public enum DataManagementError implements VipError {
         this.message = message;
         this.expectedParams = expectedParams;
         this.httpCode = httpCode;
+    }
+
+    DataManagementError(Integer code, String message, Integer expectedParams) {
+        this(code, message, expectedParams, 400);
     }
 
     @Override public Integer getCode() { return code; }

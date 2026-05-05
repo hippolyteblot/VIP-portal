@@ -75,6 +75,11 @@ public class StorageTestConfigurer {
         configureFile(path.toAbsolutePath().toString());
     }
 
+    public void configureFileForGroup(Group group, String filePath) throws Exception {
+        Path path = Path.of(ServerMockConfig.TEST_GROUP_ROOT, group.getName(), filePath);
+        configureFile(path.toAbsolutePath().toString());
+    }
+
     public void configureFile(String path) throws Exception {
         Mockito.when(gridaClient.getPathInfo(path))
                 .thenReturn(new GridPathInfo(true, GridData.Type.File))
@@ -103,8 +108,17 @@ public class StorageTestConfigurer {
 
     public void configureOperationForElementInHome(User user, String elementPath, String operationId) throws GRIDAClientException {
         Path remotePath = Path.of(ServerMockConfig.TEST_USERS_ROOT,  user.getFolder(), elementPath);
-        Path localPath = Path.of(ServerMockConfig.TEST_GRIDA_STORAGE_PATH, DataManagerConstants.DOWNLOAD_FOLDER, remotePath.getParent().toString());
-        Mockito.when(gridaPoolClient.downloadFile(remotePath.toString(),
+        configureOperationForPath(user, remotePath, operationId);
+    }
+
+    public void configureOperationForElementInGroup(User user, Group group, String elementPath, String operationId) throws GRIDAClientException {
+        Path remotePath = Path.of(ServerMockConfig.TEST_GROUP_ROOT, group.getName(), elementPath);
+        configureOperationForPath(user, remotePath, operationId);
+    }
+
+    public void configureOperationForPath(User user, Path path, String operationId) throws GRIDAClientException {
+        Path localPath = Path.of(ServerMockConfig.TEST_GRIDA_STORAGE_PATH, DataManagerConstants.DOWNLOAD_FOLDER, path.getParent().toString());
+        Mockito.when(gridaPoolClient.downloadFile(path.toString(),
                         localPath.toString(),
                         user.getEmail()))
                 .thenReturn(operationId)
@@ -137,8 +151,8 @@ public class StorageTestConfigurer {
                 0);
         operation.setStatus(Operation.Status.Done);
         Mockito.when(gridaPoolClient.getOperationById(operationId))
-                .thenReturn(operation);
-                //.thenThrow(new RuntimeException("Should not be called another time")); // TODO : put that again
+                .thenReturn(operation)
+                .thenThrow(new RuntimeException("Should not be called another time"));
     }
 
     // #################### VERIFICATION FOR CREATE FOLDER ################
