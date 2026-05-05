@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,8 +166,8 @@ public class WorkflowBusiness {
                 String mailContent = "An error occured while submitting a workflow";
                 Exception exceptionToRethrow = e;
 
-                if (e instanceof VipException vipEx && vipEx.getVipErrorCode().isEmpty()) {
-                    // intended errors, only warning by mail
+                if (e instanceof VipException vipEx && vipEx.getVipError().equals(DefaultError.GENERIC_ERROR_WITH_MESSAGE)) {
+                    // not default error code, so it's an intended errors, only warning by mail
                     logger.warn("Error occuring during workflow submission. Not disabling, sending mail to admins");
                 } else {
                     if ( ! (e instanceof VipException)) {

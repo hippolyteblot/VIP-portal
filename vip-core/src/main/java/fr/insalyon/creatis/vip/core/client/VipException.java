@@ -24,7 +24,7 @@ public class VipException extends Exception implements IsSerializable {
     }
 
     public VipException(Throwable cause) {
-        this(DefaultError.GENERIC_ERROR_WITH_MESSAGE, cause.getMessage());
+        this(DefaultError.GENERIC_ERROR_WITH_MESSAGE, cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName());
     }
 
     public VipException(VipError error, Object ...params) {

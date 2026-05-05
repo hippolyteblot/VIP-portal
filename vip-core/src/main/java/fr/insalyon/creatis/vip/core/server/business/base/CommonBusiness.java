@@ -16,8 +16,6 @@ public abstract class CommonBusiness {
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected Server server;
-
-
     protected CorePermissions permissions;
     protected Supplier<User> userSupplier;
     protected PageBuilder pageBuilder;

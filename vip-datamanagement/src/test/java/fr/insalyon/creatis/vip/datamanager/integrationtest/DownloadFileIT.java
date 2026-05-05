@@ -104,6 +104,17 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
                 .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
     }
 
+    public void expectNotFoundForDownload(User user, String path, int expectedErrorCode) throws Exception {
+        mockMvc.perform(post("/internal/storage/downloads")
+                        .with(getUserSecurityMock(user))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(new StorageDownloadRequest(path))))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(expectedErrorCode));
+    }
+
     public void expectOperation(User user, String operationId, String operationStatus) throws Exception {
         mockMvc.perform(get("/internal/storage/operations/" + operationId)
                         .with(getUserSecurityMock(user)))
@@ -186,10 +197,10 @@ public class DownloadFileIT extends BaseInternalApiSpringIT {
         expectForbiddenForDownload(basicUser, "/vip/Users", 4001);
         // not existing stuff
         utils.configureNonExistingElementForUser(basicUser, "testfile.txt");
-        expectBadRequestForDownload(basicUser, "/vip/Home/testfile.txt", 4007);
+        expectNotFoundForDownload(basicUser, "/vip/Home/testfile.txt", 4002);
         resetGridaMocks();
         utils.configureNonExistingElementForGroup(groupTest1, "testfile.txt");
-        expectBadRequestForDownload(basicUser, "/vip/groupTest1 (group)/testfile.txt", 4007);
+        expectNotFoundForDownload(basicUser, "/vip/groupTest1 (group)/testfile.txt", 4002);
         resetGridaMocks();
         // /vip/something
         expectBadRequestForDownload(basicUser, "/vip/something", 4000);

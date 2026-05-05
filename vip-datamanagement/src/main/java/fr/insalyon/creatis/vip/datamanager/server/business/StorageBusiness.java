@@ -12,6 +12,7 @@ import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
 import fr.insalyon.creatis.vip.datamanager.models.VipStoragePath;
 import fr.insalyon.creatis.vip.datamanager.server.DataManagerUtil;
 import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness.LFCAccessType;
+import jakarta.annotation.PostConstruct;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.slf4j.Logger;
@@ -45,8 +46,8 @@ public class StorageBusiness extends CommonBusiness {
     private final GroupDAO groupDAO;
     private final TransferPoolBusiness transferPoolBusiness;
     private final DataManagerBusiness dataManagerBusiness;
-    private final ScheduledExecutorService scheduler;
     private final VipStoragePathFactory vipStoragePathFactory;
+    private ScheduledExecutorService scheduler;
 
 
     @Autowired
@@ -63,6 +64,11 @@ public class StorageBusiness extends CommonBusiness {
         this.transferPoolBusiness = transferPoolBusiness;
         this.dataManagerBusiness = dataManagerBusiness;
         this.vipStoragePathFactory = vipStoragePathFactory;
+    }
+
+    @PostConstruct
+    private void initScheduler() {
+        // cannot be done in constructor because server is autowired in setter, so later
         int parallelDownloadsNb = server.getApiParallelDownloadNb();
         logger.info("Declaring threads for {} synchronous downloads and uploads", parallelDownloadsNb);
         // 2 threads are needed for every download

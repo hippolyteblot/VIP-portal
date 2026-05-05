@@ -203,7 +203,7 @@ public class AuthenticationBusiness extends CommonBusiness {
                 }
                 logger.error(
                         "Authentication failed to '" + email + "' (email or password incorrect, or user is locked).");
-                throw new VipException("Authentication failed (email or password incorrect, or user is locked).");
+                throw new VipException(DefaultError.BAD_CREDENTIALS);
             }
         } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
             logger.error("Error signing in user {}", email, ex);
