@@ -14,7 +14,6 @@ public class ActivationForm implements IsSerializable {
     public ActivationForm() {
     }
 
-    @JsonCreator
     public ActivationForm(String code) {
         this.code = code;
     }
