@@ -50,5 +50,5 @@ export const usersApi = {
     backendClient.delete<void>(`/internal/users/${encodeURIComponent(id)}`).then((r) => r.data),
 
   activate: (email: string, code: string) =>
-    backendClient.post('/internal/users/activate', { email, code }).then((r) => r.data),
+    backendClient.put(`/internal/users/${encodeURIComponent(email)}/activate`, { code }).then((r) => r.data),
 }
