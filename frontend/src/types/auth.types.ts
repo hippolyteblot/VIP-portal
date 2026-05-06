@@ -19,6 +19,7 @@ export interface VipSession {
   id: string
   email: string
   userlevel: VipUserLevel
+  confirmed?: boolean
 }
 
 export interface User {

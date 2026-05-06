@@ -14,9 +14,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!session.value)
 
-  /**
-   * Called on app startup to check if there's an existing session. If so, it populates the `session` and `user` state.
-   */
   async function initialize() {
     if (initialized.value) return
 
@@ -64,7 +61,6 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await sessionApi.logout()
     } catch {
-      // if logout fails, we still want to clear the local session and user state to ensure the app behaves as logged out
     }
     user.value = null
     session.value = null

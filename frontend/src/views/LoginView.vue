@@ -18,8 +18,13 @@ const form = reactive({
 
 async function onSubmit() {
   try {
-    await authStore.login({ username: form.email, password: form.password })
-    notificationsStore.success('You have been logged in successfully.')
+    const session = await authStore.login({ username: form.email, password: form.password })
+    if (session.confirmed === false) {
+      notificationsStore.error('Votre compte n\'est pas encore activé.')
+      router.push({ name: 'activate', params: { id: form.email } })
+      return
+    }
+    notificationsStore.success('Vous êtes maintenant connecté.')
     console.log('Connected')
     router.push('/dashboard')
   } catch (error: unknown) {

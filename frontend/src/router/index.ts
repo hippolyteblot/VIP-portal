@@ -15,7 +15,7 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
     },
     {
-      path: '/activate',
+      path: '/activate/:id?',
       name: 'activate',
       component: () => import('@/views/ActivateView.vue'),
       meta: { title: 'Activate Account' },
