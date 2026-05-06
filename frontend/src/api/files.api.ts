@@ -107,8 +107,8 @@ export const filesApi = {
   async deleteDirectory(id: string): Promise<void> {
     const normalizedPath = toStorageUrlPath(id)
     const endpoint = normalizedPath.length > 0
-      ? `/internal/storage/directories/${normalizedPath}`
-      : '/internal/storage/directories'
+      ? `/internal/storage/${normalizedPath}`
+      : '/internal/storage'
 
     await backendClient.delete(endpoint)
   },

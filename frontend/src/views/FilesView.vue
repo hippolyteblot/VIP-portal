@@ -183,7 +183,11 @@ function closeCreateDirectoryModal(): void {
 async function confirmCreateDirectory(): Promise<void> {
   const name = newDirectoryName.value.trim()
   if (name.length === 0) {
-    errorMessage.value = 'Folder name is required.'
+    errorMessage.value = 'Le nom du dossier est requis.'
+    return
+  }
+  if (name.includes(' ')) {
+    errorMessage.value = "Le nom du dossier ne peut pas contenir d'espaces."
     return
   }
 
