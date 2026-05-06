@@ -1,19 +1,21 @@
 package fr.insalyon.creatis.vip.core.models;
 
-import jakarta.validation.constraints.NotBlank;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.google.gwt.user.client.rpc.IsSerializable;
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-public class ActivationForm {
+@JsonView(DataViews.User.class)
+public class ActivationForm implements IsSerializable {
 
-    @JsonProperty("code")
     private String code;
 
     public ActivationForm() {
     }
 
     @JsonCreator
-    public ActivationForm(@JsonProperty("code") String code) {
+    public ActivationForm(String code) {
         this.code = code;
     }
 
