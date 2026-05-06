@@ -4,10 +4,12 @@ import { useRouter, useRoute, RouterLink } from 'vue-router'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { useNotificationsStore } from '@/stores/notifications.store'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const notificationsStore = useNotificationsStore()
 
 const code = ref('')
 const errorMessage = ref('')
@@ -25,6 +27,7 @@ async function onSubmit() {
     console.log("email: ", email.value, "code: ", code.value)
     await authStore.activate(email.value, code.value)
     // If successfully activated and session exists
+    notificationsStore.success('Your account has been activated and you are now logged in.')
     router.push('/dashboard')
   } catch (e: any) {
     console.error('Error during activation', e)
