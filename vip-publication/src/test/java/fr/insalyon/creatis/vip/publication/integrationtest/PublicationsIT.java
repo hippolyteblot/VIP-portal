@@ -223,7 +223,7 @@ public class PublicationsIT extends BaseSpringIT {
         VipException businessException = assertThrows(VipException.class,
                 () -> publicationBusiness.addPublication(publication3));
 
-        Assertions.assertTrue(businessException.getMessage().startsWith("Non-valid characters : [‑‑❤]"));
+        Assertions.assertTrue(businessException.getMessage().startsWith("Error : Non-valid characters : [‑‑❤]"));
     }
 
 }

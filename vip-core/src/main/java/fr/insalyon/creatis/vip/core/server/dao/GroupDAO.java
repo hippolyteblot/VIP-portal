@@ -19,6 +19,8 @@ public interface GroupDAO {
 
     public List<Group> get() throws DAOException;
 
+    public Group getByName(String groupName) throws DAOException;
+
     public List<Group> getByType(GroupType type) throws DAOException;
 
     public List<Group> getByApplication(String applicationName) throws DAOException;

@@ -39,14 +39,14 @@ public class PathTestUtils {
         user1Dir = new Data("Home", Type.folder, 1, null, null, null);
         user2Dir = new Data("Home", Type.folder, 2, null, null, null);
         groupTestDir = new Data("groupTest (group)", Type.folder, 1, null, null, null);
-        testDir1 = new Data("testDir1", Type.folder, 3, null, null, null);
+        testDir1 = new Data("folderTest1", Type.folder, 3, null, null, null);
 
-        testFile1 = new Data("testFile1.xml", Type.file, 42004, "Apr 04 2015", null, null);
-        testFile2 = new Data("testFile2.json", Type.fileSync, 42005, "Dec 21 2016 ", null, null);
-        testFile3 = new Data("testFile3", Type.file, 42006, "Jan 01 2001", null, null);
-        testFile4 = new Data("testFile4.pdf", Type.file, 42007, "Jul 30 2014", null, null);
-        testFile5 = new Data("testFile5.zip", Type.file, 42008, "Jun 15 1999", null, null);
-        testFile6 = new Data("testFile6.unknown", Type.file, 42009, "Aug 28 2014", null, null);
+        testFile1 = new Data("fileTest1.xml", Type.file, 42004, "Apr 04 2015", null, null);
+        testFile2 = new Data("fileTest2.json", Type.fileSync, 42005, "Dec 21 2016 ", null, null);
+        testFile3 = new Data("fileTest3", Type.file, 42006, "Jan 01 2001", null, null);
+        testFile4 = new Data("fileTest4.pdf", Type.file, 42007, "Jul 30 2014", null, null);
+        testFile5 = new Data("fileTest5.zip", Type.file, 42008, "Jun 15 1999", null, null);
+        testFile6 = new Data("fileTest6.unknown", Type.file, 42009, "Aug 28 2014", null, null);
 
         testVipRootPathProperties = getPath(vipRoot, true, null, null, "text/directory");
         testUser1DirPathProperties = getPath(user1Dir, true, null, null, "text/directory");
@@ -103,14 +103,14 @@ public class PathTestUtils {
         if (data == user1Dir) return "/vip/Home";
         if (data == user2Dir) return "/vip/Home";
         if (data == groupTestDir) return "/vip/groupTest (group)";
-        if (data == testDir1) return "/vip/Home/testDir1";
+        if (data == testDir1) return "/vip/Home/folderTest1";
 
-        if (data == testFile1) return "/vip/Home/testFile1.xml";
-        if (data == testFile2) return "/vip/Home/testFile2.json";
-        if (data == testFile3) return "/vip/Home/testDir1/testFile3";
-        if (data == testFile4) return "/vip/Home/testDir1/testFile4.pdf";
-        if (data == testFile5) return "/vip/Home/testDir1/testFile5.zip";
-        if (data == testFile6) return "/vip/groupTest (group)/testFile6.zip";
+        if (data == testFile1) return "/vip/Home/fileTest1.xml";
+        if (data == testFile2) return "/vip/Home/fileTest2.json";
+        if (data == testFile3) return "/vip/Home/folderTest1/fileTest3";
+        if (data == testFile4) return "/vip/Home/folderTest1/fileTest4.pdf";
+        if (data == testFile5) return "/vip/Home/folderTest1/fileTest5.zip";
+        if (data == testFile6) return "/vip/groupTest (group)/fileTest6.zip";
         throw new RuntimeException("Wrong test data");
     }
 

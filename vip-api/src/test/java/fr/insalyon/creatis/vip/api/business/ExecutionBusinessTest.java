@@ -42,7 +42,7 @@ public class ExecutionBusinessTest {
         VipException vipException = assertThrows(VipException.class,
             () -> sut.checkIfUserCanAccessExecution(EXEC_ID)
         );
-        assertEquals("Permission denied", vipException.getMessage());
+        assertEquals("Error : Permission denied (Error code 9000)", vipException.getMessage());
     }
 
     @Test
@@ -61,8 +61,7 @@ public class ExecutionBusinessTest {
         WorkflowBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, simulation);
         ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, mockedWb, null, null, null, null);
         VipException ex = Assertions.assertThrows(VipException.class, () -> sut.getExecution(EXEC_ID, false));
-        Assertions.assertTrue(ex.getVipErrorCode().isPresent());
-        Assertions.assertEquals(ApiError.INVALID_EXECUTION_ID.getCode(), ex.getVipErrorCode().get());
+        Assertions.assertEquals(ApiError.INVALID_EXECUTION_ID.getCode(), ex.getVipErrorCode());
     }
 
 

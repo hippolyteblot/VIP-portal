@@ -98,13 +98,13 @@ public class UserControllerIT extends BaseInternalApiSpringIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(form)))
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.UNAUTHENTIFIED_ONLY.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.UNAUTHENTICATED_ONLY.getCode()));
         mockMvc.perform(post("/internal/users")
                 .with(getUserSecurityMock(developperUser))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(form)))
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.UNAUTHENTIFIED_ONLY.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.UNAUTHENTICATED_ONLY.getCode()));
     }
 
     @Test
