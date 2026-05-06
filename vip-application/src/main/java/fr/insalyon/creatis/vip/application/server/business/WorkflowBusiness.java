@@ -166,16 +166,16 @@ public class WorkflowBusiness {
                 String mailContent = "An error occured while submitting a workflow";
                 Exception exceptionToRethrow = e;
 
-                if (e instanceof VipException vipEx && vipEx.getVipError().equals(DefaultError.GENERIC_ERROR_WITH_MESSAGE)) {
+                if (e instanceof VipException vipEx && ! vipEx.getVipError().equals(DefaultError.GENERIC_ERROR_WITH_MESSAGE)) {
                     // not default error code, so it's an intended errors, only warning by mail
-                    logger.warn("Error occuring during workflow submission. Not disabling, sending mail to admins");
+                    logger.warn("Error occurred during workflow submission. Not disabling, sending mail to admins");
                 } else {
                     if ( ! (e instanceof VipException)) {
                         logger.error("Unexpected exception while launching a workflow", e);
                         exceptionToRethrow = new VipException(ApplicationError.LAUNCH_ERROR, e);
                     }
                     logger.warn(
-                            "Error occuring during workflow submission. Disabling engine and sending mail to admins");
+                            "Error occurred during workflow submission. Disabling engine and sending mail to admins");
                     mailSubject = "[VIP] Urgent: VIP engine disabled !";
                     mailContent = "Engine " + engine.getName() + " has just been disabled.";
                     engine.setStatus("disabled");
