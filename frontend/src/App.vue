@@ -9,7 +9,7 @@ const route = useRoute()
 const routeName = computed(() => (typeof route.name === 'string' ? route.name : ''))
 const isRouteResolved = computed(() => routeName.value.length > 0)
 const isLandingRoute = computed(() => ['landing', 'home'].includes(routeName.value))
-const isAuthRoute = computed(() => ['login', 'register'].includes(routeName.value))
+const isAuthRoute = computed(() => ['login', 'register', 'activate'].includes(routeName.value))
 </script>
 
 <template>

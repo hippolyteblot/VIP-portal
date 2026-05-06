@@ -48,7 +48,7 @@ async function onSubmit() {
   try {
     await authStore.register(payload)
     console.log('Account created successfully')
-    router.push('/login')
+    router.push({ name: 'activate', query: { email: form.email } })
   } catch {
     console.log('Error during registration')
   }

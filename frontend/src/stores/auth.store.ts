@@ -71,6 +71,20 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function activate(email: string, code: string) {
+    isLoading.value = true
+    try {
+      await usersApi.activate(email, code)
+      // Assuming activation logs the user in (sets cookies), check session:
+      await sessionApi.getSession().then((s) => {
+        session.value = s
+        buildUserFromSession(s)
+      }).catch(() => {})
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     user,
     session,
@@ -80,6 +94,7 @@ export const useAuthStore = defineStore('auth', () => {
     initialize,
     login,
     register,
+    activate,
     logout,
   }
 })

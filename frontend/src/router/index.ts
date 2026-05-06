@@ -15,6 +15,12 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
     },
     {
+      path: '/activate',
+      name: 'activate',
+      component: () => import('@/views/ActivateView.vue'),
+      meta: { title: 'Activate Account' },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),
@@ -93,7 +99,7 @@ router.beforeEach(async (to) => {
   if (
     !to.meta.requiresAuth &&
     auth.isAuthenticated &&
-    ['login', 'register'].includes(to.name as string)
+    ['login', 'register', 'activate'].includes(to.name as string)
   ) {
     return { name: 'dashboard' }
   }
