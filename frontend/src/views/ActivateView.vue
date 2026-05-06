@@ -11,18 +11,24 @@ const authStore = useAuthStore()
 
 const code = ref('')
 const errorMessage = ref('')
-const email = computed(() => route.query.email as string | undefined || '')
+// URL is http://localhost:5173/activate/z@z.z, email is z@z.z
+const email = computed(() => {
+  const idParam = route.params.id
+  return typeof idParam === 'string' ? idParam : ''
+})
 
 async function onSubmit() {
   if (!code.value) return
   errorMessage.value = ''
   try {
+
+    console.log("email: ", email.value, "code: ", code.value)
     await authStore.activate(email.value, code.value)
     // If successfully activated and session exists
     router.push('/dashboard')
   } catch (e: any) {
     console.error('Error during activation', e)
-    errorMessage.value = "Le code de vérification est invalide ou a expiré. Veuillez réessayer."
+    errorMessage.value = "The verification code is invalid or expired. Please check your email and try again."
   }
 }
 </script>
@@ -39,19 +45,19 @@ async function onSubmit() {
 
     <div>
       <h1 class="text-2xl font-bold text-gray-900">
-        Vérification de l'email
+        Email Verification
       </h1>
       <p class="mt-2 text-sm text-gray-500">
-        Un email avec un code de vérification a été envoyé à <strong>{{ email }}</strong>.
-        Veuillez entrer ce code ci-dessous pour activer votre compte.
+        An email with a verification code has been sent to <strong>{{ email }}</strong>.
+        Please enter the code below to activate your account.
       </p>
     </div>
 
     <form class="space-y-6" @submit.prevent="onSubmit">
       <AppInput
         v-model="code"
-        label="Code de vérification"
-        placeholder="Ex: 123456"
+        label="Verification Code"
+        placeholder="e.g., 123456"
         required
       />
 
@@ -65,13 +71,13 @@ async function onSubmit() {
         class="w-full"
         :loading="authStore.isLoading"
       >
-        Valider et se connecter
+        Validate and Login
       </AppButton>
     </form>
 
     <p class="text-center text-sm text-gray-600">
       <RouterLink to="/login" class="font-medium text-primary-600 hover:text-primary-700">
-        Retour à la page de connexion
+        Return to Login Page
       </RouterLink>
     </p>
   </div>
