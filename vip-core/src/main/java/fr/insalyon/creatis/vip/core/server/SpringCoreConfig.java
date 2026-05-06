@@ -32,6 +32,8 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.springframework.util.ResourceUtils.CLASSPATH_URL_PREFIX;
 

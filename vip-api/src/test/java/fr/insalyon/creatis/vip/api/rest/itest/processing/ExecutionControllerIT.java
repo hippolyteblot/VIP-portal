@@ -164,7 +164,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -176,7 +176,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -189,7 +189,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -263,7 +263,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
 
@@ -394,11 +394,13 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         when(workflowDAO.get(workflowId)).thenReturn(w, (Workflow) null);
 
         Execution expectedExecution = new Execution(workflowId, "Exec test 1", appName + "/" + versionName, 0, ExecutionStatus.RUNNING, null, null, startDate.getTime(), null, null);
-        expectedExecution.clearReturnedFiles();
         expectedExecution.getJobs().put(0, new HashMap<>() {{
             put("exitCode", 0);
             put("exitMessage", "Successfully executed");
             put("status", "COMPLETED");
+            put("inputs", new ArrayList<>());
+            put("outputs", new ArrayList<>());
+
         }});
 
         setUpResourceAndEngine(appName, versionName, engineEndpoint);

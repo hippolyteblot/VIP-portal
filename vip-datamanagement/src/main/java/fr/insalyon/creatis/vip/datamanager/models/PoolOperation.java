@@ -1,7 +1,11 @@
 package fr.insalyon.creatis.vip.datamanager.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import java.util.Date;
+
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 /**
  *
@@ -18,17 +22,31 @@ public class PoolOperation implements IsSerializable {
 
         Queued, Running, Done, Failed, Rescheduled
     };
+    @JsonView(DataViews.User.class)
     private String id;
+    @JsonView(DataViews.Developer.class)
     private Date registration;
+    @JsonView(DataViews.Developer.class)
     private String parsedRegistration;
+    @JsonView(DataViews.Developer.class)
     private String source;
+    @JsonView(DataViews.Developer.class)
     private String dest;
+    @JsonView(DataViews.Developer.class)
     private Type type;
+    @JsonView(DataViews.User.class)
     private Status status;
+    @JsonView(DataViews.Developer.class)
     private String user;
+    @JsonView(DataViews.Developer.class)
     private int progress;
 
     public PoolOperation() {
+    }
+
+    public PoolOperation(String id, Status status) {
+        this.id = id;
+        this.status = status;
     }
 
     /**
@@ -60,18 +78,23 @@ public class PoolOperation implements IsSerializable {
         return dest;
     }
 
+    @JsonProperty("operationId")
+    @JsonView(DataViews.User.class)
     public String getId() {
         return id;
     }
 
+    @JsonView(DataViews.Developer.class)
     public Date getRegistration() {
         return registration;
     }
 
+    @JsonView(DataViews.Developer.class)
     public String getSource() {
         return source;
     }
 
+    @JsonView(DataViews.User.class)
     public Status getStatus() {
         return status;
     }
@@ -80,18 +103,22 @@ public class PoolOperation implements IsSerializable {
         this.status = status;
     }
 
+    @JsonView(DataViews.Developer.class)
     public Type getType() {
         return type;
     }
 
+    @JsonView(DataViews.Developer.class)
     public String getUser() {
         return user;
     }
 
+    @JsonView(DataViews.Developer.class)
     public String getParsedRegistration() {
         return parsedRegistration;
     }
 
+    @JsonView(DataViews.Developer.class)
     public int getProgress() {
         return progress;
     }

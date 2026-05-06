@@ -63,7 +63,7 @@ public class UserController {
         User user = userBusiness.get(id);
 
         if (user == null) {
-            throw new VipException(DefaultError.NOT_FOUND, id);
+            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
         } else {
             return user;
         }

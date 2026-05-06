@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import fr.insalyon.creatis.vip.api.data.UserTestUtils;
@@ -17,6 +18,7 @@ import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness
 public class LFCPermissionBusinessTest {
 
     @AfterEach
+    @BeforeEach
     protected void tearDown() {
         // to reset user groups
         UserTestUtils.reset();
@@ -29,7 +31,7 @@ public class LFCPermissionBusinessTest {
         Map<Group, CoreConstants.GROUP_ROLE> groups = new HashMap<>();
         UserTestUtils.baseUser1.setGroups(groups);
         UserTestUtils.baseUser2.setGroups(groups);
-        LFCPermissionBusiness sut = new LFCPermissionBusiness();
+        LFCPermissionBusiness sut = new LFCPermissionBusiness(null);
 
         // First, test users does not belong to the group
         Assertions.assertFalse(sut.isLFCPathAllowed(UserTestUtils.baseUser1, path, LFCPermissionBusiness.LFCAccessType.UPLOAD, false));

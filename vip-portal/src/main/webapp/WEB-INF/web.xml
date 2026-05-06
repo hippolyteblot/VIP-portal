@@ -151,6 +151,11 @@
             <param-name>contextConfigLocation</param-name>
             <param-value>fr.insalyon.creatis.vip.core.server.SpringInternalApiConfig</param-value>
         </init-param>
+        <multipart-config>
+            <max-file-size>-1</max-file-size>
+            <max-request-size>-1</max-request-size>
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
@@ -175,6 +180,14 @@
         <servlet-name>RestAPI</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
+    <filter>
+        <filter-name>NewFrontSpaForwardFilter</filter-name>
+        <filter-class>fr.insalyon.creatis.vip.portal.server.NewFrontSpaForwardFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>NewFrontSpaForwardFilter</filter-name>
+        <url-pattern>/new_front/*</url-pattern>
+    </filter-mapping>
     <filter>
         <filter-name>springSecurityFilterChain</filter-name>
         <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>

@@ -97,7 +97,7 @@ public class ExecutionController extends ApiController {
     public Execution getExecutionSummary(@PathVariable String executionId)
             throws VipException {
         logMethodInvocation(logger, "getExecutionSummary", executionId);
-        return executionBusiness.getExecution(executionId, true);
+        return executionBusiness.getExecution(executionId, false);
     }
     
 

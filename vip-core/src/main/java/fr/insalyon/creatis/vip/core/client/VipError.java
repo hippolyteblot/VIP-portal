@@ -13,6 +13,7 @@ public interface VipError {
      * - 6xxx : vip-social
      * - 7xxx : vip-visualization
      * - 8xxx : vip-api
+     * - 9xxx : common stuff for all modules
      */
 
     Integer getCode();

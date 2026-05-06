@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
@@ -53,8 +54,9 @@ public class GroupBusiness extends CommonBusiness {
 
         try {
             checkAuto(group);
-            gridaClient.createFolder(server.getDataManagerGroupsHome(),
-            group.getName().replaceAll(" ", "_"));
+            gridaClient.createFolder(
+                    server.getDataManagerGroupsHome(),
+                    group.getName().replaceAll(" ", "_"));
             
             groupDAO.add(group);
         } catch (GRIDAClientException ex) {
@@ -102,21 +104,39 @@ public class GroupBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
-    public List<Group> get() throws VipException {
+    public List<Group> get(boolean onlyApplications, boolean onlyResources) throws VipException {
         try {
-            if (getUserLevel().equals(UserLevel.Administrator)) {
-                return groupDAO.get();
-            } else {
-                return usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
+            if (onlyApplications && onlyResources) {
+                // Both filters requested = error
+                throw new VipException(DefaultError.BAD_PARAMETERS, "onlyApplications and onlyResources cannot be both true!");
             }
+            List<Group> groups;
+            if (getUserLevel().equals(UserLevel.Administrator)) {
+                groups = groupDAO.get();
+            } else {
+                groups = usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
+            }
+            if (onlyApplications) {
+                groups = groups.stream().filter((g) -> g.getType().equals(GroupType.APPLICATION)).toList();
+            }
+            if (onlyResources) {
+                groups = groups.stream().filter((g) -> g.getType().equals(GroupType.RESOURCE)).toList();
+            }
+            return groups;
         } catch (DAOException ex) {
+            logger.error("Error retrieving groups", ex);
             throw new VipException(ex);
         }
     }
 
     @VIPExternalSafe
-    public PrecisePage<Group> get(int offeset, int quantity) throws VipException {
-        return pageBuilder.doPrecise(offeset, quantity, get());
+    public List<Group> get() throws VipException {
+        return get(false, false);
+    }
+
+    @VIPExternalSafe
+    public PrecisePage<Group> get(boolean onlyApplications, boolean onlyResources, int offset, int quantity) throws VipException {
+        return pageBuilder.doPrecise(offset, quantity, get(onlyApplications, onlyResources));
     }
 
     @VIPExternalSafe
@@ -127,6 +147,17 @@ public class GroupBusiness extends CommonBusiness {
         return get().stream()
                 .filter(g -> groupName.equals(g.getName()))
                 .findAny().orElse(null);
+    }
+
+    public Group getByName(String groupName) throws VipException {
+        if (groupName == null) {
+            return null;
+        }
+        try {
+            return groupDAO.getByName(groupName);
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
     }
 
     public List<Group> getPublic() throws VipException {
