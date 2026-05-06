@@ -22,8 +22,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const vipSession = await sessionApi.getSession()
-      session.value = vipSession
-      buildUserFromSession(vipSession)
+      if (vipSession.confirmed === false) {
+        session.value = null
+        user.value = null
+      } else {
+        session.value = vipSession
+        buildUserFromSession(vipSession)
+      }
     } catch {
       session.value = null
       user.value = null
@@ -36,13 +41,17 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true;
     try {
       const vipSession = await sessionApi.login(credentials);
+      if (vipSession.confirmed === false) {
+        return vipSession;
+      }
       session.value = vipSession;
       buildUserFromSession(vipSession);
+      return vipSession;
     } catch (error) {
-      isLoading.value = false;
       throw error; // Throw to be handled by the caller (such as LoginView)
+    } finally {
+      isLoading.value = false;
     }
-    isLoading.value = false;
   }
 
   function buildUserFromSession(vipSession: VipSession) {
