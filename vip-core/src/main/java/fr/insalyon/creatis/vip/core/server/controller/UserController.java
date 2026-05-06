@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.models.ActivationForm;
 import fr.insalyon.creatis.vip.core.models.SignUpForm;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
@@ -76,5 +77,10 @@ public class UserController {
         }
         // the returned data may be partial, but enough for the frontend to do it own stuff!
         return authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+    }
+
+    @PutMapping(value = "{id}/activate")
+    public void activate(@PathVariable String id, @RequestBody @Valid ActivationForm form) throws VipException {
+        authenticationBusiness.activate(id, form.getCode());
     }
 }
