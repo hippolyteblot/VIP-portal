@@ -119,6 +119,17 @@ public class TransferPoolBusiness extends CommonBusiness {
         }
     }
 
+    public PoolOperation.Status getOperationStatus(String operationId) throws VipException {
+        Operation operation;
+        try {
+            operation = gridaPoolClient.getOperationById(operationId);
+            return PoolOperation.Status.valueOf(operation.getStatus().name());
+        } catch (GRIDAClientException ex) {
+            logger.error("Error getting operation status {}", operationId, ex);
+            throw new VipException(ex.getCause() != null ? ex.getCause() : ex);
+        }
+    }
+
     public PoolOperation getDownloadPoolOperation(String operationId)
             throws VipException {
         try {

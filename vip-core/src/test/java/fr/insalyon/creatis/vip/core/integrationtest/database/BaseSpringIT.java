@@ -143,6 +143,10 @@ public abstract class BaseSpringIT {
         Mockito.reset(gridaPoolClient);
     }
 
+    public GRIDAClient getGridaClient() {
+        return gridaClient;
+    }
+
     protected void assertRowsNbInTable(String tableName, int expectedNb) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(lazyDataSource);
         int rowsNb = JdbcTestUtils.countRowsInTable(jdbcTemplate, tableName);

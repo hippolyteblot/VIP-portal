@@ -1,9 +1,6 @@
 package fr.insalyon.creatis.vip.core.client;
 
-import java.util.Optional;
-
 import com.google.gwt.user.client.rpc.IsSerializable;
-
 import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPCheckRemoval;
 
 public class VipException extends Exception implements IsSerializable {
@@ -34,11 +31,6 @@ public class VipException extends Exception implements IsSerializable {
 
     public VipException(VipError error, Throwable cause, Object ...params) {
         super(format(error, params), cause);
-        this.error = error;
-    }
-
-    public VipException(String message, VipError error) {
-        super(message);
         this.error = error;
     }
 

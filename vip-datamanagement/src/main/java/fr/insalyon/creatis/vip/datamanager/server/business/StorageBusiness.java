@@ -3,6 +3,7 @@ package fr.insalyon.creatis.vip.datamanager.server.business;
 import fr.insalyon.creatis.vip.core.client.VipError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Group;
+import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.GroupDAO;
 import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
@@ -401,8 +402,8 @@ public class StorageBusiness extends CommonBusiness {
     }
 
     private String buildUniqueLocalUploadPath(String cleanFileName) {
-        return Path.of(dataManagerBusiness.getUploadRootDirectory(false) ,
-                System.currentTimeMillis() + "_" + cleanFileName).toString();
+        // DataManagerBusiness.getUploadRootDirectory(false) creates un unique folder
+        return Path.of(dataManagerBusiness.getUploadRootDirectory(false),cleanFileName).toString();
     }
 
     private void checkUploadIsPossible(VipStoragePath destination, String actionLabel, VipError vipError) throws VipException {
@@ -456,16 +457,16 @@ public class StorageBusiness extends CommonBusiness {
 
     private boolean isOperationOver(String operationId)
             throws VipException {
-        PoolOperation operation = transferPoolBusiness.getOperationById(operationId, getUser().getFolder());
+        PoolOperation.Status operationStatus = transferPoolBusiness.getOperationStatus(operationId);
 
-        return switch (operation.getStatus()) {
+        return switch (operationStatus) {
             case Queued, Running -> {
-                logger.debug("status of operation {} : {}", operationId, operation.getStatus());
+                logger.debug("status of operation {} : {}", operationId, operationStatus);
                 yield false;
             }
             case Done -> true;
             default -> {
-                logger.error("IO LFC Operation failed : {} : {}", operationId, operation.getStatus());
+                logger.error("IO LFC Operation failed : {} : {}", operationId, operationStatus);
                 throw new VipException("IO LFC Operation operation failed");
             }
         };

@@ -30,6 +30,12 @@ public class StorageTestConfigurer {
     @Autowired GRIDAClient gridaClient;
     @Autowired GRIDAPoolClient gridaPoolClient;
 
+    // ################## GENERAL stuff ################
+
+    public Path getRemotePathForUser(User user, String elementPath) {
+        return Path.of(ServerMockConfig.TEST_USERS_ROOT,  user.getFolder(), elementPath);
+    }
+
     // ################## FOLDER CONFIG ##################
 
     // configure the grida client mock to answer for getPathInfo and getFolderData on a specific path inside a user folder

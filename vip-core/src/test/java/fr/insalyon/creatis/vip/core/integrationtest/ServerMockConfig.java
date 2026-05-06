@@ -66,6 +66,7 @@ public class ServerMockConfig {
         // CORS_AUTHORIZED_DOMAINS is only used in vip-api, but in the SpringRestApiConfig (servlet context),
         // which uses a Server bean internally. We mock it here, currently lacking a cleaner solution for a higher level mock.
         when(server.getCarminCorsAuthorizedDomains()).thenReturn(new String[]{TEST_CORS_URL});
+        when(server.getApiParallelDownloadNb()).thenReturn(2);
     }
 
     @Component
