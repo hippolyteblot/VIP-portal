@@ -31,13 +31,11 @@ public class UserController {
 
     private final UserBusiness userBusiness;
     private final AuthenticationBusiness authenticationBusiness;
-    private final Supplier<User> userProvider;
 
     @Autowired
-    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness, Supplier<User> userProvider) {
+    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness) {
         this.userBusiness = userBusiness;
         this.authenticationBusiness = authenticationBusiness;
-        this.userProvider = userProvider;
     }
 
     @GetMapping

@@ -268,7 +268,7 @@ public class UserBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public User getCurrentUser() throws VipException {
-        return get(getUser().getId());
+        return getUser();
     }
 
     public void updateTermsOfUse(String email) throws VipException {
