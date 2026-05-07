@@ -2,12 +2,13 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { sessionApi } from '@/api/session.api'
 import { usersApi } from '@/api/users.api'
-import type { VipSession, LoginCredentials, RegisterPayload, User } from '@/types/auth.types'
+import type { VipSession, LoginCredentials, RegisterPayload } from '@/types/auth.types'
+import type { ProfileUser } from '@/types/profile.types'
 
 
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
+  const user = ref<ProfileUser | null>(null)
   const session = ref<VipSession | null>(null)
   const isLoading = ref(false)
   const initialized = ref(false)
@@ -24,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = null
       } else {
         session.value = vipSession
-        buildUserFromSession(vipSession)
+        await loadCurrentUser()
       }
     } catch {
       session.value = null
@@ -42,7 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
         return vipSession;
       }
       session.value = vipSession;
-      buildUserFromSession(vipSession);
+      await loadCurrentUser();
       return vipSession;
     } catch (error) {
       throw error; // Throw to be handled by the caller (such as LoginView)
@@ -51,9 +52,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function buildUserFromSession(vipSession: VipSession) {
-    user.value = {
-      email: vipSession.email
+  async function loadCurrentUser() {
+    try {
+      user.value = await usersApi.me()
+    } catch {
+      user.value = null
     }
   }
 
@@ -81,10 +84,12 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await usersApi.activate(email, code)
       // Assuming activation logs the user in (sets cookies), check session:
-      await sessionApi.getSession().then((s) => {
-        session.value = s
-        buildUserFromSession(s)
-      }).catch(() => {})
+      try {
+        const vipSession = await sessionApi.getSession()
+        session.value = vipSession
+        await loadCurrentUser()
+      } catch {
+      }
     } finally {
       isLoading.value = false
     }

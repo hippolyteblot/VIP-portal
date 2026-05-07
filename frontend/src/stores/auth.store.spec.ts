@@ -7,6 +7,7 @@ const mocked = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   register: vi.fn(),
+  me: vi.fn(),
 }))
 
 vi.mock('@/api/session.api', () => ({
@@ -20,6 +21,7 @@ vi.mock('@/api/session.api', () => ({
 vi.mock('@/api/users.api', () => ({
   usersApi: {
     register: mocked.register,
+    me: mocked.me,
   },
 }))
 
@@ -35,6 +37,20 @@ describe('useAuthStore', () => {
       email: 'user@example.com',
       userlevel: 'User',
     })
+    mocked.me.mockResolvedValue({
+      id: 'user-1',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      institution: 'VIP Lab',
+      countryCode: 'fr',
+      maxRunningSimulations: 3,
+      level: 'User',
+      termsOfUse: null,
+      lastUpdatePublications: null,
+      groups: [],
+      apiKey: null,
+    })
 
     const store = useAuthStore()
     await store.initialize()
@@ -42,7 +58,7 @@ describe('useAuthStore', () => {
     expect(mocked.getSession).toHaveBeenCalledTimes(1)
     expect(store.initialized).toBe(true)
     expect(store.isAuthenticated).toBe(true)
-    expect(store.user).toEqual({ email: 'user@example.com' })
+    expect(store.user).toEqual(expect.objectContaining({ email: 'user@example.com' }))
 
     await store.initialize()
     expect(mocked.getSession).toHaveBeenCalledTimes(1)
@@ -66,6 +82,20 @@ describe('useAuthStore', () => {
       email: 'login@example.com',
       userlevel: 'User',
     })
+    mocked.me.mockResolvedValue({
+      id: 'user-2',
+      firstName: 'Login',
+      lastName: 'User',
+      email: 'login@example.com',
+      institution: 'VIP Lab',
+      countryCode: 'fr',
+      maxRunningSimulations: 3,
+      level: 'User',
+      termsOfUse: null,
+      lastUpdatePublications: null,
+      groups: [],
+      apiKey: null,
+    })
 
     const store = useAuthStore()
     await store.login({ username: 'login@example.com', password: 'secret' })
@@ -73,7 +103,7 @@ describe('useAuthStore', () => {
     expect(mocked.login).toHaveBeenCalledWith({ username: 'login@example.com', password: 'secret' })
     expect(store.isLoading).toBe(false)
     expect(store.isAuthenticated).toBe(true)
-    expect(store.user).toEqual({ email: 'login@example.com' })
+    expect(store.user).toEqual(expect.objectContaining({ email: 'login@example.com' }))
   })
 
   it('propagates login error and resets loading flag', async () => {

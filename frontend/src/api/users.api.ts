@@ -40,6 +40,9 @@ export const usersApi = {
   register: (payload: RegisterPayload) =>
     backendClient.post('/internal/users', toSignUpFormPayload(payload)).then((r) => r.data),
 
+  me: () =>
+    backendClient.get<ProfileUser>('/internal/users/me').then((r) => r.data),
+
   getById: (id: string) =>
     backendClient.get<ProfileUser>(`/internal/users/${encodeURIComponent(id)}`).then((r) => r.data),
 
