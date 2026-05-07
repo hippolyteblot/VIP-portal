@@ -76,20 +76,12 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody @Valid UserAndPassword form) throws VipException {
-        final String email = form != null && form.user != null ? form.user.getEmail() : null;
-        final String countryCode = form != null && form.user != null && form.user.getCountryCode() != null
-                ? form.user.getCountryCode().name()
-                : null;
-        final boolean hasPassword = form != null && form.password != null && !form.password.isBlank();
-        final int groupsCount = form != null && form.user != null && form.user.getGroups() != null
-                ? form.user.getGroups().size()
-                : -1;
 
         logger.info("Signup request received: email='{}', country='{}', hasPassword={}, groupsCount={}",
-                email, countryCode, hasPassword, groupsCount);
+                form.user.getEmail(), form.user.getCountryCode(), !form.password.isBlank(), form.user.getGroups() != null ? form.user.getGroups().size() :"no groups");
 
         if (form.user.getId() != null) {
-            logger.warn("Signup rejected: id must be null for email='{}'", email);
+            logger.warn("Signup rejected: id must be null for email='{}'", form.user.getEmail());
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "ID must be empty!");
         }
         try {
@@ -100,7 +92,7 @@ public class UserController {
             logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
             return createdUser;
         } catch (VipException ex) {
-            logger.error("Signup failed for email='{}': {}", email, ex.getMessage(), ex);
+            logger.error("Signup failed for email='{}': {}", form.user.getEmail(), ex.getMessage(), ex);
             throw ex;
         }
     }
