@@ -1,7 +1,5 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
-import java.util.function.Supplier;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,13 +29,11 @@ public class UserController {
 
     private final UserBusiness userBusiness;
     private final AuthenticationBusiness authenticationBusiness;
-    private final Supplier<User> userProvider;
 
     @Autowired
-    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness, Supplier<User> userProvider) {
+    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness) {
         this.userBusiness = userBusiness;
         this.authenticationBusiness = authenticationBusiness;
-        this.userProvider = userProvider;
     }
 
     @GetMapping
@@ -48,14 +44,7 @@ public class UserController {
 
     @GetMapping(value = "me")
     public User getCurrentUser() throws VipException {
-        User currentUser = userProvider.get();
-        User user = userBusiness.get(currentUser.getId());
-
-        if (user == null) {
-            throw new VipException(DefaultError.NOT_FOUND, currentUser.getId());
-        } else {
-            return user;
-        }
+        return userBusiness.getCurrentUser();
     }
 
     @GetMapping(value = "{id}")
