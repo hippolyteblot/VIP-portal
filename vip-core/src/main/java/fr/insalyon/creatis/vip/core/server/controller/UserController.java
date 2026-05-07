@@ -48,15 +48,9 @@ public class UserController {
 
     @GetMapping(value = "me")
     public User getCurrentUser() throws VipException {
-        User currentUser = userProvider.get();
-        User user = userBusiness.get(currentUser.getId());
-
-        if (user == null) {
-            throw new VipException(DefaultError.NOT_FOUND, currentUser.getId());
-        } else {
-            return user;
-        }
+        return userBusiness.getCurrentUser();
     }
+
 
     @GetMapping(value = "{id}")
     public User get(@PathVariable String id) throws VipException {
