@@ -149,8 +149,8 @@ public class AuthenticationBusiness extends CommonBusiness {
                 groupsString.append(group.getName()).append(", ");
             }
 
-                logger.info("Signup persistence succeeded for email='{}' with generatedId='{}'",
-                    user.getEmail(), user.getId());
+            logger.info("Signup persistence succeeded for email='{}' with generatedId='{}'",
+                user.getEmail(), user.getId());
 
             if (!automaticCreation) {
                 String emailContent = emailTemplateUtils.registrationUserEmail(user);
@@ -174,7 +174,6 @@ public class AuthenticationBusiness extends CommonBusiness {
             logger.error("Error signing up user {}", user.getEmail(), ex);
             throw new VipException(ex);
         } catch (DAOException ex) {
-            logger.error("DAO error while signing up user {}", user.getEmail(), ex);
             throw new VipException(ex);
         }
     }

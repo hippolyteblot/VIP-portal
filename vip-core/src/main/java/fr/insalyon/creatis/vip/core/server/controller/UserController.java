@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
-import fr.insalyon.creatis.vip.core.server.controller.dto.SignUpForm;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -75,13 +75,12 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody @Valid SignUpForm form) throws VipException {
+    public User create(@RequestBody @Valid UserAndPassword form) throws VipException {
         final String email = form != null && form.user != null ? form.user.getEmail() : null;
         final String countryCode = form != null && form.user != null && form.user.getCountryCode() != null
                 ? form.user.getCountryCode().name()
                 : null;
-        final boolean hasPassword = form != null && form.user != null
-                && form.user.getPassword() != null && !form.user.getPassword().isBlank();
+        final boolean hasPassword = form != null && form.password != null && !form.password.isBlank();
         final int groupsCount = form != null && form.user != null && form.user.getGroups() != null
                 ? form.user.getGroups().size()
                 : -1;
@@ -94,6 +93,8 @@ public class UserController {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "ID must be empty!");
         }
         try {
+            // Set password on user object from the separate password field
+            form.user.setPassword(form.password);
             // the returned data may be partial, but enough for the frontend to do it own stuff!
             User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
             logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
