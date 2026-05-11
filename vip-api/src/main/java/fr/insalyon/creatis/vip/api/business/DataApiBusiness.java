@@ -19,6 +19,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,52 +39,41 @@ import fr.insalyon.creatis.vip.datamanager.server.business.LFCPermissionBusiness
 import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
 
 @Service
-public class DataApiBusiness {
+public class DataApiBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Server server;
-    private final Supplier<User> currentUserProvider;
-
-    private final LFCPermissionBusiness lfcPermissionBusiness;
     private final StorageBusiness storageBusiness;
 
     @Autowired
-    public DataApiBusiness(
-            Server server, Supplier<User> currentUserProvider,
-            LFCPermissionBusiness lfcPermissionBusiness,
-            StorageBusiness storageBusiness) {
-        this.server = server;
-        this.currentUserProvider = currentUserProvider;
-        this.lfcPermissionBusiness = lfcPermissionBusiness;
+    public DataApiBusiness(StorageBusiness storageBusiness) {
         this.storageBusiness = storageBusiness;
     }
 
     public boolean doesFileExist(String path) throws VipException {
-        checkReadPermission(path);
-        return storageBusiness.doesFileExist(path);
+        return storageBusiness.doesPathExist(path);
     }
 
     public void deletePath(String path) throws VipException {
-        checkPermission(path, LFCAccessType.DELETE);
         storageBusiness.deletePath(path);
     }
 
     public PathProperties getPathProperties(String path ) throws VipException {
-        checkReadPermission(path);
         if (path.equals(ROOT)) {
             return getRootPathProperties();
         }
         PathProperties pathProperties = new PathProperties();
         pathProperties.setPath(path);
-        Optional<Data.Type> type = storageBusiness.getPathInfo(path);
-        if (type.isEmpty()) { // path doesn't exist
+        Optional<StorageBusiness.PathInfo> pathInfo = storageBusiness.listDirOrGetPathInfo(path, true);
+        if (pathInfo.isEmpty()) { // path doesn't exist
             pathProperties.setExists(false);
             return pathProperties;
         }
         pathProperties.setExists(true);
-        List<Data> fileData = storageBusiness.getFileData(path);
-        if (type.get().equals(Data.Type.file)) {
+
+        List<Data> fileData = pathInfo.get().info;
+        Data.Type type = pathInfo.get().type;
+        if (type.equals(Data.Type.file)) {
             // this is a file, not a directory
             Data fileInfo = fileData.get(0);
             pathProperties.setIsDirectory(false);
@@ -103,20 +93,10 @@ public class DataApiBusiness {
     }
 
     public List<PathProperties> listDirectory(String path) throws VipException {
-        checkReadPermission(path);
         if (path.equals(ROOT)) {
             return getRootSubDirectoriesPathProps();
         }
-        Optional<Data.Type> type = storageBusiness.getPathInfo(path);
-        if (!type.isPresent()) { // path doesn't exist
-            logger.error("Trying to list a non-existing path ({})", path);
-            throw new VipException("Error listing a directory");
-        }
-        if (!type.get().equals(Data.Type.folder)) {
-            logger.error("Trying to list {} , but is a file :", path);
-            throw new VipException("Error listing a directory");
-        }
-        List<Data> directoryData = storageBusiness.getFileData(path);
+        List<Data> directoryData = storageBusiness.listDir(path);
         List<PathProperties> res = new ArrayList<>();
         for (Data fileData : directoryData) {
             res.add(buildPathFromLfcData(path, fileData));
@@ -125,80 +105,21 @@ public class DataApiBusiness {
     }
 
     public File getFile(String path) throws VipException {
-        checkDownloadPermission(path);
-        return storageBusiness.getFile(path);
+        return storageBusiness.downloadAndWait(path);
     }
 
     public void uploadRawFileFromInputStream(String lfcPath, InputStream is)
             throws VipException {
-        // TODO : check upload size ?
-        checkPermission(lfcPath, LFCAccessType.UPLOAD);
-        java.nio.file.Path javaPath = Paths.get(lfcPath);
-        String parentLfcPath = javaPath.getParent().toString();
-        // check if parent dir exists
-        if (!storageBusiness.doesFileExist(parentLfcPath)) {
-            logger.error("parent directory of upload {} does not exist :", lfcPath);
-            throw new VipException("Upload Directory doest not exist");
-        }
-        storageBusiness.uploadRawFileFromInputStream(lfcPath, is);
+        storageBusiness.uploadFileOrCreateDirFromInputStream(lfcPath, is);
     }
 
     public void uploadCustomData(String lfcPath, UploadData uploadData)
             throws VipException {
-        // TODO : check upload size ?
-        // TODO : factorize with previous method
-        checkPermission(lfcPath, LFCAccessType.UPLOAD);
-        java.nio.file.Path javaPath = Paths.get(lfcPath);
-        String parentLfcPath = javaPath.getParent().toString();
-        // check if parent dir exists
-        if (!storageBusiness.doesFileExist(parentLfcPath)) {
-            logger.error("parent directory of {} does not exist :", lfcPath);
-            throw new VipException("Upload Directory doest not exist");
-        }
         if (uploadData.getType().equals(UploadDataType.ARCHIVE)) {
             logger.error("archive upload not supported yet for ({})", lfcPath);
             throw new VipException("archive upload not supported yet");
         }
         storageBusiness.uploadBase64File(lfcPath, uploadData.getBase64Content());
-    }
-
-    // #### PERMISSION STUFF
-
-    private void checkReadPermission(String path) throws VipException {
-        checkPermission(path, LFCAccessType.READ);
-    }
-
-    private void checkDownloadPermission(String path) throws VipException {
-        checkReadPermission(path);
-        if (path.equals(ROOT)) {
-            logger.error("cannot download root ({})", path);
-            throw new VipException("Illegal data API access");
-        }
-        Optional<Data.Type> type = storageBusiness.getPathInfo(path);
-        if (!type.isPresent()) { // path doesn't exist
-            logger.error("Trying to download a non-existing file ({})", path);
-            throw new VipException("Illegal data API access");
-        }
-        if (!type.get().equals(Data.Type.file)) {
-            // it works on a directory and return a zip, but we cant check the download size
-            logger.error("Trying to download a directory ({})", path);
-            throw new VipException("Illegal data API access");
-        }
-        // path exists and is a file: check its size
-        List<Data> fileData = storageBusiness.getFileData(path);
-        Long maxSize = server.getCarminApiDataTransfertMaxSize();
-        if (fileData.get(0).getLength() > maxSize) {
-            logger.error("Trying to download a file too big ({})", path);
-            throw new VipException("Illegal data API access");
-        }
-    }
-
-    private void checkPermission(String path, LFCAccessType accessType)
-            throws VipException {
-        if ( ! lfcPermissionBusiness.isLFCPathAllowed(
-            currentUserProvider.get(), path, accessType, true)) {
-            throw new VipException(ApiError.UNAUTHORIZED_DATA_ACCESS, path);
-        }
     }
 
     // #### ROOT folder STUFF
@@ -225,8 +146,7 @@ public class DataApiBusiness {
         // Home + Trash + users groups
         List<String> rootDir = new ArrayList<>();
         rootDir.add(USERS_HOME);
-        rootDir.add(TRASH_HOME);
-        for (Group group : currentUserProvider.get().getGroups()) {
+        for (Group group : getUser().getGroups()) {
             rootDir.add(group.getName() + GROUP_APPEND);
         }
         return rootDir;

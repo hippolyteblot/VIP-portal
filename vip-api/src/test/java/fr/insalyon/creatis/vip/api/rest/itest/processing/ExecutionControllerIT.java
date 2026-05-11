@@ -164,7 +164,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -176,7 +176,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -189,7 +189,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -263,7 +263,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
 

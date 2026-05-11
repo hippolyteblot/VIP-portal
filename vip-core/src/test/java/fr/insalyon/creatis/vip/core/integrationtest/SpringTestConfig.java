@@ -32,11 +32,13 @@ public class SpringTestConfig {
     public static class CoreTestConfigurer implements TestConfigurer {
 
         @Autowired GRIDAClient gridaClient;
+        @Autowired GRIDAPoolClient gridaPoolClient;
         @Autowired EmailBusiness emailBusiness;
 
         @Override
         public void setUpBeforeEachTest() throws DAOException {
             Mockito.reset(gridaClient);
+            Mockito.reset(gridaPoolClient);
             Mockito.doReturn(new String[]{"test@admin.test"}).when(emailBusiness).getAdministratorsEmails();
         }
     }

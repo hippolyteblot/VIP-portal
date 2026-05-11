@@ -1,5 +1,7 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
+import java.util.function.Supplier;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +44,12 @@ public class UserController {
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
     return userBusiness.getAll(offset, quantity);
     }
+
+    @GetMapping(value = "me")
+    public User getCurrentUser() throws VipException {
+        return userBusiness.getCurrentUser();
+    }
+
 
     @GetMapping(value = "{id}")
     public User get(@PathVariable String id) throws VipException {

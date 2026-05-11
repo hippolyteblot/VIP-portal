@@ -105,6 +105,25 @@ public class GroupData extends JdbcDaoSupport implements GroupDAO {
     }
 
     @Override
+    public Group getByName(String groupName) throws DAOException {
+        String query = "SELECT * FROM VIPGroups WHERE name = ?";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            ps.setString(1, groupName);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return fromRs(rs);
+            }
+            return null;
+
+        } catch (SQLException ex) {
+            logger.error("Error getting group with name {}", groupName, ex);
+            throw new DAOException(ex);
+        }
+    }
+
+    @Override
     public List<Group> getByType(GroupType type) throws DAOException {
         List<Group> groups = new ArrayList<Group>();
         String query = "SELECT * FROM VIPGroups WHERE type = ? ORDER BY LOWER(name)";

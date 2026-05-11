@@ -1,33 +1,27 @@
 package fr.insalyon.creatis.vip.core.client;
 
-import java.util.Optional;
-
 import com.google.gwt.user.client.rpc.IsSerializable;
-
 import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPCheckRemoval;
 
 public class VipException extends Exception implements IsSerializable {
 
-    private VipError error;
+    private final VipError error;
 
     @VIPCheckRemoval
     public VipException() {
-        this.error = null;
+        this(DefaultError.GENERIC_ERROR);
     }
 
     public VipException(String message) {
-        super(message);
-        this.error = null;
+        this(DefaultError.GENERIC_ERROR_WITH_MESSAGE, message);
     }
 
     public VipException(String message, Throwable cause) {
-        super(message, cause);
-        this.error = null;
+        this(DefaultError.GENERIC_ERROR_WITH_MESSAGE, cause, message);
     }
 
     public VipException(Throwable cause) {
-        super(cause);
-        this.error = null;
+        this(DefaultError.GENERIC_ERROR_WITH_MESSAGE, cause.getMessage() != null ? cause.getMessage() : cause.getClass().getSimpleName());
     }
 
     public VipException(VipError error, Object ...params) {
@@ -40,17 +34,12 @@ public class VipException extends Exception implements IsSerializable {
         this.error = error;
     }
 
-    public VipException(String message, VipError error) {
-        super(message);
-        this.error = error;
+    public VipError getVipError() {
+        return error;
     }
 
-    public Optional<VipError> getVipError() {
-        return Optional.ofNullable(error);
-    }
-
-    public Optional<Integer> getVipErrorCode() {
-        return getVipError().map(VipError::getCode);
+    public Integer getVipErrorCode() {
+        return getVipError().getCode();
     }
 
     // two methods below can be simplified after GWT migration

@@ -13,6 +13,8 @@ import java.util.logging.ErrorManager;
 
 import javax.sql.DataSource;
 
+import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
+import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +101,7 @@ public abstract class BaseSpringIT {
     @Autowired protected Server server;
     @Autowired protected EmailBusiness emailBusiness;
     @Autowired protected GRIDAClient gridaClient;
+    @Autowired protected GRIDAPoolClient gridaPoolClient;
     @Autowired protected GroupBusiness groupBusiness;
     @Autowired protected GroupDAO groupDAO;
     @Autowired protected List<TestConfigurer> testConfigurers;
@@ -112,7 +115,7 @@ public abstract class BaseSpringIT {
     protected final String emailUser3 = "test3@test.fr";
     protected final String emailUser4 = "test4@test.fr";
     protected final String nameGroup1 = "group1";    
-    protected String adminEmail = "test-admin@test.com";
+    protected String adminEmail = ServerMockConfig.TEST_ADMIN_EMAIL;
 
     protected User user1;
     protected User user2;
@@ -133,6 +136,15 @@ public abstract class BaseSpringIT {
         for (TestConfigurer testConfigurer : testConfigurers) {
             testConfigurer.setUpBeforeEachTest();
         }
+    }
+
+    protected void resetGridaMocks() {
+        Mockito.reset(gridaClient);
+        Mockito.reset(gridaPoolClient);
+    }
+
+    public GRIDAClient getGridaClient() {
+        return gridaClient;
     }
 
     protected void assertRowsNbInTable(String tableName, int expectedNb) {
@@ -179,8 +191,11 @@ public abstract class BaseSpringIT {
         return createUserInGroups(userEmail, nameSuffix, groupName);
     }
 
-    public void createGroup(String groupName) throws VipException {
-        groupBusiness.add(new Group(groupName, true, GroupType.APPLICATION));
+    public Group createGroup(String groupName) throws VipException {
+        Group group = new Group(groupName, true, GroupType.APPLICATION);
+        groupBusiness.add(group);
+        Mockito.reset(gridaClient); // forget createFolder call
+        return group;
     }
 
     public void createGroup(String groupName, GroupType type) throws VipException {
@@ -197,13 +212,17 @@ public abstract class BaseSpringIT {
 
     public void setAdminContext() throws VipException, GRIDAClientException {
         SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
-        User adminUser = userBusiness.getUserWithGroups(adminEmail);
+        User adminUser = getAdminUser();
 
         // we need to create a different context object since SecurityContextHolder hold a reference
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(provider.createAuthenticationFromUser(adminUser));
 
         SecurityContextHolder.setContext(context);
+    }
+
+    public User getAdminUser() throws VipException {
+        return userBusiness.getUserWithGroups(adminEmail);
     }
 
     protected <E extends Exception> void asAdminContext(CheckedRunnable<E> action) throws E, VipException, GRIDAClientException {

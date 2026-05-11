@@ -56,6 +56,13 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>fr.insalyon.creatis</groupId>
+            <artifactId>vip-datamanager</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 
         <!-- End test dependencies -->
 
