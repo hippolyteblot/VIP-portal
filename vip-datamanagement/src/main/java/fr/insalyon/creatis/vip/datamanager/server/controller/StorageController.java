@@ -1,11 +1,13 @@
 package fr.insalyon.creatis.vip.datamanager.server.controller;
 
 import java.io.File;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -14,31 +16,24 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.HandlerMapping;
+
+import com.fasterxml.jackson.annotation.JsonView;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants;
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import fr.insalyon.creatis.vip.datamanager.models.Data;
+import fr.insalyon.creatis.vip.datamanager.models.DataManagementError;
 import fr.insalyon.creatis.vip.datamanager.models.PoolOperation;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageCreateDirectoryRequest;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageDownloadRequest;
-import fr.insalyon.creatis.vip.datamanager.server.controller.dto.StorageOperationResponse;
+import fr.insalyon.creatis.vip.datamanager.models.StorageDownloadRequest;
 import fr.insalyon.creatis.vip.datamanager.server.business.StorageBusiness;
 
 @RestController
 @RequestMapping("/storage")
 public class StorageController {
+
+    private static final Logger logger = LoggerFactory.getLogger(StorageController.class);
 
     private final StorageBusiness storageBusiness;
     @Autowired
@@ -46,129 +41,99 @@ public class StorageController {
         this.storageBusiness = storageBusiness;
     }
 
-    @GetMapping(value = {"/directories", "/directories/**"})
+    @GetMapping(value = {"/directories", "/directories/{*path}"})
     public List<Data> listDirectory(
-            HttpServletRequest request,
+            @PathVariable(required = false) String path,
             @RequestParam(defaultValue = "false") boolean refresh) throws VipException {
-        String resolvedPath = resolvePath(request);
+        // TODO : handle refresh
+        String resolvedPath = resolveStoragePath(path);
         return storageBusiness.listDir(resolvedPath);
     }
 
-    private String resolvePath(HttpServletRequest request) {
-        String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
-        String pathWithinHandlerMapping = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-
-        if (bestMatchPattern != null && pathWithinHandlerMapping != null) {
-            String extracted = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, pathWithinHandlerMapping);
-            if (extracted != null && !extracted.isBlank()) {
-                String decoded = URLDecoder.decode(extracted, StandardCharsets.UTF_8);
-                String normalized = decoded.replaceAll("/{2,}", "/");
-                return normalized.startsWith("/") ? normalized : "/" + normalized;
-            }
+    private String resolveStoragePath(String path) throws VipException {
+        if (path == null || path.isBlank()) {
+            logger.info("null or empty path provided in StorageController : {}", path);
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH, path, "must start with '/vip");
         }
-
-        return DataManagerConstants.ROOT;
+        return path.startsWith("/") ? path : "/" + path;
     }
 
     // GET /storage/<path>
-    @GetMapping(value = "/**")
-    public Data getPathMetadata(HttpServletRequest request) throws VipException {
-        // TODO : Not implemented yet
-        return new Data();
+    @GetMapping(value = {"", "/", "/{*path}"})
+    public Data getPathMetadata(@PathVariable(required = false) String path) throws VipException {
+        throw new VipException("Not implemented");
     }
 
+    @JsonView(DataViews.User.class)
     @PostMapping(value = "/uploads", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<StorageOperationResponse> uploadFile(
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public PoolOperation uploadFile(
             @RequestPart("file") MultipartFile file,
-            @RequestPart("destination") String destination) throws VipException, java.io.IOException {
-        String targetPath = buildUploadTargetPath(destination, file);
-        String operationId = storageBusiness.submitUploadFromInputStream(
-                targetPath,
-                file.getInputStream(),
-                file.getOriginalFilename());
-
-        return ResponseEntity
-                .status(HttpStatus.ACCEPTED)
-                .body(new StorageOperationResponse(operationId, PoolOperation.Status.Queued.name()));
-    }
-
-    @PostMapping(value = "/directories", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createDirectory(
-            @RequestBody StorageCreateDirectoryRequest request) throws VipException {
-        if (request == null || request.getPath() == null || request.getPath().isBlank()) {
-            throw new VipException("Directory path is required");
-        }
-        if (request.getName() == null || request.getName().isBlank()) {
-            throw new VipException("Directory name is required");
+            @RequestPart("destination") String destination) throws VipException {
+        String resolvedPath = resolveStoragePath(destination);
+        if (file.getOriginalFilename() == null || file.getOriginalFilename().isBlank()) {
+            throw new VipException(DataManagementError.INVALID_UPLOAD, resolvedPath, "Upload file name is required");
         }
 
-        storageBusiness.createDirectory(request.getPath(), request.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        try {
+            String operationId = storageBusiness.submitUploadFromInputStream(
+                    destination,
+                    file.getOriginalFilename(),
+                    file.getInputStream());
+            return new PoolOperation(operationId, PoolOperation.Status.Queued);
+        } catch (IOException e) {
+            throw new VipException(e);
+        }
     }
 
-    @GetMapping(value = "/operations/{operationId}")
-    public ResponseEntity<StorageOperationResponse> getOperationStatus(
-            @PathVariable String operationId) throws VipException {
-        PoolOperation.Status status = storageBusiness.getOperationStatus(operationId);
-        return ResponseEntity.ok(new StorageOperationResponse(operationId, status.name()));
+    @PostMapping(value = "/directories/{*path}")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createDirectory(@PathVariable String path) throws VipException {
+        String fullPath = resolveStoragePath(path);
+        storageBusiness.createDirectory(fullPath);
     }
 
-    @PostMapping(value = "/downloads", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<StorageOperationResponse> submitDownload(
-            @RequestBody StorageDownloadRequest request) throws VipException {
+    @JsonView(DataViews.User.class)
+    @PostMapping(value = "/downloads")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public PoolOperation submitDownload(
+            @RequestBody @NotNull StorageDownloadRequest request) throws VipException {
         if (request == null || request.getPath() == null || request.getPath().isBlank()) {
-            throw new VipException("Download path is required");
+            logger.info("null or empty path provided in StorageController");
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH,
+                    request == null ? null : request.getPath(),
+                    "must start with '/vip");
         }
 
         String operationId = storageBusiness.submitDownload(request.getPath());
-        return ResponseEntity
-                .status(HttpStatus.ACCEPTED)
-                .body(new StorageOperationResponse(operationId, PoolOperation.Status.Queued.name()));
+        return new PoolOperation(operationId, PoolOperation.Status.Queued);
+    }
+
+    @JsonView(DataViews.User.class)
+    @GetMapping(value = "/operations/{operationId}")
+    public PoolOperation getOperationStatus(@PathVariable String operationId) throws VipException {
+        return storageBusiness.getOperation(operationId);
     }
 
     @GetMapping(value = "/downloads/{operationId}/content")
-    public ResponseEntity<?> getDownloadContent(@PathVariable String operationId) throws VipException {
-        PoolOperation.Status status = storageBusiness.getOperationStatus(operationId);
-        if (!PoolOperation.Status.Done.equals(status)) {
-            return ResponseEntity
-                    .status(HttpStatus.ACCEPTED)
-                    .body(new StorageOperationResponse(operationId, status.name()));
-        }
+    public ResponseEntity<Resource> getDownloadContent(@PathVariable String operationId) throws VipException {
+        File file = storageBusiness.getDownloadFileIfReady(operationId);
 
-        File file = storageBusiness.getDownloadFileByOperationId(operationId);
         Resource resource = new FileSystemResource(file);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(file.length())
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment()
-                                .filename(file.getName(), StandardCharsets.UTF_8)
+                                .filename(file.getName())
                                 .build()
                                 .toString())
                 .body(resource);
     }
 
-    @DeleteMapping(value = "/**")
-    public ResponseEntity<Void> deleteFile(HttpServletRequest request) throws VipException {
-        String path = resolvePath(request);
-        storageBusiness.deletePath(path);
-        return ResponseEntity.noContent().build();
-    }
-
-    private String buildUploadTargetPath(String destination, MultipartFile file) throws VipException {
-        if (destination == null || destination.isBlank()) {
-            throw new VipException("Upload destination is required");
-        }
-
-        String fileName = file.getOriginalFilename();
-        if (fileName == null || fileName.isBlank()) {
-            throw new VipException("Upload file name is required");
-        }
-
-        String normalizedDestination = destination.startsWith("/") ? destination : "/" + destination;
-        if (normalizedDestination.endsWith("/")) {
-            return normalizedDestination + fileName;
-        }
-        return normalizedDestination + "/" + fileName;
+    @DeleteMapping(value = "/{*path}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteResource(@PathVariable String path) throws VipException {
+        String resolvedPath = resolveStoragePath(path);
+        storageBusiness.deletePath(resolvedPath);
     }
 }

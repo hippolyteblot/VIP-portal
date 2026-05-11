@@ -47,6 +47,12 @@ public class UserController {
     return userBusiness.getAll(offset, quantity);
     }
 
+    @GetMapping(value = "me")
+    public User getCurrentUser() throws VipException {
+        return userBusiness.getCurrentUser();
+    }
+
+
     @GetMapping(value = "{id}")
     public User get(@PathVariable String id) throws VipException {
         User user = userBusiness.get(id);

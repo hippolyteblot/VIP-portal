@@ -38,8 +38,6 @@ abstract public class BaseWebSpringIT extends BaseSpringIT {
     protected ResourceLoader resourceLoader;
     @Autowired
     protected UserDAO userDAO;
-    @Autowired
-    protected GRIDAClient gridaClient;
 
     @Value("${test.servletPath}")
     private String servletPath;

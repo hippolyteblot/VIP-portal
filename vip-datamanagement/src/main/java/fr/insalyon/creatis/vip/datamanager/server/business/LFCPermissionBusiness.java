@@ -9,6 +9,10 @@ import static fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants.VO
 
 import java.nio.file.Paths;
 
+import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
+import fr.insalyon.creatis.vip.datamanager.models.DataManagementError;
+import fr.insalyon.creatis.vip.datamanager.models.VipStoragePath;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,17 +25,71 @@ import fr.insalyon.creatis.vip.core.models.User;
 
 @Service
 @Transactional
-public class LFCPermissionBusiness {
+public class LFCPermissionBusiness extends CommonBusiness {
+
+    private GroupBusiness groupBusiness;
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-
     @Autowired
-    public LFCPermissionBusiness() {
+    public LFCPermissionBusiness(GroupBusiness groupBusiness) {
+        this.groupBusiness = groupBusiness;
     }
 
     public enum LFCAccessType {
         READ, UPLOAD, DELETE
+    }
+
+    public void checkLFCPathPermission(VipStoragePath path, LFCAccessType accessType) throws VipException {
+        checkLFCPathPermission(path, accessType, true);
+    }
+
+    public void checkLFCPathPermission(VipStoragePath path, LFCAccessType accessType, Boolean enableAdminArea) throws VipException {
+        // cannot write/delete in /vip or a subdir of it
+        if (path.impossibleToRemove() && accessType != LFCAccessType.READ ) {
+            logger.info("'{}' trying to upload or delete in a root directory '{}'", getUserEmail(), path);
+            throw new VipException(DataManagementError.STORAGE_PERMISSION_ERROR, path, "Impossible to upload or delete this directory");
+        }
+        // READ ok on /vip
+        // everything ok in /vip/Home
+        if (path.isRootPath() || path.isHomePath()) {
+            return;
+        }
+        // admin area
+        if (path.isAdminArea()) {
+            if ( ! getUser().isSystemAdministrator()) {
+                logger.info("Non admin '{}' trying to access an admin area on '{}'", getUserEmail(), path);
+                throw new VipException(DataManagementError.STORAGE_PERMISSION_ERROR, path, "Impossible to access this directory");
+            }
+            else if ( ! enableAdminArea) {
+                logger.error("Admin '{}' trying to access an admin area on '{}'", getUserEmail(), path);
+                throw new VipException(DataManagementError.STORAGE_PERMISSION_ERROR, path, "Impossible to access this directory");
+            }
+            return;
+        }
+        // only group left normally
+        if ( ! path.isGroupPath()) {
+            logger.error("Unknown type path, should not happen ({}). User : {}", path, getUserEmail());
+            throw new VipException(DataManagementError.INVALID_STORAGE_PATH, path, "Unknown type path");
+        }
+        // admin ok
+        if ( getUser().isSystemAdministrator() ) {
+            if ( groupBusiness.getByName(path.getGroupName()) == null) {
+                logger.error("Admin '{}' trying to access not-existing group '{}'. Complete path : {}", getUserEmail(), path.getGroupName(), path);
+                throw new VipException(DataManagementError.INVALID_STORAGE_PATH, path, "Group does not exist");
+            }
+            return;
+        }
+        // non-admin must have access
+        if ( ! getUser().hasGroupAccess(path.getGroupName())) {
+            logger.info("({}) Trying to access an unauthorized group '{}'. Complete path : '{}'", getUserEmail(), path.getGroupName(), path);
+            throw new VipException(DataManagementError.STORAGE_PERMISSION_ERROR, path, "Group not authorized");
+        }
+        // beginner cant write/delete in groups folder
+        if (accessType != LFCPermissionBusiness.LFCAccessType.READ && getUser().getLevel() == UserLevel.Beginner) {
+            logger.error("({}) Beginner user try to upload/delete in a group '{}'. Complete path {}", getUserEmail(), path.getGroupName(), path);
+            throw new VipException(DataManagementError.STORAGE_PERMISSION_ERROR, path, "Group read-only");
+        }
     }
 
     public Boolean isLFCPathAllowed(User user, String path, LFCAccessType LFCAccessType, Boolean enableAdminArea)
@@ -117,7 +175,7 @@ public class LFCPermissionBusiness {
         }
         // user must have access to this group
         if (!user.hasGroupAccess(groupName)) {
-            logger.error("({}) Trying to access an unauthorized goup '{}'",
+            logger.error("({}) Trying to access an unauthorized group '{}'",
                     user.getEmail(), groupName);
             return false;
         }

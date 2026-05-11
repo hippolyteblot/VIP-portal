@@ -41,10 +41,12 @@ public class DataApiBusinessTest {
 
         // Configure
         when(lfcPermissionBusiness.isLFCPathAllowed(baseUser2, lfcPath, LFCPermissionBusiness.LFCAccessType.UPLOAD, true)).thenReturn(true);
-        when(storageBusiness.doesFileExist(lfcParentPath)).thenReturn(true);
+        when(storageBusiness.doesPathExist(lfcParentPath)).thenReturn(true);
 
         // Doing it
-        DataApiBusiness sut = new DataApiBusiness(server, () -> baseUser2, lfcPermissionBusiness, storageBusiness);
+        DataApiBusiness sut = new DataApiBusiness(storageBusiness);
+        sut.setServer(server);
+        sut.setUserSupplier(() -> baseUser2);
         sut.uploadCustomData(lfcPath, uploadData);
 
         // Verify

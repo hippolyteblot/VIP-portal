@@ -1,13 +1,17 @@
 package fr.insalyon.creatis.vip.datamanager.models;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import com.fasterxml.jackson.annotation.JsonView;
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 /**
  *
  * @author Rafael Silva
  */
+@JsonView(DataViews.User.class)
 public class Data implements IsSerializable {
 
     public enum Type {
