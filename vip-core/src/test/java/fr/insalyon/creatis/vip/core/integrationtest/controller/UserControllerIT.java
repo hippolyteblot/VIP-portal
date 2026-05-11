@@ -23,8 +23,8 @@ import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.integrationtest.BaseInternalApiSpringIT;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.GroupType;
-import fr.insalyon.creatis.vip.core.models.SignUpForm;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 public class UserControllerIT extends BaseInternalApiSpringIT {
@@ -35,7 +35,7 @@ public class UserControllerIT extends BaseInternalApiSpringIT {
     private User testUser;
     private Group privateGroup;
     private Group publicGroup;
-    private SignUpForm form;
+    private UserAndPassword form;
 
     @BeforeEach
     @Override
@@ -57,9 +57,10 @@ public class UserControllerIT extends BaseInternalApiSpringIT {
         testUser = new User(CoreUtil.createUUID(), "test", "test", "test@insa.fr", "test", UserLevel.Beginner,
                 CountryCode.fr);
         testUser.setId(null);
-        form = new SignUpForm();
+        form = new UserAndPassword();
         form.comment = "test";
         form.user = testUser;
+        form.password = "testPassword123";
     }
 
     private Map<Group, GROUP_ROLE> asMapGroup(Set<Group> groups) {
