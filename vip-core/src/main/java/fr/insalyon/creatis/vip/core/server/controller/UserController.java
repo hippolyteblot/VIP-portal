@@ -84,16 +84,11 @@ public class UserController {
             logger.warn("Signup rejected: id must be null for email='{}'", form.user.getEmail());
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "ID must be empty!");
         }
-        try {
-            // Set password on user object from the separate password field
-            form.user.setPassword(form.password);
-            // the returned data may be partial, but enough for the frontend to do it own stuff!
-            User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
-            logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
-            return createdUser;
-        } catch (VipException ex) {
-            logger.error("Signup failed for email='{}': {}", form.user.getEmail(), ex.getMessage(), ex);
-            throw ex;
-        }
+        // Set password on user object from the separate password field
+        form.user.setPassword(form.password);
+        // the returned data may be partial, but enough for the frontend to do it own stuff!
+        User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+        logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
+        return createdUser;
     }
 }
