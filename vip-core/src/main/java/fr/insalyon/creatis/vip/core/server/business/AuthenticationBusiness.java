@@ -65,6 +65,9 @@ public class AuthenticationBusiness extends CommonBusiness {
     @VIPExternalSafe
     public User signup(User user, String comments, boolean automaticCreation, boolean mapPrivateGroups, Set<Group> groups)
             throws VipException {
+        logger.info("Starting signup flow for email='{}' (automaticCreation={}, mapPrivateGroups={})",
+                user != null ? user.getEmail() : null, automaticCreation, mapPrivateGroups);
+
         // should be unauthentified or admin (related to internal methods with asAdminContext)
         if (getUser() != null && ! getUserLevel().equals(UserLevel.Administrator)) { 
             throw new VipException(DefaultError.UNAUTHENTICATED_ONLY);
@@ -146,6 +149,9 @@ public class AuthenticationBusiness extends CommonBusiness {
                 groupsString.append(group.getName()).append(", ");
             }
 
+            logger.info("Signup persistence succeeded for email='{}' with generatedId='{}'",
+                user.getEmail(), user.getId());
+
             if (!automaticCreation) {
                 String emailContent = emailTemplateUtils.registrationUserEmail(user);
                 logger.info("Sending confirmation email to '" + user.getEmail() + "'.");
@@ -162,6 +168,7 @@ public class AuthenticationBusiness extends CommonBusiness {
                         false, user.getEmail());
             }
 
+            logger.info("Signup flow completed for email='{}'", user.getEmail());
             return user;
         } catch (GRIDAClientException | UnsupportedEncodingException | NoSuchAlgorithmException ex) {
             logger.error("Error signing up user {}", user.getEmail(), ex);

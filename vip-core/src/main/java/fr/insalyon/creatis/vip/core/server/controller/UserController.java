@@ -1,6 +1,7 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
-import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -16,8 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.ActivationForm;
-import fr.insalyon.creatis.vip.core.models.SignUpForm;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
@@ -29,6 +30,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     private final UserBusiness userBusiness;
     private final AuthenticationBusiness authenticationBusiness;
@@ -79,12 +82,21 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody @Valid SignUpForm form) throws VipException {
+    public User create(@RequestBody @Valid UserAndPassword form) throws VipException {
+
+        logger.info("Signup request received: email='{}', country='{}', hasPassword={}, groupsCount={}",
+                form.user.getEmail(), form.user.getCountryCode(), !form.password.isBlank(), form.user.getGroups() != null ? form.user.getGroups().size() :"no groups");
+
         if (form.user.getId() != null) {
+            logger.warn("Signup rejected: id must be null for email='{}'", form.user.getEmail());
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "ID must be empty!");
         }
+        // Set password on user object from the separate password field
+        form.user.setPassword(form.password);
         // the returned data may be partial, but enough for the frontend to do it own stuff!
-        return authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+        User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+        logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
+        return createdUser;
     }
 
     @PutMapping(value = "{id}/activate")
