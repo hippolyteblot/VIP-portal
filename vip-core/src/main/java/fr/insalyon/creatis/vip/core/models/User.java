@@ -41,7 +41,6 @@ public class User implements IsSerializable {
     private String code;
     private String folder;
     private String session;
-    @JsonIgnore
     private String password;
     private int failedAuthentications;
 
