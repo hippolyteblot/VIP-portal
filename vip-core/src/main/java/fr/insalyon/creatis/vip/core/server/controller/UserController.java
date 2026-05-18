@@ -80,6 +80,11 @@ public class UserController {
         }
     }
 
+    @PutMapping(value = "{id}/password")
+    public void updatePassword(@PathVariable String id, @RequestBody @Valid UserAndPassword form) throws VipException {
+        userBusiness.updateUserPassword(id, form);
+    }
+
     @PostMapping
     public User create(@RequestBody @Valid UserAndPassword form) throws VipException {
 
