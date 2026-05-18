@@ -19,6 +19,11 @@ interface SignUpFormPayload {
   comment: string
 }
 
+interface PasswordUpdatePayload {
+  user: { email: string }
+  password: string
+}
+
 function toSignUpFormPayload(payload: RegisterPayload): SignUpFormPayload {
   return {
     user: {
@@ -54,4 +59,14 @@ export const usersApi = {
 
   activate: (email: string, code: string) =>
     backendClient.put(`/internal/users/${encodeURIComponent(email)}/activate`, { code }).then((r) => r.data),
+
+  updatePassword: (email: string, password: string) => {
+    const payload: PasswordUpdatePayload = {
+      user: { email },
+      password,
+    }
+    return backendClient
+      .put(`/internal/users/${encodeURIComponent(email)}/password`, payload)
+      .then((r) => r.data)
+  },
 }
