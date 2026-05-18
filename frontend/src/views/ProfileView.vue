@@ -21,6 +21,7 @@ const notificationsStore = useNotificationsStore()
 const isLoading = ref(false)
 const isSavingProfile = ref(false)
 const isSavingGroups = ref(false)
+const isSavingPassword = ref(false)
 const isDeleting = ref(false)
 const isRegeneratingApiKey = ref(false)
 const isDeletingApiKey = ref(false)
@@ -234,13 +235,38 @@ async function saveGroups() {
   }
 }
 
-function submitPasswordChange() {
+async function submitPasswordChange() {
   if (passwordMismatch.value) {
     notificationsStore.error('The new passwords do not match.')
     return
   }
 
-  notificationsStore.info('Password change endpoint is not exposed in the current internal REST API yet.')
+  if (!profile.value?.email) {
+    notificationsStore.error('Unable to update password: missing user email.')
+    return
+  }
+
+  if (!passwordForm.newPassword.trim()) {
+    notificationsStore.error('New password is required.')
+    return
+  }
+
+  isSavingPassword.value = true
+  try {
+    await usersApi.updatePassword(profile.value.email, passwordForm.newPassword)
+    notificationsStore.success('Your password has been updated.')
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+  } catch (error: unknown) {
+    let message = 'Unable to update password.'
+    if (axios.isAxiosError(error) && typeof error.response?.data?.message === 'string') {
+      message = error.response.data.message
+    }
+    notificationsStore.error(message)
+  } finally {
+    isSavingPassword.value = false
+  }
 }
 
 function copyApiKey() {
@@ -381,7 +407,7 @@ onMounted(async () => {
           </div>
 
           <div class="mt-4 flex justify-end">
-            <AppButton @click="submitPasswordChange">
+            <AppButton :loading="isSavingPassword" @click="submitPasswordChange">
               Update password
             </AppButton>
           </div>
