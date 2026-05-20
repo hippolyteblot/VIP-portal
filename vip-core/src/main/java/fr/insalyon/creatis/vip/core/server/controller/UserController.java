@@ -43,7 +43,7 @@ public class UserController {
         this.authenticationBusiness = authenticationBusiness;
     }
 
-    @GetMapping
+        @GetMapping(params = "!q")
     public PrecisePage<User> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
     return userBusiness.getAll(offset, quantity);
