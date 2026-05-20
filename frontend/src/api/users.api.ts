@@ -2,6 +2,7 @@ import { backendClient } from './client'
 import type { RegisterPayload } from '@/types/auth.types'
 import type { Group } from '@/types/group.types'
 import type { ProfileUpdatePayload, ProfileUser } from '@/types/profile.types'
+import type { UserSuggestion } from '@/types/user.types'
 
 interface SignUpUserPayload {
   id: null
@@ -69,4 +70,11 @@ export const usersApi = {
       .put(`/internal/users/${encodeURIComponent(email)}/password`, payload)
       .then((r) => r.data)
   },
+
+  search: (query: string, limit = 10) =>
+    backendClient
+      .get<UserSuggestion[]>('/internal/users', {
+        params: { q: query, limit },
+      })
+      .then((r) => r.data),
 }

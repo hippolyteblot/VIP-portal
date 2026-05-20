@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
+import { usersApi } from '@/api/users.api'
 import { useMessagesStore } from '@/stores/messages.store'
 import { useFormatters } from '@/composables/useFormatters'
 import type { SendMessagePayload } from '@/types/message.types'
+import type { UserSuggestion } from '@/types/user.types'
 
 const messagesStore = useMessagesStore()
 const { formatRelativeTime } = useFormatters()
@@ -15,6 +17,12 @@ const { formatRelativeTime } = useFormatters()
 const showComposeModal = ref(false)
 const expandedId = ref<string | null>(null)
 const sendingMessage = ref(false)
+const userSuggestions = ref<UserSuggestion[]>([])
+const isSearchingUsers = ref(false)
+const activeQuery = ref('')
+const searchTimer = ref<number | null>(null)
+
+const MIN_QUERY_LENGTH = 2
 
 const newMessage = ref<SendMessagePayload & { to: string }>({
   to: '',
@@ -30,6 +38,8 @@ function resetForm() {
     body: '',
     isGroupMessage: false,
   }
+  userSuggestions.value = []
+  activeQuery.value = ''
 }
 
 async function sendMessage() {
@@ -54,6 +64,25 @@ function openComposeModal() {
   showComposeModal.value = true
 }
 
+function extractQuery(value: string): string {
+  const segments = value.split(/[;,]/)
+  return (segments[segments.length - 1] || '').trim()
+}
+
+function applySuggestion(email: string) {
+  const segments = newMessage.value.to.split(/[;,]/).map((segment) => segment.trim())
+  const nextSegments = segments.slice(0, -1).filter((segment) => segment.length > 0)
+  nextSegments.push(email)
+  newMessage.value.to = `${nextSegments.join(', ')}, `
+  userSuggestions.value = []
+  activeQuery.value = ''
+}
+
+function formatSuggestionLabel(user: UserSuggestion): string {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
+  return fullName ? `${fullName} <${user.email}>` : user.email
+}
+
 async function onMessageClick(id: string) {
   expandedId.value = expandedId.value === id ? null : id
   const msg = messagesStore.messages.find((m) => m.id === id)
@@ -65,6 +94,38 @@ async function onMessageClick(id: string) {
 onMounted(() => {
   messagesStore.fetchMessages()
 })
+
+watch(
+  () => newMessage.value.to,
+  (value) => {
+    const query = extractQuery(value)
+    activeQuery.value = query
+
+    if (searchTimer.value !== null) {
+      window.clearTimeout(searchTimer.value)
+    }
+
+    if (!query || query.length < MIN_QUERY_LENGTH) {
+      userSuggestions.value = []
+      isSearchingUsers.value = false
+      return
+    }
+
+    searchTimer.value = window.setTimeout(async () => {
+      isSearchingUsers.value = true
+      try {
+        const results = await usersApi.search(query, 10)
+        if (activeQuery.value === query) {
+          userSuggestions.value = results
+        }
+      } finally {
+        if (activeQuery.value === query) {
+          isSearchingUsers.value = false
+        }
+      }
+    }, 250)
+  },
+)
 </script>
 
 <template>
@@ -165,6 +226,29 @@ onMounted(() => {
             label="Destinataire"
             required
           />
+          <div v-if="activeQuery && (isSearchingUsers || userSuggestions.length > 0)" class="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Suggestions
+            </p>
+            <div class="mt-2 space-y-1">
+              <p v-if="isSearchingUsers" class="text-sm text-gray-500">Recherche en cours...</p>
+              <button
+                v-for="user in userSuggestions"
+                :key="user.id"
+                type="button"
+                class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm text-gray-700 hover:bg-white"
+                @click="applySuggestion(user.email)"
+              >
+                <span>{{ formatSuggestionLabel(user) }}</span>
+              </button>
+              <p
+                v-if="!isSearchingUsers && userSuggestions.length === 0"
+                class="text-sm text-gray-500"
+              >
+                Aucune suggestion
+              </p>
+            </div>
+          </div>
           <AppInput
             v-model="newMessage.subject"
             label="Sujet"
