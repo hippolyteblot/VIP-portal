@@ -5,11 +5,13 @@ import AppCard from '@/components/ui/AppCard.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
+import { groupsApi } from '@/api/groups.api'
 import { usersApi } from '@/api/users.api'
 import { useMessagesStore } from '@/stores/messages.store'
 import { useFormatters } from '@/composables/useFormatters'
 import type { SendMessagePayload } from '@/types/message.types'
 import type { UserSuggestion } from '@/types/user.types'
+import type { Group } from '@/types/group.types'
 
 const messagesStore = useMessagesStore()
 const { formatRelativeTime } = useFormatters()
@@ -17,11 +19,16 @@ const { formatRelativeTime } = useFormatters()
 const showComposeModal = ref(false)
 const expandedId = ref<string | null>(null)
 const sendingMessage = ref(false)
+const sendToAll = ref(false)
 const activeTab = ref<'received' | 'sent'>('received')
+const composeMode = ref<'users' | 'groups'>('users')
 const userSuggestions = ref<UserSuggestion[]>([])
+const groupSuggestions = ref<Group[]>([])
 const isSearchingUsers = ref(false)
+const isSearchingGroups = ref(false)
 const activeQuery = ref('')
 const searchTimer = ref<number | null>(null)
+const groupSearchTimer = ref<number | null>(null)
 
 const MIN_QUERY_LENGTH = 2
 
@@ -39,7 +46,10 @@ function resetForm() {
     body: '',
     isGroupMessage: false,
   }
+  composeMode.value = 'users'
+  sendToAll.value = false
   userSuggestions.value = []
+  groupSuggestions.value = []
   activeQuery.value = ''
 }
 
@@ -79,6 +89,15 @@ function applySuggestion(email: string) {
   activeQuery.value = ''
 }
 
+function applyGroupSuggestion(name: string) {
+  const segments = newMessage.value.to.split(/[;,]/).map((segment) => segment.trim())
+  const nextSegments = segments.slice(0, -1).filter((segment) => segment.length > 0)
+  nextSegments.push(name)
+  newMessage.value.to = `${nextSegments.join(', ')}, `
+  groupSuggestions.value = []
+  activeQuery.value = ''
+}
+
 function formatSuggestionLabel(user: UserSuggestion): string {
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
   return fullName ? `${fullName} <${user.email}>` : user.email
@@ -112,27 +131,80 @@ watch(
       window.clearTimeout(searchTimer.value)
     }
 
+    if (groupSearchTimer.value !== null) {
+      window.clearTimeout(groupSearchTimer.value)
+    }
+
     if (!query || query.length < MIN_QUERY_LENGTH) {
       userSuggestions.value = []
+      groupSuggestions.value = []
       isSearchingUsers.value = false
+      isSearchingGroups.value = false
       return
     }
 
-    searchTimer.value = window.setTimeout(async () => {
-      isSearchingUsers.value = true
-      try {
-        const results = await usersApi.search(query, 10)
-        if (activeQuery.value === query) {
-          userSuggestions.value = results
+    if (composeMode.value === 'users' && !sendToAll.value) {
+      searchTimer.value = window.setTimeout(async () => {
+        isSearchingUsers.value = true
+        try {
+          const results = await usersApi.search(query, 10)
+          if (activeQuery.value === query) {
+            userSuggestions.value = results
+          }
+        } finally {
+          if (activeQuery.value === query) {
+            isSearchingUsers.value = false
+          }
         }
-      } finally {
-        if (activeQuery.value === query) {
-          isSearchingUsers.value = false
+      }, 250)
+    }
+
+    if (composeMode.value === 'groups') {
+      groupSearchTimer.value = window.setTimeout(async () => {
+        isSearchingGroups.value = true
+        try {
+          const results = await groupsApi.search(query, 10)
+          if (activeQuery.value === query) {
+            groupSuggestions.value = results
+          }
+        } catch {
+          if (activeQuery.value === query) {
+            groupSuggestions.value = []
+          }
+        } finally {
+          if (activeQuery.value === query) {
+            isSearchingGroups.value = false
+          }
         }
-      }
-    }, 250)
+      }, 250)
+    }
   },
 )
+
+watch(sendToAll, (enabled) => {
+  if (enabled) {
+    newMessage.value.to = 'All'
+    userSuggestions.value = []
+    activeQuery.value = ''
+    return
+  }
+
+  if (newMessage.value.to.trim().toLowerCase() === 'all') {
+    newMessage.value.to = ''
+  }
+})
+
+watch(composeMode, (mode) => {
+  if (mode === 'groups') {
+    sendToAll.value = false
+    userSuggestions.value = []
+    activeQuery.value = ''
+    newMessage.value.isGroupMessage = true
+    return
+  }
+
+  newMessage.value.isGroupMessage = false
+})
 </script>
 
 <template>
@@ -295,29 +367,83 @@ watch(
           </button>
         </div>
         <form class="mt-4 space-y-4" @submit.prevent="sendMessage">
+          <div class="flex flex-wrap gap-2">
+            <AppButton
+              type="button"
+              :variant="composeMode === 'users' ? 'primary' : 'secondary'"
+              @click="composeMode = 'users'"
+            >
+              Message users
+            </AppButton>
+            <AppButton
+              type="button"
+              :variant="composeMode === 'groups' ? 'primary' : 'secondary'"
+              @click="composeMode = 'groups'"
+            >
+              Message groups
+            </AppButton>
+          </div>
           <AppInput
             v-model="newMessage.to"
-            label="Recipients"
+            :label="composeMode === 'users' ? 'Recipients' : 'Groups'"
             required
+            :disabled="sendToAll && composeMode === 'users'"
           />
-          <div v-if="activeQuery && (isSearchingUsers || userSuggestions.length > 0)" class="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <label v-if="composeMode === 'users'" class="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              v-model="sendToAll"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            />
+            Send to all users
+          </label>
+          <div
+            v-if="composeMode === 'users' && activeQuery && (isSearchingUsers || userSuggestions.length > 0)"
+            class="rounded-lg border border-gray-200 bg-white p-2 shadow-sm"
+          >
+            <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Suggestions
             </p>
-            <div class="mt-2 space-y-1">
-              <p v-if="isSearchingUsers" class="text-sm text-gray-500">Searching...</p>
+            <div class="space-y-1">
+              <p v-if="isSearchingUsers" class="px-2 text-sm text-gray-500">Searching...</p>
               <button
                 v-for="user in userSuggestions"
                 :key="user.id"
                 type="button"
-                class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm text-gray-700 hover:bg-white"
+                class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm text-gray-700 hover:bg-gray-50"
                 @click="applySuggestion(user.email)"
               >
                 <span>{{ formatSuggestionLabel(user) }}</span>
               </button>
               <p
                 v-if="!isSearchingUsers && userSuggestions.length === 0"
-                class="text-sm text-gray-500"
+                class="px-2 text-sm text-gray-500"
+              >
+                No suggestions
+              </p>
+            </div>
+          </div>
+          <div
+            v-if="composeMode === 'groups' && activeQuery && (isSearchingGroups || groupSuggestions.length > 0)"
+            class="rounded-lg border border-gray-200 bg-white p-2 shadow-sm"
+          >
+            <p class="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Group suggestions
+            </p>
+            <div class="space-y-1">
+              <p v-if="isSearchingGroups" class="px-2 text-sm text-gray-500">Searching...</p>
+              <button
+                v-for="group in groupSuggestions"
+                :key="group.name"
+                type="button"
+                class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm text-gray-700 hover:bg-gray-50"
+                @click="applyGroupSuggestion(group.name)"
+              >
+                <span>{{ group.name }}</span>
+              </button>
+              <p
+                v-if="!isSearchingGroups && groupSuggestions.length === 0"
+                class="px-2 text-sm text-gray-500"
               >
                 No suggestions
               </p>
@@ -339,14 +465,9 @@ watch(
               placeholder="Your message..."
             />
           </div>
-          <label class="flex items-center gap-2">
-            <input
-              v-model="newMessage.isGroupMessage"
-              type="checkbox"
-              class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-            />
-            <span class="text-sm text-gray-700">Group message</span>
-          </label>
+          <p class="text-xs text-gray-500">
+            Multi-recipient is supported with commas. Use "Message groups" to target a group.
+          </p>
           <div class="flex justify-end gap-2 pt-2">
             <AppButton type="button" variant="secondary" @click="showComposeModal = false">
               Cancel

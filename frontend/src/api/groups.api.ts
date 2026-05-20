@@ -12,4 +12,11 @@ export const groupsApi = {
       .get<PrecisePage<BackendGroup>>('/internal/groups', { params })
       .then((r) => r.data)
   },
+
+  search: (query: string, limit = 10) =>
+    backendClient
+      .get<BackendGroup[]>('/internal/groups', {
+        params: { q: query, limit },
+      })
+      .then((r) => r.data),
 }
