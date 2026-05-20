@@ -60,6 +60,20 @@ public class MessageController {
         }
 
         User currentUser = userBusiness.getCurrentUser();
+        if (Boolean.TRUE.equals(request.getIsGroupMessage())) {
+            for (String groupName : request.getRecipients()) {
+                if (groupName != null && !groupName.isBlank()) {
+                    messageBusiness.sendGroupMessage(
+                            currentUser,
+                            groupName,
+                            userBusiness.getUsersFromGroup(groupName),
+                            request.getSubject(),
+                            request.getMessage());
+                }
+            }
+            return;
+        }
+
         messageBusiness.sendMessage(currentUser, request.getRecipients(), request.getSubject(), request.getMessage());
     }
 

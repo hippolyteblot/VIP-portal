@@ -10,6 +10,7 @@ public class SendMessageRequest {
     private String[] recipients;
     private String subject;
     private String message;
+    private Boolean isGroupMessage;
 
     public String[] getRecipients() {
         return recipients;
@@ -33,5 +34,13 @@ public class SendMessageRequest {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public Boolean getIsGroupMessage() {
+        return isGroupMessage;
+    }
+
+    public void setIsGroupMessage(Boolean isGroupMessage) {
+        this.isGroupMessage = isGroupMessage;
     }
 }
