@@ -74,7 +74,7 @@ public class MessageController {
     }
 
     private Date toDate(Long startDate) {
-        return startDate == null ? null : new Date(startDate);
+        return startDate == null ? new Date() : new Date(startDate);
     }
 
     public static class SendMessageRequest {
