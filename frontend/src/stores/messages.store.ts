@@ -41,11 +41,17 @@ function parseRecipients(input: string): string[] {
 
 export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<MessageItem[]>([])
+  const sentMessages = ref<MessageItem[]>([])
   const isLoading = ref(false)
+  const isLoadingSent = ref(false)
   const notifications = useNotificationsStore()
 
   const sortedMessages = computed(() =>
     [...messages.value].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  )
+
+  const sortedSentMessages = computed(() =>
+    [...sentMessages.value].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   )
 
   const unreadCount = computed(() => messages.value.filter((message) => !message.read).length)
@@ -56,20 +62,28 @@ export const useMessagesStore = defineStore('messages', () => {
       const data = await messagesApi.getReceived(startDate)
       messages.value = data.map(mapMessage)
     } catch {
-      notifications.error('Impossible de charger les messages.')
+      notifications.error('Unable to load messages.')
     } finally {
       isLoading.value = false
     }
   }
 
   async function fetchSentMessages(startDate?: number) {
-    return messagesApi.getSent(startDate).then((data) => data.map(mapMessage))
+    isLoadingSent.value = true
+    try {
+      const data = await messagesApi.getSent(startDate)
+      sentMessages.value = data.map(mapMessage)
+    } catch {
+      notifications.error('Unable to load sent messages.')
+    } finally {
+      isLoadingSent.value = false
+    }
   }
 
   async function sendMessage(payload: SendMessagePayload) {
     const recipients = parseRecipients(payload.to)
     if (recipients.length === 0) {
-      notifications.error('Veuillez renseigner au moins un destinataire.')
+      notifications.error('Please provide at least one recipient.')
       return
     }
 
@@ -79,9 +93,9 @@ export const useMessagesStore = defineStore('messages', () => {
         subject: payload.subject,
         message: payload.body,
       })
-      notifications.success('Message envoyé.')
+      notifications.success('Message sent.')
     } catch {
-      notifications.error('Impossible d\'envoyer le message.')
+      notifications.error('Unable to send message.')
     }
   }
 
@@ -93,6 +107,14 @@ export const useMessagesStore = defineStore('messages', () => {
     messages.value = messages.value.filter((message) => message.id !== id)
   }
 
+  async function deleteSentMessage(id: string) {
+    const numericId = Number(id)
+    if (Number.isNaN(numericId)) return
+
+    await messagesApi.deleteSent(numericId)
+    sentMessages.value = sentMessages.value.filter((message) => message.id !== id)
+  }
+
   function markAsRead(id: string) {
     const message = messages.value.find((item) => item.id === id)
     if (message) {
@@ -102,13 +124,17 @@ export const useMessagesStore = defineStore('messages', () => {
 
   return {
     messages,
+    sentMessages,
     sortedMessages,
+    sortedSentMessages,
     unreadCount,
     isLoading,
+    isLoadingSent,
     fetchMessages,
     fetchSentMessages,
     sendMessage,
     deleteMessage,
+    deleteSentMessage,
     markAsRead,
   }
 })

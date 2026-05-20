@@ -9,7 +9,6 @@ interface SignUpUserPayload {
   firstName: string
   lastName: string
   email: string
-  password: string
   countryCode: string
   institution: string
   groups: Group[]
@@ -17,6 +16,7 @@ interface SignUpUserPayload {
 
 interface SignUpFormPayload {
   user: SignUpUserPayload
+  password: string
   comment: string
 }
 
@@ -32,12 +32,12 @@ function toSignUpFormPayload(payload: RegisterPayload): SignUpFormPayload {
       firstName: payload.firstName,
       lastName: payload.lastName,
       email: payload.email,
-      password: payload.password,
       countryCode: payload.countryCode.toLowerCase(),
       institution: payload.institution,
       // Backend signup expects a non-null groups collection.
       groups: [],
     },
+    password: payload.password,
     comment: payload.comments,
   }
 }

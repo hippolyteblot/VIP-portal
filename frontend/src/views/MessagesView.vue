@@ -17,6 +17,7 @@ const { formatRelativeTime } = useFormatters()
 const showComposeModal = ref(false)
 const expandedId = ref<string | null>(null)
 const sendingMessage = ref(false)
+const activeTab = ref<'received' | 'sent'>('received')
 const userSuggestions = ref<UserSuggestion[]>([])
 const isSearchingUsers = ref(false)
 const activeQuery = ref('')
@@ -95,6 +96,12 @@ onMounted(() => {
   messagesStore.fetchMessages()
 })
 
+watch(activeTab, (tab) => {
+  if (tab === 'sent' && messagesStore.sentMessages.length === 0) {
+    messagesStore.fetchSentMessages()
+  }
+})
+
 watch(
   () => newMessage.value.to,
   (value) => {
@@ -139,11 +146,28 @@ watch(
       </h1>
       <AppButton @click="openComposeModal">
         <Plus class="h-4 w-4" />
-        Nouveau message
+        New message
       </AppButton>
     </div>
 
-    <div class="space-y-2">
+    <div class="flex flex-wrap gap-2">
+      <AppButton
+        type="button"
+        :variant="activeTab === 'received' ? 'primary' : 'secondary'"
+        @click="activeTab = 'received'"
+      >
+        Inbox
+      </AppButton>
+      <AppButton
+        type="button"
+        :variant="activeTab === 'sent' ? 'primary' : 'secondary'"
+        @click="activeTab = 'sent'"
+      >
+        Sent
+      </AppButton>
+    </div>
+
+    <div v-if="activeTab === 'received'" class="space-y-2">
       <AppCard
         v-for="msg in messagesStore.sortedMessages"
         :key="msg.id"
@@ -196,11 +220,61 @@ watch(
       </AppCard>
     </div>
 
+    <div v-else class="space-y-2">
+      <AppCard
+        v-for="msg in messagesStore.sortedSentMessages"
+        :key="msg.id"
+        padding
+        hoverable
+        class="cursor-pointer"
+        @click="expandedId = expandedId === msg.id ? null : msg.id"
+      >
+        <div class="flex items-start gap-3">
+          <span class="w-2 shrink-0" />
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <p class="font-medium text-gray-900">
+                {{ msg.subject }}
+              </p>
+              <AppButton
+                variant="ghost"
+                size="sm"
+                @click.stop="messagesStore.deleteSentMessage(msg.id)"
+              >
+                <Trash2 class="h-4 w-4 text-red-600" />
+              </AppButton>
+            </div>
+            <p class="text-sm text-gray-500">
+              To {{ msg.to.join(', ') || '-' }} · {{ formatRelativeTime(msg.date) }}
+            </p>
+            <p
+              v-if="expandedId === msg.id"
+              class="mt-2 whitespace-pre-wrap text-sm text-gray-600"
+            >
+              {{ msg.body }}
+            </p>
+            <p
+              v-else
+              class="mt-1 line-clamp-2 text-sm text-gray-500"
+            >
+              {{ msg.body.slice(0, 120) }}{{ msg.body.length > 120 ? '...' : '' }}
+            </p>
+          </div>
+        </div>
+      </AppCard>
+    </div>
+
     <p
-      v-if="!messagesStore.isLoading && messagesStore.sortedMessages.length === 0"
+      v-if="activeTab === 'received' && !messagesStore.isLoading && messagesStore.sortedMessages.length === 0"
       class="py-12 text-center text-gray-500"
     >
-      Aucun message
+      No messages
+    </p>
+    <p
+      v-if="activeTab === 'sent' && !messagesStore.isLoadingSent && messagesStore.sortedSentMessages.length === 0"
+      class="py-12 text-center text-gray-500"
+    >
+      No sent messages
     </p>
 
     <div
@@ -210,12 +284,12 @@ watch(
     >
       <div class="w-full max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
         <div class="flex items-center justify-between gap-4">
-          <h2 class="text-lg font-semibold text-gray-900">Nouveau message</h2>
+          <h2 class="text-lg font-semibold text-gray-900">New message</h2>
           <button
             type="button"
             class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             @click="showComposeModal = false"
-            aria-label="Fermer"
+            aria-label="Close"
           >
             ×
           </button>
@@ -223,7 +297,7 @@ watch(
         <form class="mt-4 space-y-4" @submit.prevent="sendMessage">
           <AppInput
             v-model="newMessage.to"
-            label="Destinataire"
+            label="Recipients"
             required
           />
           <div v-if="activeQuery && (isSearchingUsers || userSuggestions.length > 0)" class="rounded-lg border border-gray-200 bg-gray-50 p-3">
@@ -231,7 +305,7 @@ watch(
               Suggestions
             </p>
             <div class="mt-2 space-y-1">
-              <p v-if="isSearchingUsers" class="text-sm text-gray-500">Recherche en cours...</p>
+              <p v-if="isSearchingUsers" class="text-sm text-gray-500">Searching...</p>
               <button
                 v-for="user in userSuggestions"
                 :key="user.id"
@@ -245,24 +319,24 @@ watch(
                 v-if="!isSearchingUsers && userSuggestions.length === 0"
                 class="text-sm text-gray-500"
               >
-                Aucune suggestion
+                No suggestions
               </p>
             </div>
           </div>
           <AppInput
             v-model="newMessage.subject"
-            label="Sujet"
+            label="Subject"
             required
           />
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">
-              Corps
+              Body
             </label>
             <textarea
               v-model="newMessage.body"
               rows="5"
               class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 disabled:bg-gray-50 disabled:text-gray-500"
-              placeholder="Votre message..."
+              placeholder="Your message..."
             />
           </div>
           <label class="flex items-center gap-2">
@@ -271,14 +345,14 @@ watch(
               type="checkbox"
               class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
-            <span class="text-sm text-gray-700">Message de groupe</span>
+            <span class="text-sm text-gray-700">Group message</span>
           </label>
           <div class="flex justify-end gap-2 pt-2">
             <AppButton type="button" variant="secondary" @click="showComposeModal = false">
-              Annuler
+              Cancel
             </AppButton>
             <AppButton type="submit" :loading="sendingMessage">
-              Envoyer
+              Send
             </AppButton>
           </div>
         </form>

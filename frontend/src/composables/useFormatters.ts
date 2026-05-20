@@ -1,5 +1,5 @@
 export function useFormatters() {
-  const relativeFormatter = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' })
+  const relativeFormatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 
   function formatRelativeTime(input: string | number | Date): string {
     const date = input instanceof Date ? input : new Date(input)
@@ -28,7 +28,7 @@ export function useFormatters() {
       return relativeFormatter.format(diffDays, 'day')
     }
 
-    return date.toLocaleDateString('fr-FR')
+    return date.toLocaleDateString('en-US')
   }
 
   return { formatRelativeTime }
