@@ -17,7 +17,9 @@ import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import fr.insalyon.creatis.vip.social.models.Message;
+import fr.insalyon.creatis.vip.social.models.SendMessageRequest;
 import fr.insalyon.creatis.vip.social.server.business.MessageBusiness;
 
 @RestController
@@ -76,34 +78,4 @@ public class MessageController {
         return startDate == null ? new Date() : new Date(startDate);
     }
 
-    public static class SendMessageRequest {
-
-        private String[] recipients;
-        private String subject;
-        private String message;
-
-        public String[] getRecipients() {
-            return recipients;
-        }
-
-        public void setRecipients(String[] recipients) {
-            this.recipients = recipients;
-        }
-
-        public String getSubject() {
-            return subject;
-        }
-
-        public void setSubject(String subject) {
-            this.subject = subject;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-    }
 }
