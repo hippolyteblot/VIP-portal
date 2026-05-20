@@ -61,6 +61,7 @@ public class MessageController {
 
         User currentUser = userBusiness.getCurrentUser();
         if (Boolean.TRUE.equals(request.getIsGroupMessage())) {
+            System.out.println("Group message to send : " + request.getSubject() + " to groups : " + String.join(", ", request.getRecipients()));
             for (String groupName : request.getRecipients()) {
                 if (groupName != null && !groupName.isBlank()) {
                     messageBusiness.sendGroupMessage(
