@@ -19,7 +19,6 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.social.models.Message;
 import fr.insalyon.creatis.vip.social.server.business.MessageBusiness;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/messages")
@@ -47,7 +46,7 @@ public class MessageController {
     }
 
     @PostMapping
-    public void sendMessage(@RequestBody @Valid SendMessageRequest request) throws VipException {
+    public void sendMessage(@RequestBody SendMessageRequest request) throws VipException {
         if (request == null || request.getRecipients() == null || request.getRecipients().length == 0) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "recipients", "Recipients are required!");
         }
