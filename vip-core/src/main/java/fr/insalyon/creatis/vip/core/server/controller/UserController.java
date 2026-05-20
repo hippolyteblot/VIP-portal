@@ -43,17 +43,17 @@ public class UserController {
         this.authenticationBusiness = authenticationBusiness;
     }
 
-        @GetMapping(params = "!q")
-    public PrecisePage<User> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
-            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
-    return userBusiness.getAll(offset, quantity);
-    }
+        @GetMapping
+        public Object list(@RequestParam(required = false) String q,
+                @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
+                @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity,
+                @RequestParam(defaultValue = "50") @Positive @Max(value = 50) int limit) throws VipException {
+            if (q != null) {
+                return userBusiness.searchUsers(q, limit);
+            }
 
-    @GetMapping(params = "q")
-    public List<User> search(@RequestParam String q,
-            @RequestParam(defaultValue = "50") @Positive @Max(value = 50) int limit) throws VipException {
-        return userBusiness.searchUsers(q, limit);
-    }
+            return userBusiness.getAll(offset, quantity);
+        }
 
     @GetMapping(value = "me")
     public User getCurrentUser() throws VipException {
