@@ -1,8 +1,10 @@
 package fr.insalyon.creatis.vip.social.models;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 import java.util.Date;
 
@@ -10,6 +12,7 @@ import java.util.Date;
  *
  * @author Rafael Silva
  */
+@JsonView(DataViews.User.class)
 public class Message implements IsSerializable {
 
     private long id;
