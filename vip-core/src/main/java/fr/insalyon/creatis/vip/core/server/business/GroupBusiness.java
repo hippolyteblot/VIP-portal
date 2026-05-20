@@ -148,7 +148,7 @@ public class GroupBusiness extends CommonBusiness {
         int safeLimit = Math.max(1, Math.min(limit, 50));
         String normalized = query.trim().toLowerCase();
 
-        return get(true, true).stream()
+        return get(false, false).stream()
                 .filter((group) -> group.getName() != null && group.getName().toLowerCase().contains(normalized))
                 .limit(safeLimit)
                 .collect(Collectors.toList());
