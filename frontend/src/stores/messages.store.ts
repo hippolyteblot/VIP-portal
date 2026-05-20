@@ -92,6 +92,7 @@ export const useMessagesStore = defineStore('messages', () => {
         recipients,
         subject: payload.subject,
         message: payload.body,
+        isGroupMessage: payload.isGroupMessage,
       })
       notifications.success('Message sent.')
     } catch {

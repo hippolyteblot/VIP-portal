@@ -22,6 +22,7 @@ interface SendMessageRequest {
   recipients: string[]
   subject: string
   message: string
+  isGroupMessage?: boolean
 }
 
 export const messagesApi = {
