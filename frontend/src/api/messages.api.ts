@@ -65,4 +65,7 @@ export const messagesApi = {
 
   deleteSent: (id: number) =>
     backendClient.delete(`/internal/messages/send/${id}`).then((r) => r.data),
+
+  markAsRead: (id: number) =>
+    backendClient.put(`/internal/messages/${id}/read`).then((r) => r.data),
 }

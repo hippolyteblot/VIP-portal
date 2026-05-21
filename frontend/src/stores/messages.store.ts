@@ -195,10 +195,18 @@ export const useMessagesStore = defineStore('messages', () => {
     sentMessages.value = sentMessages.value.filter((message) => message.id !== id)
   }
 
-  function markAsRead(id: string) {
+  async function markAsRead(id: string) {
     const message = messages.value.find((item) => item.id === id)
-    if (message) {
+    if (!message || message.isGroupMessage) return
+
+    const numericId = Number(id)
+    if (Number.isNaN(numericId)) return
+
+    try {
+      await messagesApi.markAsRead(numericId)
       message.read = true
+    } catch {
+      notifications.error('Unable to mark message as read.')
     }
   }
 
