@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -94,6 +95,12 @@ public class MessageController {
     @DeleteMapping("/send/{id}")
     public void deleteSentMessage(@PathVariable long id) throws VipException {
         messageBusiness.remove(id);
+    }
+
+    @PutMapping("/{id}/read")
+    public void markAsRead(@PathVariable long id) throws VipException {
+        User currentUser = userBusiness.getCurrentUser();
+        messageBusiness.markAsRead(id, currentUser.getEmail());
     }
 
     private Date toDate(Long startDate) {
