@@ -5,6 +5,12 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import type { MessageItem, SendMessagePayload } from '@/types/message.types'
 
+interface GroupThread {
+  name: string
+  messages: MessageItem[]
+  latestDate: string
+}
+
 function toDisplayName(user?: { email?: string; firstName?: string; lastName?: string } | null): string {
   if (!user) return 'Unknown'
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
@@ -58,8 +64,10 @@ function parseRecipients(input: string): string[] {
 export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<MessageItem[]>([])
   const sentMessages = ref<MessageItem[]>([])
+  const groupMessages = ref<MessageItem[]>([])
   const isLoading = ref(false)
   const isLoadingSent = ref(false)
+  const isLoadingGroups = ref(false)
   const notifications = useNotificationsStore()
   const authStore = useAuthStore()
 
@@ -73,12 +81,33 @@ export const useMessagesStore = defineStore('messages', () => {
 
   const unreadCount = computed(() => messages.value.filter((message) => !message.read).length)
 
+  const groupThreads = computed<GroupThread[]>(() => {
+    const grouped = groupMessages.value.reduce<Record<string, MessageItem[]>>((acc, message) => {
+      const groupName = message.groupName || 'Unknown group'
+      acc[groupName] = acc[groupName] || []
+      acc[groupName].push(message)
+      return acc
+    }, {})
+
+    return Object.entries(grouped)
+      .map(([name, items]) => {
+        const sorted = [...items].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+        )
+        return {
+          name,
+          messages: sorted,
+          latestDate: sorted[0]?.date || new Date(0).toISOString(),
+        }
+      })
+      .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
+  })
+
   async function fetchMessages(startDate?: number) {
     isLoading.value = true
     try {
       const received = await messagesApi.getReceived(startDate)
-      const groupMessages = await fetchGroupMessages(startDate)
-      messages.value = [...received.map(mapMessage), ...groupMessages.map(mapGroupMessage)]
+      messages.value = received.map(mapMessage)
     } catch {
       notifications.error('Unable to load messages.')
     } finally {
@@ -86,10 +115,13 @@ export const useMessagesStore = defineStore('messages', () => {
     }
   }
 
-  async function fetchGroupMessages(startDate?: number): Promise<BackendGroupMessage[]> {
+  async function fetchGroupMessages(startDate?: number): Promise<void> {
+    isLoadingGroups.value = true
     const groups = authStore.user?.groups ?? []
     if (groups.length === 0) {
-      return []
+      groupMessages.value = []
+      isLoadingGroups.value = false
+      return
     }
 
     const results = await Promise.allSettled(
@@ -111,7 +143,8 @@ export const useMessagesStore = defineStore('messages', () => {
       notifications.error('Unable to load some group messages.')
     }
 
-    return collected
+    groupMessages.value = collected.map(mapGroupMessage)
+    isLoadingGroups.value = false
   }
 
   async function fetchSentMessages(startDate?: number) {
@@ -172,12 +205,16 @@ export const useMessagesStore = defineStore('messages', () => {
   return {
     messages,
     sentMessages,
+    groupMessages,
+    groupThreads,
     sortedMessages,
     sortedSentMessages,
     unreadCount,
     isLoading,
     isLoadingSent,
+    isLoadingGroups,
     fetchMessages,
+    fetchGroupMessages,
     fetchSentMessages,
     sendMessage,
     deleteMessage,

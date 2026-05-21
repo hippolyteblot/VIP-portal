@@ -21,7 +21,7 @@ const showComposeModal = ref(false)
 const expandedId = ref<string | null>(null)
 const sendingMessage = ref(false)
 const sendToAll = ref(false)
-const activeTab = ref<'received' | 'sent'>('received')
+const activeTab = ref<'received' | 'sent' | 'groups'>('received')
 const composeMode = ref<'users' | 'groups'>('users')
 const userSuggestions = ref<UserSuggestion[]>([])
 const groupSuggestions = ref<Group[]>([])
@@ -30,6 +30,8 @@ const isSearchingGroups = ref(false)
 const activeQuery = ref('')
 const searchTimer = ref<number | null>(null)
 const groupSearchTimer = ref<number | null>(null)
+const selectedGroup = ref<string | null>(null)
+const expandedGroupMessageId = ref<string | null>(null)
 
 const MIN_QUERY_LENGTH = 2
 
@@ -76,6 +78,15 @@ function openComposeModal() {
   showComposeModal.value = true
 }
 
+function selectGroup(name: string) {
+  selectedGroup.value = name
+  expandedGroupMessageId.value = null
+}
+
+function toggleGroupMessage(id: string) {
+  expandedGroupMessageId.value = expandedGroupMessageId.value === id ? null : id
+}
+
 function extractQuery(value: string): string {
   const segments = value.split(/[;,]/)
   return (segments[segments.length - 1] || '').trim()
@@ -120,7 +131,21 @@ watch(activeTab, (tab) => {
   if (tab === 'sent' && messagesStore.sentMessages.length === 0) {
     messagesStore.fetchSentMessages()
   }
+  if (tab === 'groups' && messagesStore.groupMessages.length === 0) {
+    messagesStore.fetchGroupMessages()
+  }
 })
+
+watch(
+  () => messagesStore.groupThreads,
+  (threads) => {
+    if (activeTab.value !== 'groups') return
+    if (!selectedGroup.value && threads.length > 0) {
+      selectedGroup.value = threads[0].name
+    }
+  },
+  { deep: true },
+)
 
 watch(
   () => newMessage.value.to,
@@ -238,6 +263,13 @@ watch(composeMode, (mode) => {
       >
         Sent
       </AppButton>
+      <AppButton
+        type="button"
+        :variant="activeTab === 'groups' ? 'primary' : 'secondary'"
+        @click="activeTab = 'groups'"
+      >
+        Groups
+      </AppButton>
     </div>
 
     <div v-if="activeTab === 'received'" class="space-y-2">
@@ -301,7 +333,7 @@ watch(composeMode, (mode) => {
       </AppCard>
     </div>
 
-    <div v-else class="space-y-2">
+    <div v-else-if="activeTab === 'sent'" class="space-y-2">
       <AppCard
         v-for="msg in messagesStore.sortedSentMessages"
         :key="msg.id"
@@ -345,6 +377,76 @@ watch(composeMode, (mode) => {
       </AppCard>
     </div>
 
+    <div v-else class="flex flex-col gap-4 lg:flex-row">
+      <aside class="w-full max-w-xs space-y-2 lg:w-1/4">
+        <AppCard
+          v-for="group in messagesStore.groupThreads"
+          :key="group.name"
+          padding
+          hoverable
+          :class="[
+            'cursor-pointer transition',
+            selectedGroup === group.name ? 'border-primary-500 bg-primary-50' : 'border-transparent',
+          ]"
+          @click="selectGroup(group.name)"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <AppBadge :variant="getGroupBadgeColor(group.name)">
+                {{ group.name }}
+              </AppBadge>
+              <p class="text-xs text-gray-500">
+                {{ group.messages.length }} messages
+              </p>
+            </div>
+            <p class="text-xs text-gray-500">
+              {{ formatRelativeTime(group.latestDate) }}
+            </p>
+          </div>
+        </AppCard>
+      </aside>
+
+      <section class="flex-1 space-y-2">
+        <template v-if="selectedGroup">
+          <AppCard
+            v-for="msg in messagesStore.groupThreads.find((g) => g.name === selectedGroup)?.messages || []"
+            :key="msg.id"
+            padding
+            hoverable
+            class="cursor-pointer"
+            @click="toggleGroupMessage(msg.id)"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <p class="font-medium text-gray-900">
+                {{ msg.subject }}
+              </p>
+              <p class="text-xs text-gray-500">
+                {{ formatRelativeTime(msg.date) }}
+              </p>
+            </div>
+            <p class="text-sm text-gray-500">
+              {{ msg.from }}
+            </p>
+            <p
+              v-if="expandedGroupMessageId === msg.id"
+              class="mt-2 whitespace-pre-wrap text-sm text-gray-600"
+            >
+              {{ msg.body }}
+            </p>
+            <p
+              v-else
+              class="mt-1 line-clamp-2 text-sm text-gray-500"
+            >
+              {{ msg.body.slice(0, 160) }}{{ msg.body.length > 160 ? '...' : '' }}
+            </p>
+          </AppCard>
+        </template>
+        <p v-else class="py-12 text-center text-sm text-gray-500">
+          Sélectionnez un groupe pour afficher ses messages.
+        </p>
+      </section>
+    </div>
+
     <p
       v-if="activeTab === 'received' && !messagesStore.isLoading && messagesStore.sortedMessages.length === 0"
       class="py-12 text-center text-gray-500"
@@ -356,6 +458,12 @@ watch(composeMode, (mode) => {
       class="py-12 text-center text-gray-500"
     >
       No sent messages
+    </p>
+    <p
+      v-if="activeTab === 'groups' && !messagesStore.isLoadingGroups && messagesStore.groupThreads.length === 0"
+      class="py-12 text-center text-gray-500"
+    >
+      No group messages
     </p>
 
     <div
