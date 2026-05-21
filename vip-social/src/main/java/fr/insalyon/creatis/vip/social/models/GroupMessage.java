@@ -2,14 +2,17 @@ package fr.insalyon.creatis.vip.social.models;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 /**
  *
  * @author Rafael Silva
  */
+@JsonView(DataViews.User.class)
 public class GroupMessage implements IsSerializable {
 
     private long id;
