@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.publication.models.Publication;
@@ -41,36 +42,49 @@ public class PublicationBusiness {
         }
     }
 
-    public void removePublication(Long id)
+    public void removePublication(Long id, User currentUser)
             throws VipException {
         try {
+            Publication existing = publicationDAO.getPublication(id);
+            if (existing == null) {
+                throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), id.toString());
+            }
+
+            ensureAdminOrAuthor(currentUser, existing);
             publicationDAO.remove(id);
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
 
-    public void addPublication(Publication pub)
+    public void addPublication(Publication pub, String vipAuthor)
             throws VipException {
         try {
+            pub.setVipAuthor(vipAuthor);
+            logger.info("Create publication request: title='{}', vipAuthor='{}', vipApplication='{}'",
+                pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication());
             assertDataIsOK(pub);
             publicationDAO.add(pub);
             logger.debug("Publication created: title='{}', vipAuthor='{}', vipApplication='{}'",
                     pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication());
         } catch (DAOException ex) {
-            logger.error("Publication persistence failed on create: title='{}', vipAuthor='{}', vipApplication='{}'",
-                pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication(), ex);
             throw new VipException(ex);
         } catch (VipException ex) {
-            logger.warn("Publication validation failed on create: title='{}', vipAuthor='{}', vipApplication='{}', cause='{}'",
-                    pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication(), ex.getMessage());
             throw ex;
         }
     }
 
-    public void updatePublication(Publication pub)
+    public void updatePublication(Publication pub, User currentUser)
             throws VipException {
         try {
+            Publication existing = publicationDAO.getPublication(pub.getId());
+            if (existing == null) {
+                throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), pub.getId().toString());
+            }
+
+            ensureAdminOrAuthor(currentUser, existing);
+            // Keep creator immutable to avoid ownership spoofing from request payload.
+            pub.setVipAuthor(existing.getVipAuthor());
             assertDataIsOK(pub);
             publicationDAO.update(pub);
         } catch (DAOException ex) {
@@ -90,20 +104,24 @@ public class PublicationBusiness {
                 publication.getTypeName(),
                 publication.getVipApplication());
 
-        if (publication.getTitle() == null || publication.getTitle().trim().isEmpty()) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "title", "Title is required");
-        } else {
-            CoreUtil.assertOnlyLatin1Characters(publication.getTitle());
-        }
-        if (publication.getAuthors() == null || publication.getAuthors().trim().isEmpty()) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "authors", "Authors are required");
-        } else {
-            CoreUtil.assertOnlyLatin1Characters(publication.getAuthors());
-        }
+        assertRequiredText(publication.getTitle(), "title", "Title is required");
+        assertRequiredText(publication.getDate(), "date", "Date is required");
+        assertRequiredText(publication.getAuthors(), "authors", "Authors are required");
         if (publication.getDoi() != null && !publication.getDoi().trim().isEmpty()) {
             CoreUtil.assertOnlyLatin1Characters(publication.getDoi());
         }
+        assertRequiredText(publication.getType(), "type", "Type is required");
+        assertRequiredText(publication.getTypeName(), "typeName", "Type name is required");
+        assertRequiredText(publication.getVipApplication(), "vipApplication", "VIP application is required");
+        assertRequiredText(publication.getVipAuthor(), "vipAuthor", "VIP author is required");
         
+    }
+
+    private void assertRequiredText(String value, String fieldName, String message) throws VipException {
+        if (value == null || value.trim().isEmpty()) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, fieldName, message);
+        }
+        CoreUtil.assertOnlyLatin1Characters(value);
     }
 
     
@@ -115,6 +133,22 @@ public class PublicationBusiness {
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
+    }
+
+    private void ensureAdminOrAuthor(User currentUser, Publication publication) throws VipException {
+        if (currentUser == null) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+
+        if (!currentUser.isSystemAdministrator() && !isAuthor(currentUser, publication)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+    }
+
+    private boolean isAuthor(User currentUser, Publication publication) {
+        return currentUser.getEmail() != null
+                && publication.getVipAuthor() != null
+                && currentUser.getEmail().equalsIgnoreCase(publication.getVipAuthor());
     }
 
 

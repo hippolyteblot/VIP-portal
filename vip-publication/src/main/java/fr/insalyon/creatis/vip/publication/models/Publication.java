@@ -1,7 +1,10 @@
 package fr.insalyon.creatis.vip.publication.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
@@ -14,20 +17,27 @@ public class Publication implements IsSerializable {
     
 
     private Long id;
+    @NotBlank
     private String title;
+    @NotBlank
     private String date;
     private String doi;
+    @NotBlank
     private String authors;
-    private String type;
+    @NotNull
+    private PublicationType type;
+    @NotBlank
     private String typeName;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String vipAuthor;
+    @NotBlank
     private String vipApplication;
 
     public Publication() {
     }
     
 
-    public Publication(Long id, String title, String date, String doi, String authors, String type, String typeName, String vipAuthor, String vipApplication) {
+    public Publication(Long id, String title, String date, String doi, String authors, PublicationType type, String typeName, String vipAuthor, String vipApplication) {
         this.id = id;
         this.title = title;
         this.date = date;
@@ -45,7 +55,7 @@ public class Publication implements IsSerializable {
         this.date = date;
         this.doi = doi;
         this.authors = authors;
-        this.type = type;
+        this.type = PublicationType.fromValue(type);
         this.typeName = typeName;
         this.vipApplication = vipApplication;
     }
@@ -55,9 +65,31 @@ public class Publication implements IsSerializable {
         this.date = date;
         this.doi = doi;
         this.authors = authors;
-        this.type = type;
+        this.type = PublicationType.fromValue(type);
         this.typeName = typeName;
         this.vipAuthor=vipAuthor;
+        this.vipApplication = vipApplication;
+    }
+
+    public Publication(Long id, String title, String date, String doi, String authors, PublicationType type, String typeName, String vipApplication) {
+        this.id = id;
+        this.title = title;
+        this.date = date;
+        this.doi = doi;
+        this.authors = authors;
+        this.type = type;
+        this.typeName = typeName;
+        this.vipApplication = vipApplication;
+    }
+
+    public Publication(String title, String date, String doi, String authors, PublicationType type, String typeName, String vipAuthor, String vipApplication) {
+        this.title = title;
+        this.date = date;
+        this.doi = doi;
+        this.authors = authors;
+        this.type = type;
+        this.typeName = typeName;
+        this.vipAuthor = vipAuthor;
         this.vipApplication = vipApplication;
     }
 
@@ -102,10 +134,18 @@ public class Publication implements IsSerializable {
     }
 
     public String getType() {
+        return type == null ? null : type.toString();
+    }
+
+    public PublicationType getTypeEnum() {
         return type;
     }
 
     public void setType(String type) {
+        this.type = PublicationType.fromValue(type);
+    }
+
+    public void setType(PublicationType type) {
         this.type = type;
     }
 

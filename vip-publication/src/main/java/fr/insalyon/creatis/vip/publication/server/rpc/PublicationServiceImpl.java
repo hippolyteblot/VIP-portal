@@ -17,8 +17,8 @@ import fr.insalyon.creatis.vip.core.client.view.CoreException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.rpc.AbstractRemoteServiceServlet;
 import fr.insalyon.creatis.vip.publication.client.rpc.PublicationService;
-import fr.insalyon.creatis.vip.publication.client.view.PublicationTypes;
 import fr.insalyon.creatis.vip.publication.models.Publication;
+import fr.insalyon.creatis.vip.publication.models.PublicationType;
 import fr.insalyon.creatis.vip.publication.server.business.PublicationBusiness;
 import jakarta.servlet.ServletException;
 
@@ -53,15 +53,7 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
         try {
             User user = getSessionUser();
-            if (user.isSystemAdministrator() ||
-                    publicationBusiness.getPublication(id).getVipAuthor()
-                            .equals(user.getEmail())) {
-                publicationBusiness.removePublication(id);
-            } else {
-                logger.error("{} cannot remove publication {} because it's not his",
-                        user, id);
-                throw new CoreException("you can't remove a publication that is not yours");
-            }
+            publicationBusiness.removePublication(id, user);
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
@@ -73,8 +65,7 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
         try {
             User user = getSessionUser();
-            pub.setVipAuthor(user.getEmail());
-            publicationBusiness.addPublication(pub);
+            publicationBusiness.addPublication(pub, user.getEmail());
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
@@ -86,16 +77,7 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
         try {
             User user = getSessionUser();
-            if (user.isSystemAdministrator() ||
-                    publicationBusiness.getPublication(pub.getId()).getVipAuthor()
-                            .equals(user.getEmail())) {
-                pub.setVipAuthor(user.getEmail());
-                publicationBusiness.updatePublication(pub);
-            } else {
-                logger.error("{} cannot modify publication {} because its not his",
-                        user.getEmail(), pub.getId());
-                throw new CoreException("you can't modify a publication that is not yours");
-            }
+            publicationBusiness.updatePublication(pub, user);
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
@@ -116,7 +98,6 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
                 org.jbibtex.Value date = entry.getField(org.jbibtex.BibTeXEntry.KEY_YEAR);
                 org.jbibtex.Value doi = entry.getField(org.jbibtex.BibTeXEntry.KEY_DOI);
                 org.jbibtex.Value authors = entry.getField(org.jbibtex.BibTeXEntry.KEY_AUTHOR);
-                org.jbibtex.Value typeName = entry.getField(org.jbibtex.BibTeXEntry.KEY_BOOKTITLE);
                 String doiv;
                 if (doi == null) {
                     doiv = "";
@@ -136,15 +117,15 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
         return publications;
     }
 
-    private String parseTypePublication(String type) {
+    private PublicationType parseTypePublication(String type) {
         if (type.equalsIgnoreCase("inproceedings") || type.equalsIgnoreCase("conference")) {
-            return PublicationTypes.ConferenceArticle.toString();
+            return PublicationType.ConferenceArticle;
         } else if (type.equalsIgnoreCase("article")) {
-            return PublicationTypes.Journal.toString();
+            return PublicationType.Journal;
         } else if (type.equalsIgnoreCase("inbook") || type.equalsIgnoreCase("incollection")) {
-            return PublicationTypes.BookChapter.toString();
+            return PublicationType.BookChapter;
         } else {
-            return PublicationTypes.Other.toString();
+            return PublicationType.Other;
         }
 
     }

@@ -14,11 +14,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.publication.models.Publication;
+import fr.insalyon.creatis.vip.publication.models.PublicationType;
 import fr.insalyon.creatis.vip.publication.server.business.PublicationBusiness;
 
 @RestController
@@ -41,6 +43,11 @@ public class PublicationController {
         return publicationBusiness.getPublications();
     }
 
+    @GetMapping("/types")
+    public PublicationType[] types() {
+        return PublicationType.values();
+    }
+
     @GetMapping("{id}")
     public Publication get(@PathVariable Long id) throws VipException {
         Publication publication = publicationBusiness.getPublication(id);
@@ -52,24 +59,13 @@ public class PublicationController {
     }
 
     @PostMapping
-    public void create(@RequestBody Publication publication) throws VipException {
-        if (publication == null) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "publication", "Publication payload is required");
-        }
-
+    public void create(@Valid @RequestBody Publication publication) throws VipException {
         User currentUser = userProvider.get();
-        publication.setVipAuthor(currentUser.getEmail());
-        logger.info("Create publication request: title='{}', vipAuthor='{}', vipApplication='{}'",
-                publication.getTitle(), publication.getVipAuthor(), publication.getVipApplication());
-        publicationBusiness.addPublication(publication);
+        publicationBusiness.addPublication(publication, currentUser.getEmail());
     }
 
     @PutMapping("{id}")
-    public void update(@PathVariable Long id, @RequestBody Publication publication) throws VipException {
-        if (publication == null) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "publication", "Publication payload is required");
-        }
-
+    public void update(@PathVariable Long id, @Valid @RequestBody Publication publication) throws VipException {
         if (publication.getId() == null || !id.equals(publication.getId())) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "Publication id do not match!");
         }
@@ -77,44 +73,13 @@ public class PublicationController {
         logger.info("Update publication request: id='{}', title='{}', vipApplication='{}'",
             id, publication.getTitle(), publication.getVipApplication());
 
-        Publication existing = publicationBusiness.getPublication(id);
-        if (existing == null) {
-            throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), id.toString());
-        }
-
-        ensureAdminOrAuthor(existing);
-        // Keep creator immutable to avoid ownership spoofing from request payload.
-        publication.setVipAuthor(existing.getVipAuthor());
-
-        publicationBusiness.updatePublication(publication);
+        User currentUser = userProvider.get();
+        publicationBusiness.updatePublication(publication, currentUser);
     }
 
     @DeleteMapping("{id}")
     public void delete(@PathVariable Long id) throws VipException {
-        Publication existing = publicationBusiness.getPublication(id);
-        if (existing == null) {
-            throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), id.toString());
-        }
-
-        ensureAdminOrAuthor(existing);
-
-        publicationBusiness.removePublication(id);
-    }
-
-    private void ensureAdminOrAuthor(Publication publication) throws VipException {
         User currentUser = userProvider.get();
-        if (currentUser == null) {
-            throw new VipException(DefaultError.ACCESS_DENIED);
-        }
-
-        if (!currentUser.isSystemAdministrator() && !isAuthor(currentUser, publication)) {
-            throw new VipException(DefaultError.ACCESS_DENIED);
-        }
-    }
-
-    private boolean isAuthor(User currentUser, Publication publication) {
-        return currentUser.getEmail() != null
-                && publication.getVipAuthor() != null
-                && currentUser.getEmail().equalsIgnoreCase(publication.getVipAuthor());
+        publicationBusiness.removePublication(id, currentUser);
     }
 }

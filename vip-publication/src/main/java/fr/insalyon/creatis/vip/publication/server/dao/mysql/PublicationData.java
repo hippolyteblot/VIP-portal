@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.publication.server.dao.mysql;
 
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.publication.models.Publication;
+import fr.insalyon.creatis.vip.publication.models.PublicationType;
 import fr.insalyon.creatis.vip.publication.server.dao.PublicationDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,8 +113,8 @@ public class PublicationData extends JdbcDaoSupport implements PublicationDAO {
             List<Publication> publications = new ArrayList<Publication>();
 
             while (rs.next()) {
-
-                publications.add(new Publication(rs.getLong("id"), rs.getString("title"), rs.getString("date"), rs.getString("doi"), rs.getString("authors"), rs.getString("type"), rs.getString("typeName"), rs.getString("VIPAuthor"), rs.getString("VIPApplication")));
+                PublicationType type = rs.getString("type") == null ? null : PublicationType.valueOf(rs.getString("type"));
+                publications.add(new Publication(rs.getLong("id"), rs.getString("title"), rs.getString("date"), rs.getString("doi"), rs.getString("authors"), type, rs.getString("typeName"), rs.getString("VIPAuthor"), rs.getString("VIPApplication")));
             }
 
             rs.close();
@@ -140,7 +141,8 @@ public class PublicationData extends JdbcDaoSupport implements PublicationDAO {
 
             Publication p = null;
             if (rs.next()) {
-                p = new Publication(rs.getLong("id"), rs.getString("title"), rs.getString("date"), rs.getString("doi"), rs.getString("authors"), rs.getString("type"), rs.getString("typeName"), rs.getString("VIPAuthor"), rs.getString("VIPApplication"));
+                PublicationType type = rs.getString("type") == null ? null : PublicationType.valueOf(rs.getString("type"));
+                p = new Publication(rs.getLong("id"), rs.getString("title"), rs.getString("date"), rs.getString("doi"), rs.getString("authors"), type, rs.getString("typeName"), rs.getString("VIPAuthor"), rs.getString("VIPApplication"));
             }
 
             rs.close();
