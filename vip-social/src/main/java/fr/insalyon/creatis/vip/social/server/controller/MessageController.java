@@ -18,6 +18,7 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+import fr.insalyon.creatis.vip.social.models.GroupMessage;
 import fr.insalyon.creatis.vip.social.models.Message;
 import fr.insalyon.creatis.vip.social.models.SendMessageRequest;
 import fr.insalyon.creatis.vip.social.server.business.MessageBusiness;
@@ -45,6 +46,12 @@ public class MessageController {
     public List<Message> getSentMessages(@RequestParam(required = false) Long startDate) throws VipException {
         User currentUser = userBusiness.getCurrentUser();
         return messageBusiness.getSentMessagesByUser(currentUser.getEmail(), toDate(startDate));
+    }
+
+    @GetMapping("/groups")
+    public List<GroupMessage> getGroupMessages(@RequestParam String groupName,
+            @RequestParam(required = false) Long startDate) throws VipException {
+        return messageBusiness.getGroupMessages(groupName, toDate(startDate));
     }
 
     @PostMapping
