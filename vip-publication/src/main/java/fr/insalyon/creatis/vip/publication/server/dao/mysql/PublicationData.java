@@ -101,7 +101,6 @@ public class PublicationData extends JdbcDaoSupport implements PublicationDAO {
     public List<Publication> getList() throws DAOException {
         logger.debug("PuBlicationData getList");
         try {
-            String level = null;
             PreparedStatement ps;
 
             ps = getConnection().prepareStatement("SELECT "
@@ -129,7 +128,6 @@ public class PublicationData extends JdbcDaoSupport implements PublicationDAO {
     @Override
     public Publication getPublication(Long id) throws DAOException {
         try {
-            String level = null;
             PreparedStatement ps;
 
             ps = getConnection().prepareStatement("SELECT "

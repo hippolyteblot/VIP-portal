@@ -23,9 +23,6 @@ import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 public class PublicationsIT extends BaseSpringIT {
     @Autowired
     private PublicationBusiness publicationBusiness;
-    
-    @Autowired
-    private UserBusiness userBusiness;
 
     private long idPublicationCreated;
 

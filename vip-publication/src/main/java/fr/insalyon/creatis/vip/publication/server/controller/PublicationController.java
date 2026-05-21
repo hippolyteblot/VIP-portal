@@ -82,4 +82,16 @@ public class PublicationController {
         User currentUser = userProvider.get();
         publicationBusiness.removePublication(id, currentUser);
     }
+
+    @PostMapping("/import/bibtex")
+    public List<Publication> importBibtex(@RequestBody String bibtex) throws VipException {
+        User currentUser = userProvider.get();
+        String vipEmail = currentUser == null ? null : currentUser.getEmail();
+        List<Publication> publications = publicationBusiness.parseBibtexText(bibtex, vipEmail);
+        // Persist parsed publications
+        for (Publication p : publications) {
+            publicationBusiness.addPublication(p, vipEmail);
+        }
+        return publications;
+    }
 }

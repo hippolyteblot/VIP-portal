@@ -85,36 +85,12 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
     @Override
     public List<Publication> parseBibtexText(String s) throws CoreException {
-        List<Publication> publications = new ArrayList<Publication>();
         try {
-            Reader reader = new StringReader(s);
-            org.jbibtex.BibTeXParser bibtexParser = new org.jbibtex.BibTeXParser();
-            org.jbibtex.BibTeXDatabase database = bibtexParser.parseFully(reader);
-            Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
-            Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
-            for (org.jbibtex.BibTeXEntry entry : entries) {
-                String type = entry.getType().toString();
-                org.jbibtex.Value title = entry.getField(org.jbibtex.BibTeXEntry.KEY_TITLE);
-                org.jbibtex.Value date = entry.getField(org.jbibtex.BibTeXEntry.KEY_YEAR);
-                org.jbibtex.Value doi = entry.getField(org.jbibtex.BibTeXEntry.KEY_DOI);
-                org.jbibtex.Value authors = entry.getField(org.jbibtex.BibTeXEntry.KEY_AUTHOR);
-                String doiv;
-                if (doi == null) {
-                    doiv = "";
-                } else {
-                    doiv = doi.toUserString();
-                }
-                //TODO Sorina : handle VIPApplication in this case
-                String VipApplication = "";
-                publications.add(new Publication(title.toUserString(), date.toUserString(), doiv, authors.toUserString(), parseTypePublication(type), getTypeName(entry, type), getSessionUser().getEmail(), VipApplication));
-
-            }
-
-        } catch (ParseException | TokenMgrException ex) {
-            logger.error("Error parsing publication {}", s, ex);
+            User user = getSessionUser();
+            return publicationBusiness.parseBibtexText(s, user == null ? null : user.getEmail());
+        } catch (VipException ex) {
             throw new CoreException(ex);
         }
-        return publications;
     }
 
     private PublicationType parseTypePublication(String type) {

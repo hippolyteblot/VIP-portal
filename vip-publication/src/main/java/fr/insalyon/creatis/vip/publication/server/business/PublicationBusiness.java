@@ -1,6 +1,11 @@
 package fr.insalyon.creatis.vip.publication.server.business;
 
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +18,7 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.publication.models.Publication;
+import fr.insalyon.creatis.vip.publication.models.PublicationType;
 import fr.insalyon.creatis.vip.publication.server.dao.PublicationDAO;
 
 @Service
@@ -25,6 +31,67 @@ public class PublicationBusiness {
 
     public PublicationBusiness(PublicationDAO publicationDAO) {
         this.publicationDAO = publicationDAO;
+    }
+
+    public List<Publication> parseBibtexText(String s, String vipAuthor) throws VipException {
+        List<Publication> publications = new ArrayList<>();
+        try {
+            Reader reader = new StringReader(s);
+            org.jbibtex.BibTeXParser bibtexParser = new org.jbibtex.BibTeXParser();
+            org.jbibtex.BibTeXDatabase database = bibtexParser.parseFully(reader);
+            Map<org.jbibtex.Key, org.jbibtex.BibTeXEntry> entryMap = database.getEntries();
+            Collection<org.jbibtex.BibTeXEntry> entries = entryMap.values();
+            for (org.jbibtex.BibTeXEntry entry : entries) {
+                String type = entry.getType().toString();
+                org.jbibtex.Value title = entry.getField(org.jbibtex.BibTeXEntry.KEY_TITLE);
+                org.jbibtex.Value date = entry.getField(org.jbibtex.BibTeXEntry.KEY_YEAR);
+                org.jbibtex.Value doi = entry.getField(org.jbibtex.BibTeXEntry.KEY_DOI);
+                org.jbibtex.Value authors = entry.getField(org.jbibtex.BibTeXEntry.KEY_AUTHOR);
+                String doiv = (doi == null) ? "" : doi.toUserString();
+                // TODO: handle vipApplication from bibtex entry if needed
+                String vipApplication = "";
+                publications.add(new Publication(
+                        title == null ? "" : title.toUserString(),
+                        date == null ? "" : date.toUserString(),
+                        doiv,
+                        authors == null ? "" : authors.toUserString(),
+                        parseTypePublication(type),
+                        getTypeName(entry, type),
+                        vipAuthor,
+                        vipApplication));
+            }
+
+        } catch (org.jbibtex.ParseException | org.jbibtex.TokenMgrException ex) {
+            logger.error("Error parsing publication {}", s, ex);
+            throw new VipException(ex);
+        }
+        return publications;
+    }
+
+    private PublicationType parseTypePublication(String type) {
+        if (type.equalsIgnoreCase("inproceedings") || type.equalsIgnoreCase("conference")) {
+            return PublicationType.ConferenceArticle;
+        } else if (type.equalsIgnoreCase("article")) {
+            return PublicationType.Journal;
+        } else if (type.equalsIgnoreCase("inbook") || type.equalsIgnoreCase("incollection")) {
+            return PublicationType.BookChapter;
+        } else {
+            return PublicationType.Other;
+        }
+
+    }
+
+    private String getTypeName(org.jbibtex.BibTeXEntry entry, String type) {
+        if (type.equalsIgnoreCase("inproceedings") || type.equalsIgnoreCase("conference") || type.equalsIgnoreCase("incollection")) {
+            org.jbibtex.Value v = entry.getField(org.jbibtex.BibTeXEntry.KEY_BOOKTITLE);
+            return v == null ? "" : v.toUserString();
+        } else if (type.equalsIgnoreCase("article")) {
+            org.jbibtex.Value v = entry.getField(org.jbibtex.BibTeXEntry.KEY_JOURNAL);
+            return v == null ? "" : v.toUserString();
+        } else {
+            return "";
+        }
+
     }
 
 
@@ -104,26 +171,18 @@ public class PublicationBusiness {
                 publication.getTypeName(),
                 publication.getVipApplication());
 
-        assertRequiredText(publication.getTitle(), "title", "Title is required");
-        assertRequiredText(publication.getDate(), "date", "Date is required");
-        assertRequiredText(publication.getAuthors(), "authors", "Authors are required");
+        CoreUtil.assertOnlyLatin1Characters(publication.getTitle());
+        CoreUtil.assertOnlyLatin1Characters(publication.getDate());
+        CoreUtil.assertOnlyLatin1Characters(publication.getAuthors());
         if (publication.getDoi() != null && !publication.getDoi().trim().isEmpty()) {
             CoreUtil.assertOnlyLatin1Characters(publication.getDoi());
         }
-        assertRequiredText(publication.getType(), "type", "Type is required");
-        assertRequiredText(publication.getTypeName(), "typeName", "Type name is required");
-        assertRequiredText(publication.getVipApplication(), "vipApplication", "VIP application is required");
-        assertRequiredText(publication.getVipAuthor(), "vipAuthor", "VIP author is required");
+        CoreUtil.assertOnlyLatin1Characters(publication.getType());
+        CoreUtil.assertOnlyLatin1Characters(publication.getTypeName());
+        CoreUtil.assertOnlyLatin1Characters(publication.getVipApplication());
+        CoreUtil.assertOnlyLatin1Characters(publication.getVipAuthor());
         
     }
-
-    private void assertRequiredText(String value, String fieldName, String message) throws VipException {
-        if (value == null || value.trim().isEmpty()) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, fieldName, message);
-        }
-        CoreUtil.assertOnlyLatin1Characters(value);
-    }
-
     
 
     public Publication getPublication(Long id)
