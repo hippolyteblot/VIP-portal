@@ -9,6 +9,7 @@ import { groupsApi } from '@/api/groups.api'
 import { usersApi } from '@/api/users.api'
 import { useMessagesStore } from '@/stores/messages.store'
 import { useFormatters } from '@/composables/useFormatters'
+import { getGroupBadgeColor } from '@/utils/groupColor'
 import type { SendMessagePayload } from '@/types/message.types'
 import type { UserSuggestion } from '@/types/user.types'
 import type { Group } from '@/types/group.types'
@@ -256,14 +257,22 @@ watch(composeMode, (mode) => {
           <span v-else class="w-2 shrink-0" />
           <div class="min-w-0 flex-1">
             <div class="flex flex-wrap items-start justify-between gap-2">
-              <p
-                :class="[
-                  'font-medium',
-                  msg.read ? 'text-gray-700' : 'font-bold text-gray-900',
-                ]"
-              >
-                {{ msg.subject }}
-              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <p
+                  :class="[
+                    'font-medium',
+                    msg.read ? 'text-gray-700' : 'font-bold text-gray-900',
+                  ]"
+                >
+                  {{ msg.subject }}
+                </p>
+                <AppBadge
+                  v-if="msg.groupName"
+                  :variant="getGroupBadgeColor(msg.groupName)"
+                >
+                  {{ msg.groupName }}
+                </AppBadge>
+              </div>
               <AppButton
                 variant="ghost"
                 size="sm"

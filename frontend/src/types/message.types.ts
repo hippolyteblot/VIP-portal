@@ -6,6 +6,8 @@ export interface MessageItem {
   to: string[]
   date: string
   read: boolean
+  groupName?: string
+  isGroupMessage: boolean
 }
 
 export interface SendMessagePayload {

@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { messagesApi, type BackendMessage } from '@/api/messages.api'
+import { messagesApi, type BackendGroupMessage, type BackendMessage } from '@/api/messages.api'
+import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import type { MessageItem, SendMessagePayload } from '@/types/message.types'
 
@@ -29,6 +30,21 @@ function mapMessage(message: BackendMessage): MessageItem {
     to: (message.receivers || []).map((receiver) => receiver.email || ''),
     date: toDateString(message.postedDate || message.posted),
     read: Boolean(message.read),
+    isGroupMessage: false,
+  }
+}
+
+function mapGroupMessage(message: BackendGroupMessage): MessageItem {
+  return {
+    id: `g-${message.id}`,
+    subject: message.title || '(No subject)',
+    body: message.message || '',
+    from: toDisplayName(message.sender),
+    to: [],
+    date: toDateString(message.postedDate || message.posted),
+    read: true,
+    groupName: message.groupName,
+    isGroupMessage: true,
   }
 }
 
@@ -45,6 +61,7 @@ export const useMessagesStore = defineStore('messages', () => {
   const isLoading = ref(false)
   const isLoadingSent = ref(false)
   const notifications = useNotificationsStore()
+  const authStore = useAuthStore()
 
   const sortedMessages = computed(() =>
     [...messages.value].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
@@ -59,13 +76,42 @@ export const useMessagesStore = defineStore('messages', () => {
   async function fetchMessages(startDate?: number) {
     isLoading.value = true
     try {
-      const data = await messagesApi.getReceived(startDate)
-      messages.value = data.map(mapMessage)
+      const received = await messagesApi.getReceived(startDate)
+      const groupMessages = await fetchGroupMessages(startDate)
+      messages.value = [...received.map(mapMessage), ...groupMessages.map(mapGroupMessage)]
     } catch {
       notifications.error('Unable to load messages.')
     } finally {
       isLoading.value = false
     }
+  }
+
+  async function fetchGroupMessages(startDate?: number): Promise<BackendGroupMessage[]> {
+    const groups = authStore.user?.groups ?? []
+    if (groups.length === 0) {
+      return []
+    }
+
+    const results = await Promise.allSettled(
+      groups.map((group) => messagesApi.getGroupMessages(group.name, startDate)),
+    )
+
+    let hasFailure = false
+    const collected: BackendGroupMessage[] = []
+
+    results.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        collected.push(...result.value)
+      } else {
+        hasFailure = true
+      }
+    })
+
+    if (hasFailure) {
+      notifications.error('Unable to load some group messages.')
+    }
+
+    return collected
   }
 
   async function fetchSentMessages(startDate?: number) {
