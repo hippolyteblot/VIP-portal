@@ -334,25 +334,18 @@ public class UserBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
-    public void updateUserPassword(String userId, UserAndPassword form) throws VipException {
-        if (form == null || form.password == null || form.password.isBlank()) {
+    public void updateUserPassword(String userId, String password) throws VipException {
+        if (password == null || password.isBlank()) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "password", "Password is required!");
         }
 
-        String targetEmail = userId;
-        if (form.user != null && form.user.getEmail() != null && !form.user.getEmail().isBlank()) {
-            if (!userId.equals(form.user.getEmail())) {
-                throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "User id do not match!");
-            }
-            targetEmail = form.user.getEmail();
-        }
-
+        // Ensure user can only change their own password
         User currentUser = getCurrentUser();
-        if (!currentUser.getEmail().equals(targetEmail)) {
+        if (!currentUser.getId().equals(userId)) {
             throw new VipException(DefaultError.ACCESS_DENIED);
         }
 
-        passwordBusiness.setPassword(targetEmail, form.password);
+        passwordBusiness.setPassword(currentUser.getEmail(), password);
     }
 
     public boolean testLastUpdatePublication(String email) throws VipException {
