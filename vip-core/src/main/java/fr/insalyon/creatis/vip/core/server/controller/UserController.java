@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.models.ActivationCode;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
@@ -104,5 +105,14 @@ public class UserController {
         User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
         logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
         return createdUser;
+    }
+
+    @PutMapping(value = "{id}/activate")
+    public void activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode) throws VipException {
+        User user = userBusiness.get(id);
+        if (user == null) {
+            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
+        }
+        authenticationBusiness.activate(user.getEmail(), activationCode.getCode());
     }
 }
