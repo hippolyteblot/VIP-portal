@@ -1,7 +1,6 @@
 package fr.insalyon.creatis.vip.gatelab.server.business;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
