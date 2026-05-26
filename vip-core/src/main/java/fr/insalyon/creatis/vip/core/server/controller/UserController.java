@@ -80,6 +80,14 @@ public class UserController {
         }
     }
 
+    @PutMapping(value = "{id}/password")
+    public void updatePassword(@PathVariable String id, @RequestBody @Valid UserAndPassword form) throws VipException {
+        if (!id.equals(form.user.getId())) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "User id do not match!");
+        }
+        userBusiness.updateUserPassword(id, form.password);
+    }
+
     @PostMapping
     public User create(@RequestBody @Valid UserAndPassword form) throws VipException {
 

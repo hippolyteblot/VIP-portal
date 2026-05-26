@@ -27,6 +27,7 @@ import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
@@ -44,16 +45,19 @@ public class UserBusiness extends CommonBusiness {
     private final GRIDAPoolClient gridaPoolClient;
     private final Server server;
     private final EmailTemplateUtils emailTemplateUtils;
+    private final PasswordBusiness passwordBusiness;
 
     @Autowired
     public UserBusiness(UserDAO userDAO, UsersGroupsDAO usersGroupsDAO, EmailBusiness emailBusiness,
-            GRIDAPoolClient gridaPoolClient, Server server, EmailTemplateUtils emailTemplateUtils) {
+            GRIDAPoolClient gridaPoolClient, Server server, EmailTemplateUtils emailTemplateUtils,
+            PasswordBusiness passwordBusiness) {
         this.userDAO = userDAO;
         this.usersGroupsDAO = usersGroupsDAO;
         this.emailBusiness = emailBusiness;
         this.gridaPoolClient = gridaPoolClient;
         this.server = server;
         this.emailTemplateUtils = emailTemplateUtils;
+        this.passwordBusiness = passwordBusiness;
     }
 
     public void updateUserEmail(String oldEmail, String newEmail)
@@ -327,6 +331,21 @@ public class UserBusiness extends CommonBusiness {
         userDAO.updateSession(email, session);
 
         return userDAO.get(email);
+    }
+
+    @VIPExternalSafe
+    public void updateUserPassword(String userId, String password) throws VipException {
+        if (password == null || password.isBlank()) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "password", "Password is required!");
+        }
+
+        // Ensure user can only change their own password
+        User currentUser = getCurrentUser();
+        if (!currentUser.getId().equals(userId)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+
+        passwordBusiness.setPassword(currentUser.getEmail(), password);
     }
 
     public boolean testLastUpdatePublication(String email) throws VipException {
