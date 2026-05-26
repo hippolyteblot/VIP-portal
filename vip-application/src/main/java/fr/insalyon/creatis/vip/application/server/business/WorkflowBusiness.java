@@ -455,7 +455,7 @@ public class WorkflowBusiness {
         }
     }
 
-    public Map<String, String> relaunch(String simulationID, String currentUserFolder) throws VipException {
+    public List<Map<String, String>> relaunch(String simulationID, String currentUserFolder) throws VipException {
         return getInputFileParser(currentUserFolder).parse(Path.of(server.getWorkflowsPath() + "/" + simulationID + "/inputs"));
     }
 

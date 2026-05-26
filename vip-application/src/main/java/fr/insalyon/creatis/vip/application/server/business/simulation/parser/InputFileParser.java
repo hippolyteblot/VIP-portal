@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -65,7 +67,7 @@ public class InputFileParser {
 
     // If the filePath do not contain an extension, then JSON and XML will be tested
     // the first founded file will be used
-    public Map<String, String> parse(Path path) throws VipException {
+    public List<Map<String, String>> parse(Path path) throws VipException {
         String ext = FilenameUtils.getExtension(path.toString());
 
         if (ext.isEmpty()) {
@@ -89,7 +91,7 @@ public class InputFileParser {
         }
     }
 
-    public Map<String, String> handleXML(File file) throws VipException {
+    public List<Map<String, String>> handleXML(File file) throws VipException {
         try {
             XMLHandler handler = new XMLHandler();
 
@@ -100,33 +102,58 @@ public class InputFileParser {
             reader.setContentHandler(handler);
             reader.parse(new InputSource(new FileReader(file)));
 
-            return inputs;
+            return Collections.singletonList(inputs);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             logger.error("Error parsing {}", file.getName(), e);
             throw new VipException(e);
         }
     }
 
-    public Map<String, String> handleJSON(File file) throws VipException {
+    public List<Map<String, String>> handleJSON(File file) throws VipException {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            Map<String, List<String>> data = mapper.readValue(file, new TypeReference<Map<String, List<String>>>() {
-            });
+            JsonNode root = mapper.readTree(file);
+            Map<String, List<String>> singleInputMap = new HashMap<>();
+            if (root.isArray()) {
+                // List of input maps format (API/Executions)
+                List<Map<String, List<String>>> data = mapper.convertValue(root, new TypeReference<>() {});
+                for (Map<String, List<String>> entry : data) {
+                    entry.forEach((name, items) ->
+                            singleInputMap.computeIfAbsent(name, k -> new ArrayList<>()).addAll(items));
+                }
+            } else if (root.isContainerNode()) {
+                // Single input map format (UI/Simulations)
+                Map<String, List<String>> data = mapper.convertValue(root, new TypeReference<>() {});
+                singleInputMap.putAll(data);
+            }
+            else {
+                throw new IOException("Invalid JSON format");
+            }
 
-            data.forEach((name, items) -> {
+            // Convert single input map to Map<String, String>
+            singleInputMap.forEach((name, items) -> {
+                // Filter out empty strings
+                List<String> filteredItems = items.stream()
+                        .filter(item -> item != null && !item.isEmpty())
+                        .toList();
+
+                if (filteredItems.isEmpty()) {
+                    return;
+                }
+
                 if (items.size() == 1) {
-                    String val = items.get(0);
-                    inputs.put(name, pathHandler(val));
+                    inputs.put(name, pathHandler(filteredItems.getFirst()));
                 } else {
-                    handleList(name, items);
+                    handleList(name, filteredItems);
                 }
             });
         } catch (IOException e) {
             logger.error("Error parsing {}", file.getName(), e);
             throw new VipException(e);
         }
-        return inputs;
+
+        return Collections.singletonList(inputs);
     }
 
     private String pathHandler(String path) {

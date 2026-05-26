@@ -172,21 +172,26 @@ public class ExecutionBusiness {
 
         // retrieves all input data associated with this simulation
         List<InOutData> inputs = workflowBusiness.getInputData(s.getID(), userFolder);
+        Map<String, Object> inputMap = new HashMap<>();
         for (InOutData iod : inputs) {
             String key = iod.getProcessor();
             String value = iod.getPath();
-            for (Map<String, Object> inputMap : e.getInputValues()) {
-                ((List<Object>) inputMap.computeIfAbsent(key, k -> new ArrayList<>())).add(value);
+            ((List<Object>) inputMap.computeIfAbsent(key, k -> new ArrayList<>())).add(value);
+        }
+        // In this case, we have a single input map with multiple values
+        if (!inputMap.isEmpty()) {
+            e.getInputValues().add(inputMap);
+        }
+        // retrieves results directory
+        if (!e.getInputValues().isEmpty()) {
+            List<Object> resDirList = (List<Object>) e.getInputValues().getFirst().get(RESULTS_DIRECTORY_PARAM_NAME);
+            if (resDirList == null) {
+                resDirList = new ArrayList<>();
+            }
 
-                // retrieves results directory
-                List<Object> resDirList = (List<Object>) inputMap.get(RESULTS_DIRECTORY_PARAM_NAME);
-                if (resDirList == null) {
-                    resDirList = new ArrayList<>();
-                }
-                if (!resDirList.isEmpty()) {
-                    e.setResultsLocation(resDirList);
-                    inputMap.remove(RESULTS_DIRECTORY_PARAM_NAME);
-                }
+            if (!resDirList.isEmpty()) {
+                e.setResultsLocation(resDirList);
+                e.getInputValues().getFirst().remove(RESULTS_DIRECTORY_PARAM_NAME);
             }
         }
 
@@ -424,21 +429,20 @@ public class ExecutionBusiness {
                 continue;
             }
 
-            for (Map<String, String> inputMap : mapsWithoutKey) {
-                // then ok if input has a default value (and we set it)
-                if (pp.getDefaultValue() != null) {
-                    inputMap.put(pp.getName(), pp.getDefaultValue().toString());
-                    continue;
-                }
-                // then ok if it is optional
-                if (pp.isOptional()) {
-                    continue;
-                }
-
-                // error : pp is an empty input with no default value and it is not optional
-                logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
-                throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
+            // then ok if input has a default value (and we set it)
+            if (pp.getDefaultValue() != null) {
+                mapsWithoutKey.forEach(inputMap -> inputMap.put(pp.getName(), pp.getDefaultValue().toString()));
+                continue;
             }
+
+            // then ok if it is optional
+            if (pp.isOptional()) {
+                continue;
+            }
+
+            // error : pp is an empty input with no default value and it is not optional
+            logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
+            throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
         }
 
         // fill in overriddenInputs from explicit inputs

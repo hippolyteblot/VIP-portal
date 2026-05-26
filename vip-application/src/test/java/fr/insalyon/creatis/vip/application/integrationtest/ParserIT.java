@@ -33,7 +33,7 @@ public class ParserIT extends BaseApplicationSpringIT {
         Mockito.when(server.getWorkflowsPath()).thenReturn(testWorkflowPath.getFile().getAbsolutePath());
 
         // do test
-        Map<String, String> res = workflowBusiness.relaunch(simulationId, currentUserFolder);
+        Map<String, String> res = workflowBusiness.relaunch(simulationId, currentUserFolder).getFirst();
 
         // verify
         Assertions.assertEquals(3, res.size());
@@ -42,7 +42,7 @@ public class ParserIT extends BaseApplicationSpringIT {
         Assertions.assertEquals("/vip/Home/output", res.get("results-directory"));
 
         // do test with another user. Another parser with another currentUserFolder should be used
-        res = workflowBusiness.relaunch(simulationId, "other_user");
+        res = workflowBusiness.relaunch(simulationId, "other_user").getFirst();
 
         // verify
         Assertions.assertEquals(3, res.size());
