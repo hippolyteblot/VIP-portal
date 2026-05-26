@@ -102,6 +102,9 @@ public class UserController {
     @PutMapping(value = "{id}/activate")
     public void activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode) throws VipException {
         User user = userBusiness.get(id);
+        if (user == null) {
+            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
+        }
         authenticationBusiness.activate(user.getEmail(), activationCode.getCode());
     }
 }
