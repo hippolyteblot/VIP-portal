@@ -112,7 +112,7 @@ public class PublicationData extends JdbcDaoSupport implements PublicationDAO {
             List<Publication> publications = new ArrayList<Publication>();
 
             while (rs.next()) {
-                PublicationType type = rs.getString("type") == null ? null : PublicationType.valueOf(rs.getString("type"));
+                PublicationType type = rs.getString("type") == null ? null : PublicationType.fromValue(rs.getString("type"));
                 publications.add(new Publication(rs.getLong("id"), rs.getString("title"), rs.getString("date"), rs.getString("doi"), rs.getString("authors"), type, rs.getString("typeName"), rs.getString("VIPAuthor"), rs.getString("VIPApplication")));
             }
 
@@ -139,7 +139,7 @@ public class PublicationData extends JdbcDaoSupport implements PublicationDAO {
 
             Publication p = null;
             if (rs.next()) {
-                PublicationType type = rs.getString("type") == null ? null : PublicationType.valueOf(rs.getString("type"));
+                PublicationType type = rs.getString("type") == null ? null : PublicationType.fromValue(rs.getString("type"));
                 p = new Publication(rs.getLong("id"), rs.getString("title"), rs.getString("date"), rs.getString("doi"), rs.getString("authors"), type, rs.getString("typeName"), rs.getString("VIPAuthor"), rs.getString("VIPApplication"));
             }
 
