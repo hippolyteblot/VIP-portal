@@ -124,18 +124,25 @@ const permanentTeam = [
 
 const fixedTermTeam = [
   {
+    name: 'Bertrand Pautet',
+    role: 'Research Engineer',
+    org: 'CREATIS',
+    url: null,
+    photo: '/team/bertrand_pautet.jpg',
+  },
+  {
     name: 'Guillaume Vinet',
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/guillaume_vinet.png',
+    photo: '/team/guillaume_vinet.jpg',
   },
   {
     name: 'Mayssa Rouissi',
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/mayssa_rouissi.png',
+    photo: '/team/mayssa_rouissi.jpg',
   },
   {
     name: 'Hippolyte Blot',
