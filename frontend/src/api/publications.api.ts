@@ -5,6 +5,9 @@ export const publicationsApi = {
   getAll: () =>
     backendClient.get<Publication[]>('/internal/publications').then((r) => r.data),
 
+  getTypes: () =>
+    backendClient.get<string[]>('/internal/publications/types').then((r) => r.data),
+
   getById: (id: number) =>
     backendClient.get<Publication>(`/internal/publications/${id}`).then((r) => r.data),
 
@@ -16,4 +19,7 @@ export const publicationsApi = {
 
   remove: (id: number) =>
     backendClient.delete<void>(`/internal/publications/${id}`).then((r) => r.data),
+
+  importBibtex: (bibtex: string) =>
+    backendClient.post<Publication[]>('/internal/publications/import/bibtex', bibtex).then((r) => r.data),
 }

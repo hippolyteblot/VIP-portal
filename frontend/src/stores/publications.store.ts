@@ -42,6 +42,10 @@ export const usePublicationsStore = defineStore('publications', () => {
     return publications.value
   }
 
+  async function fetchPublicationTypes() {
+    return publicationsApi.getTypes()
+  }
+
   async function createPublication(payload: PublicationInput) {
     await publicationsApi.create(payload)
     await fetchPublications()
@@ -57,14 +61,21 @@ export const usePublicationsStore = defineStore('publications', () => {
     publications.value = publications.value.filter((publication) => publication.id !== id)
   }
 
+  async function importBibtex(bibtex: string) {
+    await publicationsApi.importBibtex(bibtex)
+    await fetchPublications()
+  }
+
   return {
     publications,
     isLoading,
     searchQuery,
     filteredPublications,
     fetchPublications,
+    fetchPublicationTypes,
     createPublication,
     updatePublication,
     deletePublication,
+    importBibtex,
   }
 })

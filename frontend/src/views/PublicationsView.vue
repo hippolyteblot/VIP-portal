@@ -17,9 +17,14 @@ const publicationsStore = usePublicationsStore()
 const isSaving = ref(false)
 const isModalOpen = ref(false)
 const isEditing = ref(false)
+const addMode = ref<'classic' | 'bibtex'>('classic')
 const editingId = ref<number | null>(null)
+const isImporting = ref(false)
+const importText = ref('')
 const appOptions = ref<string[]>([])
 const isLoadingApplications = ref(false)
+const publicationTypeOptions = ref<string[]>([])
+const isLoadingPublicationTypes = ref(false)
 
 const form = reactive<PublicationInput>({
   title: '',
@@ -106,12 +111,22 @@ function resetForm() {
 
 function openCreateModal() {
   resetForm()
+  addMode.value = 'classic'
   isModalOpen.value = true
+}
+
+function setAddMode(mode: 'classic' | 'bibtex') {
+  addMode.value = mode
+  if (mode === 'classic') {
+    importText.value = ''
+  }
 }
 
 function closeModal() {
   isModalOpen.value = false
   resetForm()
+  importText.value = ''
+  addMode.value = 'classic'
 }
 
 function openEditModal(publication: Publication) {
@@ -132,6 +147,25 @@ function openEditModal(publication: Publication) {
 }
 
 async function submit() {
+  if (!isEditing.value && addMode.value === 'bibtex') {
+    if (!importText.value || !importText.value.trim()) {
+      notificationsStore.warning('Please paste BibTeX content to import.')
+      return
+    }
+
+    isImporting.value = true
+    try {
+      await publicationsStore.importBibtex(importText.value)
+      notificationsStore.success('Publications imported.')
+      closeModal()
+    } catch {
+      notificationsStore.error('Unable to import publications from BibTeX.')
+    } finally {
+      isImporting.value = false
+    }
+    return
+  }
+
   if (!form.title?.trim() || !form.authors?.trim()) {
     notificationsStore.warning('Title and authors are required.')
     return
@@ -195,8 +229,20 @@ async function fetchApplicationOptions() {
   }
 }
 
+async function fetchPublicationTypes() {
+  isLoadingPublicationTypes.value = true
+  try {
+    publicationTypeOptions.value = await publicationsStore.fetchPublicationTypes()
+  } catch {
+    notificationsStore.error('Unable to load publication types.')
+  } finally {
+    isLoadingPublicationTypes.value = false
+  }
+}
+
 onMounted(async () => {
   await fetchApplicationOptions()
+  await fetchPublicationTypes()
 
   try {
     await publicationsStore.fetchPublications()
@@ -297,18 +343,44 @@ onMounted(async () => {
               {{ isEditing ? 'Edit publication' : 'Add publication' }}
             </h2>
             <p class="mt-1 text-sm text-gray-500">
-              Fill in the publication metadata. Fields marked with * are required.
+              Fill in the publication metadata or switch to BibTeX import.
             </p>
           </div>
           <button type="button" class="text-sm text-gray-500 hover:text-gray-700" @click="closeModal">Close</button>
         </div>
 
-        <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div v-if="!isEditing" class="mt-4 flex gap-2">
+          <AppButton
+            :variant="addMode === 'classic' ? 'primary' : 'secondary'"
+            size="sm"
+            @click="setAddMode('classic')"
+          >
+            Creation classique
+          </AppButton>
+          <AppButton
+            :variant="addMode === 'bibtex' ? 'primary' : 'secondary'"
+            size="sm"
+            @click="setAddMode('bibtex')"
+          >
+            Import BibTeX
+          </AppButton>
+        </div>
+
+        <div v-if="isEditing || addMode === 'classic'" class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
           <input v-model="form.title" type="text" placeholder="Title *" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           <input v-model="form.authors" type="text" placeholder="Authors *" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           <input v-model="form.date" type="text" placeholder="Date" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           <input v-model="form.doi" type="text" placeholder="DOI" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-          <input v-model="form.type" type="text" placeholder="Type" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+          <select
+            v-model="form.type"
+            class="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            :disabled="isLoadingPublicationTypes"
+          >
+            <option value="">No type</option>
+            <option v-for="publicationType in publicationTypeOptions" :key="publicationType" :value="publicationType">
+              {{ publicationType }}
+            </option>
+          </select>
           <input v-model="form.typeName" type="text" placeholder="Type name" class="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
           <select
             v-model="form.vipApplication"
@@ -320,7 +392,16 @@ onMounted(async () => {
           </select>
         </div>
 
-        <p v-if="!isLoadingApplications && !hasApplicationOptions" class="mt-2 text-xs text-amber-700">
+        <div v-else class="mt-4">
+          <textarea
+            v-model="importText"
+            rows="12"
+            class="w-full rounded-lg border border-gray-300 p-3 text-sm font-mono"
+            placeholder="@article{...}"
+          ></textarea>
+        </div>
+
+        <p v-if="!isLoadingApplications && !hasApplicationOptions && (isEditing || addMode === 'classic')" class="mt-2 text-xs text-amber-700">
           No application available. Leave this field empty or create an application first.
         </p>
 
@@ -329,10 +410,10 @@ onMounted(async () => {
             Cancel
           </AppButton>
           <AppButton
-            :loading="isSaving"
+            :loading="isSaving || isImporting"
             @click="submit"
           >
-            {{ isEditing ? 'Update publication' : 'Create publication' }}
+            {{ isEditing ? 'Update publication' : addMode === 'bibtex' ? 'Import BibTeX' : 'Create publication' }}
           </AppButton>
         </div>
       </AppCard>
