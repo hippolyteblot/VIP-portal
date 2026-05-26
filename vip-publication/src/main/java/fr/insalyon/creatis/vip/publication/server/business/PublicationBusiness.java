@@ -179,6 +179,9 @@ public class PublicationBusiness {
         }
         CoreUtil.assertOnlyLatin1Characters(publication.getType());
         CoreUtil.assertOnlyLatin1Characters(publication.getTypeName());
+        if (publication.getVipApplication() == null || publication.getVipApplication().isBlank()) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "vipApplication", "VIP application is required!");
+        }
         CoreUtil.assertOnlyLatin1Characters(publication.getVipApplication());
         CoreUtil.assertOnlyLatin1Characters(publication.getVipAuthor());
         
