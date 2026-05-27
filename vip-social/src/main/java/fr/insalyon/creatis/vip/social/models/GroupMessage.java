@@ -3,6 +3,8 @@ package fr.insalyon.creatis.vip.social.models;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import fr.insalyon.creatis.vip.core.models.User;
@@ -15,12 +17,19 @@ import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 @JsonView(DataViews.User.class)
 public class GroupMessage implements IsSerializable {
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private long id;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private User sender;
+    @NotBlank
     private String groupName;
+    @NotBlank
     private String title;
+    @NotBlank
     private String message;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String posted;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Date postedDate;
 
     public GroupMessage() {

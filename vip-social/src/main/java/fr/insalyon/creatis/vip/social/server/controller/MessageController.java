@@ -16,37 +16,30 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.models.User;
-import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
-import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import fr.insalyon.creatis.vip.social.models.GroupMessage;
 import fr.insalyon.creatis.vip.social.models.Message;
-import fr.insalyon.creatis.vip.social.models.SendMessageRequest;
 import fr.insalyon.creatis.vip.social.server.business.MessageBusiness;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/messages")
 public class MessageController {
 
     private final MessageBusiness messageBusiness;
-    private final UserBusiness userBusiness;
 
     @Autowired
-    public MessageController(MessageBusiness messageBusiness, UserBusiness userBusiness) {
+    public MessageController(MessageBusiness messageBusiness) {
         this.messageBusiness = messageBusiness;
-        this.userBusiness = userBusiness;
     }
 
     @GetMapping
     public List<Message> getReceivedMessages(@RequestParam(required = false) Long startDate) throws VipException {
-        User currentUser = userBusiness.getCurrentUser();
-        return messageBusiness.getMessagesByUser(currentUser.getEmail(), toDate(startDate));
+        return messageBusiness.getMessagesByUser(toDate(startDate));
     }
 
     @GetMapping("/send")
     public List<Message> getSentMessages(@RequestParam(required = false) Long startDate) throws VipException {
-        User currentUser = userBusiness.getCurrentUser();
-        return messageBusiness.getSentMessagesByUser(currentUser.getEmail(), toDate(startDate));
+        return messageBusiness.getSentMessagesByUser(toDate(startDate));
     }
 
     @GetMapping("/groups")
@@ -56,40 +49,37 @@ public class MessageController {
     }
 
     @PostMapping
-    public void sendMessage(@RequestBody SendMessageRequest request) throws VipException {
-        if (request == null || request.getRecipients() == null || request.getRecipients().length == 0) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "recipients", "Recipients are required!");
-        }
-        if (request.getSubject() == null || request.getSubject().isBlank()) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "subject", "Subject is required!");
-        }
-        if (request.getMessage() == null || request.getMessage().isBlank()) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "message", "Message is required!");
+    public void postMessage(@RequestBody @Valid Message message) throws VipException {
+
+        if (message == null || message.getReceivers() == null || message.getReceivers().length == 0) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "receivers", "Receivers are required!");
         }
 
-        User currentUser = userBusiness.getCurrentUser();
-        if (Boolean.TRUE.equals(request.getIsGroupMessage())) {
-            System.out.println("Group message to send : " + request.getSubject() + " to groups : " + String.join(", ", request.getRecipients()));
-            for (String groupName : request.getRecipients()) {
-                if (groupName != null && !groupName.isBlank()) {
-                    messageBusiness.sendGroupMessage(
-                            currentUser,
-                            groupName,
-                            userBusiness.getUsersFromGroup(groupName),
-                            request.getSubject(),
-                            request.getMessage());
-                }
-            }
-            return;
+        // convert User[] receivers to String[] emails
+        String[] recipients = java.util.Arrays.stream(message.getReceivers())
+                .filter(r -> r != null && r.getEmail() != null && !r.getEmail().isBlank())
+                .map(r -> r.getEmail())
+                .toArray(String[]::new);
+
+        if (recipients.length == 0) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "receivers", "Receivers must contain at least one valid email");
         }
 
-        messageBusiness.sendMessage(currentUser, request.getRecipients(), request.getSubject(), request.getMessage());
+        messageBusiness.sendMessage(recipients, message.getTitle(), message.getMessage());
+    }
+
+    @PostMapping("/groups")
+    public void postGroupMessage(@RequestBody @Valid GroupMessage groupMessage) throws VipException {
+        if (groupMessage == null || groupMessage.getGroupName() == null || groupMessage.getGroupName().isBlank()) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "groupName", "Group name is required!");
+        }
+
+        messageBusiness.sendGroupMessage(groupMessage.getGroupName(), groupMessage.getTitle(), groupMessage.getMessage());
     }
 
     @DeleteMapping("/{id}")
     public void deleteMessage(@PathVariable long id) throws VipException {
-        User currentUser = userBusiness.getCurrentUser();
-        messageBusiness.removeByReceiver(id, currentUser.getEmail());
+        messageBusiness.removeByReceiver(id);
     }
 
     @DeleteMapping("/send/{id}")
@@ -99,8 +89,7 @@ public class MessageController {
 
     @PutMapping("/{id}/read")
     public void markAsRead(@PathVariable long id) throws VipException {
-        User currentUser = userBusiness.getCurrentUser();
-        messageBusiness.markAsRead(id, currentUser.getEmail());
+        messageBusiness.markAsRead(id);
     }
 
     private Date toDate(Long startDate) {

@@ -184,6 +184,11 @@ public class UserBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public List<User> searchUsers(String query, int limit) throws VipException {
+        // only administrators and developers can perform this search
+        if (!getUserLevel().equals(UserLevel.Administrator) && !getUserLevel().equals(UserLevel.Developer)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+
         if (query == null || query.isBlank()) {
             return List.of();
         }
@@ -195,6 +200,8 @@ public class UserBusiness extends CommonBusiness {
         return getUsers().stream()
                 .filter((user) -> matchesQuery(user, normalized))
                 .limit(safeLimit)
+                // return abbreviated User objects to avoid leaking data
+                .map(u -> new User(u.getId(), u.getFirstName(), u.getLastName()))
                 .collect(Collectors.toList());
     }
 
