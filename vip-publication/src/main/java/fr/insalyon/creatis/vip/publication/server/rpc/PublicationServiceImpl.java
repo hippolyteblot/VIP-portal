@@ -52,8 +52,7 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
         trace(logger, "Removing publication.");
 
         try {
-            User user = getSessionUser();
-            publicationBusiness.removePublication(id, user);
+            publicationBusiness.removePublication(id);
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
@@ -76,8 +75,7 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
         trace(logger, "Updating publication.");
 
         try {
-            User user = getSessionUser();
-            publicationBusiness.updatePublication(pub, user);
+            publicationBusiness.updatePublication(pub);
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
@@ -91,30 +89,6 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
-    }
-
-    private PublicationType parseTypePublication(String type) {
-        if (type.equalsIgnoreCase("inproceedings") || type.equalsIgnoreCase("conference")) {
-            return PublicationType.ConferenceArticle;
-        } else if (type.equalsIgnoreCase("article")) {
-            return PublicationType.Journal;
-        } else if (type.equalsIgnoreCase("inbook") || type.equalsIgnoreCase("incollection")) {
-            return PublicationType.BookChapter;
-        } else {
-            return PublicationType.Other;
-        }
-
-    }
-
-    private String getTypeName(org.jbibtex.BibTeXEntry entry, String type) {
-        if (type.equalsIgnoreCase("inproceedings") || type.equalsIgnoreCase("conference") || type.equalsIgnoreCase("incollection")) {
-            return entry.getField(org.jbibtex.BibTeXEntry.KEY_BOOKTITLE).toUserString();
-        } else if (type.equalsIgnoreCase("article")) {
-            return entry.getField(org.jbibtex.BibTeXEntry.KEY_JOURNAL).toUserString();
-        } else {
-            return "";
-        }
-
     }
 
 

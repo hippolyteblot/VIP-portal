@@ -109,7 +109,9 @@ public class PublicationsIT extends BaseSpringIT {
     @Test
     public void testUpdatePublication() throws VipException {
         Publication publication = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author2, author3", PublicationType.Journal, "typeName", null, publicationApplicationName);
-        publicationBusiness.updatePublication(publication, admin);
+
+        publicationBusiness.setUserSupplier(() -> admin);
+        publicationBusiness.updatePublication(publication);
 
         Assertions.assertEquals("author2, author3", publicationBusiness.getPublication(idPublicationCreated).getAuthors(), "Incorrect authors value");
 
@@ -119,6 +121,7 @@ public class PublicationsIT extends BaseSpringIT {
     public void testSetAttributesUpdatePublication() throws VipException, DAOException, GRIDAClientException {
         Publication publication = publicationBusiness.getPublication(idPublicationCreated);
 
+        publicationBusiness.setUserSupplier(() -> admin);
         asAdminContext(() -> {
             authenticationBusiness.getOrCreateUser("test1@test.fr", "institution", null);
         });
@@ -131,7 +134,7 @@ public class PublicationsIT extends BaseSpringIT {
         publication.setTypeName("typeName updated");
         publication.setTypeName("typeName updated");
 
-        publicationBusiness.updatePublication(publication, admin);
+        publicationBusiness.updatePublication(publication);
 
         // verify updated properties of publication
         Assertions.assertEquals("author2, author3", publicationBusiness.getPublication(idPublicationCreated).getAuthors(), "Incorrect publication authors");
@@ -147,7 +150,9 @@ public class PublicationsIT extends BaseSpringIT {
     @Test
     public void testCatchUpdateNonExistentPublication() throws VipException {
         Publication publication = new Publication(100L, "Publication title", "21/06/2023", "01010100", "author2, author3", PublicationType.Journal, "typeName", null, publicationApplicationName);
-        Exception exception = assertThrows(VipException.class, () -> publicationBusiness.updatePublication(publication, admin));
+
+        publicationBusiness.setUserSupplier(() -> admin);
+        Exception exception = assertThrows(VipException.class, () -> publicationBusiness.updatePublication(publication));
 
         assertTrue(StringUtils.contains(exception.getMessage(), "not found"));
 
@@ -161,7 +166,8 @@ public class PublicationsIT extends BaseSpringIT {
         publication.setAuthors("author2, author3");
         publication.setVipAuthor("nonExistent_vip_author@test.fr");
 
-        publicationBusiness.updatePublication(publication, admin);
+        publicationBusiness.setUserSupplier(() -> admin);
+        publicationBusiness.updatePublication(publication);
 
         // vipAuthor is protected by the business layer and must remain unchanged
         assertEquals("author2, author3", publicationBusiness.getPublication(idPublicationCreated).getAuthors(), "Incorrect publication authors");
@@ -200,13 +206,15 @@ public class PublicationsIT extends BaseSpringIT {
 
     @Test
     public void testRemovePublication() throws VipException {
-        publicationBusiness.removePublication(idPublicationCreated, admin);
+        publicationBusiness.setUserSupplier(() -> admin);
+        publicationBusiness.removePublication(idPublicationCreated);
         Assertions.assertEquals(0, publicationBusiness.getPublications().size(), "Incorrect number of publications");
     }
 
     @Test
     public void testCatchRemoveInexistantPublication() throws VipException {
-        Exception exception = assertThrows(VipException.class, () -> publicationBusiness.removePublication(100L, admin));
+        publicationBusiness.setUserSupplier(() -> admin);
+        Exception exception = assertThrows(VipException.class, () -> publicationBusiness.removePublication(100L));
 
         assertTrue(StringUtils.contains(exception.getMessage(), "not found"));
 

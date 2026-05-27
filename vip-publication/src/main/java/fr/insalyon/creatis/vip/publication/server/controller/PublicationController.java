@@ -73,14 +73,12 @@ public class PublicationController {
         logger.info("Update publication request: id='{}', title='{}', vipApplication='{}'",
             id, publication.getTitle(), publication.getVipApplication());
 
-        User currentUser = userProvider.get();
-        publicationBusiness.updatePublication(publication, currentUser);
+        publicationBusiness.updatePublication(publication);
     }
 
     @DeleteMapping("{id}")
     public void delete(@PathVariable Long id) throws VipException {
-        User currentUser = userProvider.get();
-        publicationBusiness.removePublication(id, currentUser);
+        publicationBusiness.removePublication(id);
     }
 
     @PostMapping("/import/bibtex")

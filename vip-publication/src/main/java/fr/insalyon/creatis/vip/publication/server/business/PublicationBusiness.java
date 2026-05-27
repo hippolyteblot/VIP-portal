@@ -16,6 +16,7 @@ import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.publication.models.Publication;
 import fr.insalyon.creatis.vip.publication.models.PublicationType;
@@ -23,7 +24,7 @@ import fr.insalyon.creatis.vip.publication.server.dao.PublicationDAO;
 
 @Service
 @Transactional
-public class PublicationBusiness {
+public class PublicationBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -109,7 +110,7 @@ public class PublicationBusiness {
         }
     }
 
-    public void removePublication(Long id, User currentUser)
+    public void removePublication(Long id)
             throws VipException {
         try {
             Publication existing = publicationDAO.getPublication(id);
@@ -117,7 +118,7 @@ public class PublicationBusiness {
                 throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), id.toString());
             }
 
-            ensureAdminOrAuthor(currentUser, existing);
+            ensureAdminOrAuthor(existing);
             publicationDAO.remove(id);
         } catch (DAOException ex) {
             throw new VipException(ex);
@@ -141,7 +142,7 @@ public class PublicationBusiness {
         }
     }
 
-    public void updatePublication(Publication pub, User currentUser)
+    public void updatePublication(Publication pub)
             throws VipException {
         try {
             Publication existing = publicationDAO.getPublication(pub.getId());
@@ -149,7 +150,7 @@ public class PublicationBusiness {
                 throw new VipException(DefaultError.NOT_FOUND, Publication.class.getSimpleName(), pub.getId().toString());
             }
 
-            ensureAdminOrAuthor(currentUser, existing);
+            ensureAdminOrAuthor(existing);
             // Keep creator immutable to avoid ownership spoofing from request payload.
             pub.setVipAuthor(existing.getVipAuthor());
             assertDataIsOK(pub);
@@ -177,13 +178,10 @@ public class PublicationBusiness {
         if (publication.getDoi() != null && !publication.getDoi().trim().isEmpty()) {
             CoreUtil.assertOnlyLatin1Characters(publication.getDoi());
         }
-        CoreUtil.assertOnlyLatin1Characters(publication.getType());
         CoreUtil.assertOnlyLatin1Characters(publication.getTypeName());
         if (publication.getVipApplication() == null || publication.getVipApplication().isBlank()) {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "vipApplication", "VIP application is required!");
         }
-        CoreUtil.assertOnlyLatin1Characters(publication.getVipApplication());
-        CoreUtil.assertOnlyLatin1Characters(publication.getVipAuthor());
         
     }
     
@@ -197,7 +195,8 @@ public class PublicationBusiness {
         }
     }
 
-    private void ensureAdminOrAuthor(User currentUser, Publication publication) throws VipException {
+    private void ensureAdminOrAuthor(Publication publication) throws VipException {
+        User currentUser = getUser();
         if (currentUser == null) {
             throw new VipException(DefaultError.ACCESS_DENIED);
         }
