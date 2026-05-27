@@ -60,8 +60,7 @@ public class PublicationController {
 
     @PostMapping
     public void create(@Valid @RequestBody Publication publication) throws VipException {
-        User currentUser = userProvider.get();
-        publicationBusiness.addPublication(publication, currentUser.getEmail());
+        publicationBusiness.addPublication(publication);
     }
 
     @PutMapping("{id}")
@@ -88,7 +87,7 @@ public class PublicationController {
         List<Publication> publications = publicationBusiness.parseBibtexText(bibtex, vipEmail);
         // Persist parsed publications
         for (Publication p : publications) {
-            publicationBusiness.addPublication(p, vipEmail);
+            publicationBusiness.addPublication(p);
         }
         return publications;
     }

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
+import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.publication.models.Publication;
@@ -42,7 +43,8 @@ public class PublicationsIT extends BaseSpringIT {
 
         // Create test publication
         Publication publication = new Publication("Publication title", "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
-        publicationBusiness.addPublication(publication, adminEmail);
+        publicationBusiness.setUserSupplier(() -> admin);
+        publicationBusiness.addPublication(publication);
         idPublicationCreated = publicationBusiness.getPublications().get(0).getId();
     }
 
@@ -65,17 +67,18 @@ public class PublicationsIT extends BaseSpringIT {
 
     @Test
     public void testAddPublication() throws VipException {
+        publicationBusiness.setUserSupplier(() -> admin);
         // With id
         Publication publication = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
-        publicationBusiness.addPublication(publication, adminEmail);
+        publicationBusiness.addPublication(publication);
 
         // Without id
         Publication publication2 = new Publication("Publication title", "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
-        publicationBusiness.addPublication(publication2, adminEmail);
+        publicationBusiness.addPublication(publication2);
 
         // Without vipAuthor
         Publication publication3 = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
-        publicationBusiness.addPublication(publication3, adminEmail);
+        publicationBusiness.addPublication(publication3);
 
         Assertions.assertEquals(4, publicationBusiness.getPublications().size(), "Incorrect publications number");
     }
@@ -85,16 +88,17 @@ public class PublicationsIT extends BaseSpringIT {
         Publication publication = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
 
         // No exception because the id is not taken into account for the object creation
-        publicationBusiness.addPublication(publication, adminEmail);
+        publicationBusiness.addPublication(publication);
     }
 
     @Test
     public void testCatchAddPublicationNonExistentVipAuthor() {
         Publication publication = new Publication(idPublicationCreated, "Publication title", "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
 
+        publicationBusiness.setUserSupplier(() -> nonExistentUser);
         Exception exception = assertThrows(
                 VipException.class, () ->
-                        publicationBusiness.addPublication(publication, "nonExistent_vip_author@test.fr")
+                        publicationBusiness.addPublication(publication)
         );
 
         // INSERT + nonExistent foreign key vipAuthor => violation
@@ -234,8 +238,9 @@ public class PublicationsIT extends BaseSpringIT {
             + " un coeur : I \u2764 Java!",
             "21/06/2023", "01010100", "author1, author2", PublicationType.Journal, "typeName", null, publicationApplicationName);
 
+        publicationBusiness.setUserSupplier(() -> admin);
         VipException businessException = assertThrows(VipException.class,
-                () -> publicationBusiness.addPublication(publication3, adminEmail));
+                () -> publicationBusiness.addPublication(publication3));
 
         Assertions.assertTrue(businessException.getMessage().startsWith("Non-valid characters : [‑‑❤]"));
     }

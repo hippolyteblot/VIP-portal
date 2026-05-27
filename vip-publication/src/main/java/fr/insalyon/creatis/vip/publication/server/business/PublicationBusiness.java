@@ -125,10 +125,10 @@ public class PublicationBusiness extends CommonBusiness {
         }
     }
 
-    public void addPublication(Publication pub, String vipAuthor)
+    public void addPublication(Publication pub)
             throws VipException {
         try {
-            pub.setVipAuthor(vipAuthor);
+            pub.setVipAuthor(getUser().getEmail());
             logger.info("Create publication request: title='{}', vipAuthor='{}', vipApplication='{}'",
                 pub.getTitle(), pub.getVipAuthor(), pub.getVipApplication());
             assertDataIsOK(pub);

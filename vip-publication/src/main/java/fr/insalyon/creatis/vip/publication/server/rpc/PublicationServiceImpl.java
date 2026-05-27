@@ -64,7 +64,7 @@ public class PublicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
         try {
             User user = getSessionUser();
-            publicationBusiness.addPublication(pub, user.getEmail());
+            publicationBusiness.addPublication(pub);
         } catch (VipException ex) {
             throw new CoreException(ex);
         }
