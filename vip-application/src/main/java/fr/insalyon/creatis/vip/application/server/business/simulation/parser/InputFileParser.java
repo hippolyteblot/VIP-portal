@@ -26,6 +26,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -65,7 +66,7 @@ public class InputFileParser {
 
     // If the filePath do not contain an extension, then JSON and XML will be tested
     // the first founded file will be used
-    public Map<String, String> parse(Path path) throws VipException {
+    public List<Map<String, String>> parse(Path path) throws VipException {
         String ext = FilenameUtils.getExtension(path.toString());
 
         if (ext.isEmpty()) {
@@ -89,7 +90,7 @@ public class InputFileParser {
         }
     }
 
-    public Map<String, String> handleXML(File file) throws VipException {
+    public List<Map<String, String>> handleXML(File file) throws VipException {
         try {
             XMLHandler handler = new XMLHandler();
 
@@ -100,33 +101,60 @@ public class InputFileParser {
             reader.setContentHandler(handler);
             reader.parse(new InputSource(new FileReader(file)));
 
-            return inputs;
+            return List.of(inputs);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             logger.error("Error parsing {}", file.getName(), e);
             throw new VipException(e);
         }
     }
 
-    public Map<String, String> handleJSON(File file) throws VipException {
+    public List<Map<String, String>> handleJSON(File file) throws VipException {
         ObjectMapper mapper = new ObjectMapper();
+        List<Map<String, String>> inputsData = new ArrayList<>();
 
         try {
-            Map<String, List<String>> data = mapper.readValue(file, new TypeReference<Map<String, List<String>>>() {
-            });
+            JsonNode root = mapper.readTree(file);
+            List<Map<String, List<String>>> inputMaps;
+            if (root.isArray()) {
+                // List of input maps format (API/Executions)
+                inputMaps = mapper.convertValue(root, new TypeReference<>() {});
+            } else if (root.isObject()) {
+                // Single input map format (UI/Simulations)
+                Map<String, List<String>> data = mapper.convertValue(root, new TypeReference<>() {});
+                inputMaps = List.of(data);
+            }
+            else {
+                throw new IOException("Invalid JSON format");
+            }
 
-            data.forEach((name, items) -> {
-                if (items.size() == 1) {
-                    String val = items.get(0);
-                    inputs.put(name, pathHandler(val));
-                } else {
-                    handleList(name, items);
-                }
-            });
+            // Create result List of input maps, keep same amount of maps and apply PathHandler/List logic to their values
+            for (Map<String, List<String>> inputMap : inputMaps) {
+                Map<String, String> parsed = new HashMap<>();
+                inputMap.forEach((name, items) -> {
+                    // Filter out empty strings
+                    List<String> filteredItems = items.stream()
+                            .filter(item -> item != null && !item.isEmpty())
+                            .toList();
+
+                    if (filteredItems.isEmpty()) {
+                        return;
+                    }
+
+                    if (filteredItems.size() == 1) {
+                        parsed.put(name, pathHandler(filteredItems.getFirst()));
+                    } else {
+                        parsed.put(name, handleList(filteredItems));
+                    }
+                });
+
+                inputsData.add(parsed);
+            }
         } catch (IOException e) {
             logger.error("Error parsing {}", file.getName(), e);
             throw new VipException(e);
         }
-        return inputs;
+
+        return inputsData;
     }
 
     private String pathHandler(String path) {
@@ -176,13 +204,13 @@ public class InputFileParser {
                 .collect(Collectors.joining("; "));
     }
 
-    private void handleList(String name, List<String> items) {
+    private String handleList(List<String> items) {
         Triplet<Double, Double, Double> startStopStep = getStartStopStep(items);
         if (startStopStep == null) {
-            inputs.put(name, formatListString(items));
+            return formatListString(items);
         } else {
-            inputs.put(name, "Start: " + startStopStep.getFirst() + " - Stop: "
-                    + startStopStep.getSecond() + " - Step: " + startStopStep.getThird());
+            return "Start: " + startStopStep.getFirst() + " - Stop: "
+                    + startStopStep.getSecond() + " - Step: " + startStopStep.getThird();
         }
     }
 
@@ -214,7 +242,7 @@ public class InputFileParser {
                     inputs.put(name, pathHandler(path));
 
                 } else {
-                    handleList(name, values);
+                    inputs.put(name, handleList(values));
                 }
             } else if (localName.equals("item")) {
                 values.add(itemContent.toString().trim());

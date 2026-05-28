@@ -426,7 +426,9 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         expectedParams.put("testTextInput", List.of("best test text value"));
         expectedParams.put("testFlagInput", List.of("false"));
         expectedParams.put("results-directory", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser1.getFolder()));
-        String expectedInputs = workflowExecutionBusiness.getParametersAsJSONInput(expectedParams);
+        List<Map<String, List<String>>> paramsList = new ArrayList<>();
+        paramsList.add(expectedParams);
+        String expectedInputs = workflowExecutionBusiness.getParametersAsJSONInput(paramsList);
         Assertions.assertEquals(expectedInputs, inputs);
 
         // verify created workflow
