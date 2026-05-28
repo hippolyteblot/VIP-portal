@@ -137,12 +137,26 @@ public class MessageBusiness extends CommonBusiness {
                 }
                 recipients = users.toArray(new String[]{});
             } else {
-                // Convert recipient IDs to emails
+                // If callers (GWT or others) still send emails, detect that
+                // by checking for an '@' in the first element and treat the
+                // array as emails. Otherwise treat elements as user IDs and
+                // resolve them to emails.
                 List<String> emails = new ArrayList<>();
-                for (String recipientId : recipients) {
-                    User recipient = userBusiness.get(recipientId);
-                    if (recipient != null && !recipient.isAccountLocked()) {
-                        emails.add(recipient.getEmail());
+                if (recipients.length > 0 && recipients[0].contains("@")) {
+                    // recipients are already emails
+                    for (String email : recipients) {
+                        User recipient = userBusiness.getUserData(email);
+                        if (recipient != null && !recipient.isAccountLocked()) {
+                            emails.add(email);
+                        }
+                    }
+                } else {
+                    // Convert recipient IDs to emails
+                    for (String recipientId : recipients) {
+                        User recipient = userBusiness.get(recipientId);
+                        if (recipient != null && !recipient.isAccountLocked()) {
+                            emails.add(recipient.getEmail());
+                        }
                     }
                 }
                 recipients = emails.toArray(new String[]{});
