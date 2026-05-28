@@ -5,7 +5,6 @@ import static fr.insalyon.creatis.vip.core.client.view.CoreConstants.RESULTS_DIR
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -171,27 +170,19 @@ public class ExecutionBusiness {
 
         // retrieves all input data associated with this simulation
         List<InOutData> inputs = workflowBusiness.getInputData(s.getID(), userFolder);
-        Map<String, Object> inputMap = new HashMap<>();
         for (InOutData iod : inputs) {
             String key = iod.getProcessor();
             String value = iod.getPath();
-            ((List<Object>) inputMap.computeIfAbsent(key, k -> new ArrayList<>())).add(value);
-        }
-        // In this case, we have a single input map with multiple values
-        if (!inputMap.isEmpty()) {
-            e.getInputValues().add(inputMap);
+            ((List<Object>) e.getInputValuesForDisplay().computeIfAbsent(key, k -> new ArrayList<>())).add(value);
         }
         // retrieves results directory
-        if (!e.getInputValues().isEmpty()) {
-            List<Object> resDirList = (List<Object>) e.getInputValues().getFirst().get(RESULTS_DIRECTORY_PARAM_NAME);
-            if (resDirList == null) {
-                resDirList = new ArrayList<>();
-            }
-
-            if (!resDirList.isEmpty()) {
-                e.setResultsLocation(resDirList);
-                e.getInputValues().getFirst().remove(RESULTS_DIRECTORY_PARAM_NAME);
-            }
+        List<Object> resDirList = (List<Object>) e.getInputValuesForDisplay().get(RESULTS_DIRECTORY_PARAM_NAME);
+        if (resDirList == null) {
+            resDirList = new ArrayList<>();
+        }
+        if (!resDirList.isEmpty()) {
+            e.setResultsLocation(resDirList);
+            e.getInputValuesForDisplay().remove(RESULTS_DIRECTORY_PARAM_NAME);
         }
 
         List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
@@ -325,8 +316,8 @@ public class ExecutionBusiness {
     public String initExecution(Execution execution) throws VipException {
         List<Map<String, String>> inputMaps = new ArrayList<>();
         Object resultsLocation = execution.getResultsLocation();
-        boolean isInputMapList = execution.getInputValues().size() > 1;
-        for (Map<String, Object> inputValuesMap : execution.getInputValues()) {
+        boolean isInputMapList = execution.getInputValuesForInit().size() > 1;
+        for (Map<String, Object> inputValuesMap : execution.getInputValuesForInit()) {
             Map<String, String> inputMap = new HashMap<>();
             for (Entry<String, Object> restInput : inputValuesMap.entrySet()) {
                 if (isInputMapList && restInput.getValue() instanceof List) {

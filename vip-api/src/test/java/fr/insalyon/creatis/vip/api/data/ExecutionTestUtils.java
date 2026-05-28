@@ -30,12 +30,11 @@ public class ExecutionTestUtils {
                 new GregorianCalendar(2016, 9, 2).getTime(),
                 "Exec test 1", SimulationStatus.Running.toString(), "engine 1", null);
         execution1 = getExecution(simulation1, ExecutionStatus.RUNNING);
-        List<Map<String, Object>> parametersMaps = new ArrayList<>();
-        Map<String, Object> map = new HashMap<>();
-        map.put("param 1", "value 1");
-        map.put("param 2", "42");
-        parametersMaps.add(map);
-        execution1.setInputValues(parametersMaps);
+        execution1.setInputValuesForDisplay(new HashMap<String,Object>() {{
+                                      put("param 1", "value 1");
+                                      put("param 2", "42");
+                                  }}
+        );
         execution1.clearReturnedFiles();
 
         simulation1InData = Arrays.asList(
@@ -48,11 +47,11 @@ public class ExecutionTestUtils {
                 new GregorianCalendar(2016, 4, 29).getTime(),
                 "Exec test 2", SimulationStatus.Completed.toString(), "engine 1", null);
         execution2 = getExecution(simulation2, ExecutionStatus.FINISHED);
-        parametersMaps = new ArrayList<>();
-        parametersMaps.add(new HashMap<>() {{
-            put("param2-1", "5.3");
-        }});
-        execution2.setInputValues(parametersMaps);
+        execution2.setInputValuesForDisplay(new HashMap<String,Object>() {{
+                                      put("param2-1", "5.3");
+                                  }}
+        );
+
         execution2.setReturnedFiles(new HashMap<String,List<Object>>() {{
             put("param2-res", Collections.singletonList("/vip/Home/testFile1.xml"));
         }});
@@ -106,7 +105,7 @@ public class ExecutionTestUtils {
                 execution.getResultsLocation()
         );
         // WARNING, do not copy input value and returned files objects
-        newExecution.setInputValues(execution.getInputValues());
+        newExecution.setInputValuesForDisplay(execution.getInputValuesForDisplay());
         newExecution.setReturnedFiles(execution.getReturnedFiles());
         return newExecution;
     }
@@ -139,7 +138,7 @@ public class ExecutionTestUtils {
                 Execution::getPipelineIdentifier,
                 Execution::getTimeout,
                 execution -> execution.getStatus().getRestLabel(),
-                Execution::getInputValues,
+                Execution::getInputValuesForDisplay,
                 Execution::getReturnedFiles,
                 Execution::getStudyIdentifier,
                 Execution::getErrorCode,

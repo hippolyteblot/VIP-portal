@@ -2,6 +2,8 @@ package fr.insalyon.creatis.vip.api.model;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -17,9 +19,23 @@ public class Execution {
     private String pipelineIdentifier;
     private int timeout;
     private ExecutionStatus status;
+    /* the inputValues property has a peculiar behavior
+    As input, it can be a list of maps or a map. InputValuesDeserializer handles that and produces a list of
+    maps in all cases. This list can be accessed through the getInputValuesForInit method.
+    As output, it is always (at the moment) a map. This map can be accessed/modified through the inputValuesForDisplay
+    property.
+    The getInputValuesForJackson ensure the serialization as a list. It is private to keep this behavior
+    internal. This needs access READ_WRITE to work.
+    So Jackson uses the InputValuesDeserializer for deserialization and the getInputValuesForJackson for serialization.
+    All other methods for inputValues are ignored by jackson, and are meant to make available the appropriate input
+    values for init or display.
+    */
     @NotNull
+    @JsonProperty(value = "inputValues", access = JsonProperty.Access.READ_WRITE)
     @JsonDeserialize(using = InputValuesDeserializer.class)
-    private List<Map<String, Object>> inputValues;
+    private List<Map<String, Object>> inputValuesForJackson;
+    @JsonIgnore
+    private Map<String, Object> inputValuesForDisplay;
     private Map<String, List<java.lang.Object>> returnedFiles;
 
     // optional arguments
@@ -31,7 +47,7 @@ public class Execution {
     private Map<Integer, Map<String, Object>> jobs; // jobId -> status
 
     public Execution() {
-        inputValues = new ArrayList<>();
+        inputValuesForDisplay = new HashMap<>();
         returnedFiles = new HashMap<>();
         jobs = new HashMap<>();
     }
@@ -100,12 +116,28 @@ public class Execution {
         this.status = status;
     }
 
-    public List<Map<String, Object>> getInputValues() {
-        return inputValues;
+    @JsonIgnore
+    // allow to fetch the inputValues list deserialized by jackson
+    // only used on execution init
+    public List<Map<String, Object>> getInputValuesForInit() {
+        return inputValuesForJackson;
     }
 
-    public void setInputValues(List<Map<String, Object>> inputValues) {
-        this.inputValues = inputValues;
+    /*
+      make it private to avoid accidental use
+      only used by jackson for serializing
+      and we want to serialize the map version
+     */
+    private Map<String, Object> getInputValuesForJackson() {
+        return inputValuesForDisplay;
+    }
+
+    public void setInputValuesForDisplay(Map<String, Object> inputValues) {
+        this.inputValuesForDisplay = inputValues;
+    }
+
+    public Map<String, Object> getInputValuesForDisplay() {
+        return inputValuesForDisplay;
     }
 
     public Map<String, List<java.lang.Object>> getReturnedFiles() {
