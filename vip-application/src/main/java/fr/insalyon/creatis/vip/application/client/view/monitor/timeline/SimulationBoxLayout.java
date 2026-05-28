@@ -28,7 +28,6 @@ import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
 import fr.insalyon.creatis.vip.core.client.view.util.WidgetUtil;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -295,7 +294,7 @@ public class SimulationBoxLayout extends HLayout {
      */
     private void relaunchSimulation() {
 
-        AsyncCallback<List<Map<String, String>>> callback = new AsyncCallback<>() {
+        AsyncCallback<Map<String, String>> callback = new AsyncCallback<Map<String, String>>() {
             @Override
             public void onFailure(Throwable caught) {
                 setLoading(false, null);
@@ -303,12 +302,12 @@ public class SimulationBoxLayout extends HLayout {
             }
 
             @Override
-            public void onSuccess(final List<Map<String, String>> result) {
+            public void onSuccess(final Map<String, String> result) {
                 setLoading(false, null);
                 String tabId = ApplicationConstants.getLaunchTabID(applicationName);
                 Layout.getInstance().removeTab(tabId);
                 RelaunchService.getInstance().relaunch(
-                        applicationName, applicationVersion, applicationClass, simulationName, result.get(0), tabId);
+                        applicationName, applicationVersion, applicationClass, simulationName, result, tabId);
             }
         };
         WorkflowService.Util.getInstance().relaunchSimulation(simulationID, callback);

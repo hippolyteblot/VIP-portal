@@ -76,7 +76,7 @@ public interface WorkflowService extends RemoteService {
     
     public void markWorkflowCompleted(String simulationID) throws VipException;
 
-    public List<Map<String, String>> relaunchSimulation(String simulationID) throws VipException;
+    public Map<String, String> relaunchSimulation(String simulationID) throws VipException;
 
     public List<Simulation> getSimulations(String user, String application, String status, Date startDate, Date endDate) throws VipException;
 

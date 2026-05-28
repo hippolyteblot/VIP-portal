@@ -21,7 +21,6 @@ import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.ModalWindow;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -277,7 +276,7 @@ public class SimulationsContextMenu extends Menu {
      */
     private void relaunchSimulation() {
 
-        AsyncCallback<List<Map<String, String>>> callback = new AsyncCallback<>() {
+        AsyncCallback<Map<String, String>> callback = new AsyncCallback<Map<String, String>>() {
             @Override
             public void onFailure(Throwable caught) {
                 modal.hide();
@@ -285,12 +284,12 @@ public class SimulationsContextMenu extends Menu {
             }
 
             @Override
-            public void onSuccess(final List<Map<String, String>> result) {
+            public void onSuccess(final Map<String, String> result) {
                 modal.hide();
                 String tabId = ApplicationConstants.getLaunchTabID(applicationName);
                 Layout.getInstance().removeTab(tabId);
                 RelaunchService.getInstance().relaunch(
-                        applicationName, applicationVersion, applicationClass, simulationName, result.get(0), tabId);
+                        applicationName, applicationVersion, applicationClass, simulationName, result, tabId);
             }
         };
         WorkflowService.Util.getInstance().relaunchSimulation(simulationID, callback);

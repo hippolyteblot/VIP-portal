@@ -455,8 +455,13 @@ public class WorkflowBusiness {
         }
     }
 
-    public List<Map<String, String>> relaunch(String simulationID, String currentUserFolder) throws VipException {
-        return getInputFileParser(currentUserFolder).parse(Path.of(server.getWorkflowsPath() + "/" + simulationID + "/inputs"));
+    public Map<String, String> relaunch(String simulationID, String currentUserFolder) throws VipException {
+        List<Map<String, String>> inputMaps = getInputFileParser(currentUserFolder).parse(Path.of(server.getWorkflowsPath() + "/" + simulationID + "/inputs"));
+        if (inputMaps.size() != 1) {
+            throw new VipException("Expected exactly one input map, got " + inputMaps.size() + ", multiple input maps are not supported yet here");
+        }
+
+        return inputMaps.getFirst();
     }
 
     public Simulation getSimulation(String simulationID) throws VipException {

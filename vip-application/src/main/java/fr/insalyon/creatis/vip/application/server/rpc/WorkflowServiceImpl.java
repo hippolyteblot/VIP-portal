@@ -400,7 +400,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @throws VipException
      */
     @Override
-    public List<Map<String, String>> relaunchSimulation(String simulationID) throws VipException {
+    public Map<String, String> relaunchSimulation(String simulationID) throws VipException {
         trace(logger, "Relaunching simulation '" + simulationID + "'.");
         return workflowBusiness.relaunch(
                 simulationID, getSessionUser().getFolder());
