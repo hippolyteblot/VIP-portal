@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -183,6 +184,45 @@ public class UserBusiness extends CommonBusiness {
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
+    }
+
+    @VIPExternalSafe
+    public List<User> searchUsers(String query, int limit) throws VipException {
+        // only administrators and developers can perform this search
+        if (!getUserLevel().equals(UserLevel.Administrator) && !getUserLevel().equals(UserLevel.Developer)) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        String normalized = query.trim().toLowerCase();
+
+        // TODO : optimize by doing the filtering in the database instead of in memory
+        return getUsers().stream()
+                .filter((user) -> matchesQuery(user, normalized))
+                .limit(safeLimit)
+                // return abbreviated User objects to avoid leaking data
+                .map(u -> new User(u.getId(), u.getFirstName(), u.getLastName()))
+                .collect(Collectors.toList());
+    }
+
+    private boolean matchesQuery(User user, String query) {
+        if (user == null) {
+            return false;
+        }
+
+        Stream<String> fields = Stream.of(
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getFullName());
+
+        return fields.filter((value) -> value != null && !value.isBlank())
+                .map((value) -> value.toLowerCase())
+                .anyMatch((value) -> value.contains(query));
     }
 
     @VIPExternalSafe

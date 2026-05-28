@@ -75,6 +75,34 @@ public class GroupMessageData extends JdbcDaoSupport implements GroupMessageDAO 
         }
     }
 
+    public GroupMessage get(long id) throws DAOException {
+
+        try {
+            PreparedStatement ps = getConnection().prepareStatement("SELECT id, sender, name, title, message, posted FROM VIPSocialGroupMessage WHERE id = ?");
+            ps.setLong(1, id);
+
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) {
+                ps.close();
+                return null;
+            }
+
+                long messageId = rs.getLong("id");
+            User sender = userDAO.get(rs.getString("sender"));
+                String name = rs.getString("name");
+                String title = rs.getString("title");
+                String body = rs.getString("message");
+            Date posted = new Date(rs.getTimestamp("posted").getTime());
+            ps.close();
+                return new GroupMessage(messageId, sender, name, title,
+                    body, new SimpleDateFormat("MMMM d, yyyy HH:mm").format(posted), posted);
+
+        } catch (SQLException ex) {
+            logger.error("Error getting group message {}", id, ex);
+            throw new DAOException(ex);
+        }
+    }
+
     public List<GroupMessage> getMessageByGroup(String groupName, int limit, Date startDate) throws DAOException {
 
         try {

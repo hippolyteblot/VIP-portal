@@ -118,6 +118,6 @@ public class MessageViewerWindow extends Window {
                 SocialModule.verifyMessages();
             }
         };
-        service.markMessageAsRead(message.getId(), message.getReceivers()[0].getEmail(), callback);
+        service.markMessageAsRead(message.getId(), callback);
     }
 }

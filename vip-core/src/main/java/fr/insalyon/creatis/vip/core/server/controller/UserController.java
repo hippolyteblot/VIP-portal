@@ -3,6 +3,8 @@ package fr.insalyon.creatis.vip.core.server.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +50,12 @@ public class UserController {
     return userBusiness.getAll(offset, quantity);
     }
 
+    @GetMapping(params = "q")
+    public List<User> search(@RequestParam String q,
+            @RequestParam(defaultValue = "50") @Positive @Max(value = 50) int limit) throws VipException {
+        return userBusiness.searchUsers(q, limit);
+    }
+
     @GetMapping(value = "me")
     public User getCurrentUser() throws VipException {
         return userBusiness.getCurrentUser();
@@ -64,6 +72,7 @@ public class UserController {
             return user;
         }
     }
+
 
     @DeleteMapping(value = "{id}")
     public void remove(@PathVariable String id) throws VipException {

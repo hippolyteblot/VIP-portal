@@ -59,8 +59,8 @@ public class Publication implements IsSerializable {
         this.typeName = typeName;
         this.vipApplication = vipApplication;
     }
-     public Publication(String title, String date, String doi, String authors, String type, String typeName,String vipAuthor, String vipApplication) {
-        
+    
+    public Publication(String title, String date, String doi, String authors, String type, String typeName,String vipAuthor, String vipApplication) {
         this.title = title;
         this.date = date;
         this.doi = doi;
