@@ -126,7 +126,8 @@ public class MessageBusiness extends CommonBusiness {
         assertCurrentUserCanSendMessage(user);
 
         try {
-            if (recipients[0].equals("All")) {
+            // Handle "All" special case
+            if (recipients.length > 0 && recipients[0].equals("All")) {
                 List<String> users = new ArrayList<>();
                 for (User u : userBusiness.getUsers()) {
                     // Dont send mail to locked users
@@ -135,6 +136,16 @@ public class MessageBusiness extends CommonBusiness {
                     }
                 }
                 recipients = users.toArray(new String[]{});
+            } else {
+                // Convert recipient IDs to emails
+                List<String> emails = new ArrayList<>();
+                for (String recipientId : recipients) {
+                    User recipient = userBusiness.get(recipientId);
+                    if (recipient != null && !recipient.isAccountLocked()) {
+                        emails.add(recipient.getEmail());
+                    }
+                }
+                recipients = emails.toArray(new String[]{});
             }
 
             String emailContent = emailTemplateUtils.sendMessage(user, subject, message);
@@ -264,7 +275,10 @@ public class MessageBusiness extends CommonBusiness {
 
         try {
             GroupMessage groupMessage = groupMessageDAO.get(id);
-            if (groupMessage == null || groupMessage.getSender() == null || !currentUser.getEmail().equals(groupMessage.getSender().getEmail())) {
+            if (groupMessage == null) {
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+            if (!currentUser.isGroupAdmin(groupMessage.getGroupName())) {
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
         } catch (DAOException ex) {

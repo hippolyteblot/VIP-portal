@@ -21,7 +21,7 @@ public interface SocialServiceAsync {
 
     public void getGroupMessages(String groupName, Date startDate, AsyncCallback<List<GroupMessage>> asyncCallback);
 
-    public void markMessageAsRead(long id, String receiver, AsyncCallback<Void> asyncCallback);
+    public void markMessageAsRead(long id, AsyncCallback<Void> asyncCallback);
 
     public void removeMessage(long id, AsyncCallback<Void> asyncCallback);
 

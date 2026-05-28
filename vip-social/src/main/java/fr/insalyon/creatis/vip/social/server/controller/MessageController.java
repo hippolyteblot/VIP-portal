@@ -55,17 +55,17 @@ public class MessageController {
             throw new VipException(DefaultError.BAD_INPUT_FIELD, "receivers", "Receivers are required!");
         }
 
-        // convert User[] receivers to String[] emails
-        String[] recipients = java.util.Arrays.stream(message.getReceivers())
-                .filter(r -> r != null && r.getEmail() != null && !r.getEmail().isBlank())
-                .map(r -> r.getEmail())
+        // extract receiver IDs
+        String[] recipientIds = java.util.Arrays.stream(message.getReceivers())
+                .filter(r -> r != null && r.getId() != null && !r.getId().isBlank())
+                .map(r -> r.getId())
                 .toArray(String[]::new);
 
-        if (recipients.length == 0) {
-            throw new VipException(DefaultError.BAD_INPUT_FIELD, "receivers", "Receivers must contain at least one valid email");
+        if (recipientIds.length == 0) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "receivers", "Receivers must contain at least one valid user ID");
         }
 
-        messageBusiness.sendMessage(recipients, message.getTitle(), message.getMessage());
+        messageBusiness.sendMessage(recipientIds, message.getTitle(), message.getMessage());
     }
 
     @PostMapping("/groups")

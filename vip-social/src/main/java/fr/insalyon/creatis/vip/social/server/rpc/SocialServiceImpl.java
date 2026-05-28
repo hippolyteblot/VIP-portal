@@ -57,7 +57,7 @@ public class SocialServiceImpl extends AbstractRemoteServiceServlet implements S
         }
     }
 
-    public void markMessageAsRead(long id, String receiver) throws SocialException {
+    public void markMessageAsRead(long id) throws SocialException {
         try {
             messageBusiness.markAsRead(id);
         } catch (VipException ex) {
