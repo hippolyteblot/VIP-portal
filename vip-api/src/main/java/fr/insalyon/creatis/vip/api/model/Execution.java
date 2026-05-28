@@ -24,7 +24,7 @@ public class Execution {
     maps in all cases. This list can be accessed through the getInputValuesForInit method.
     As output, it is always (at the moment) a map. This map can be accessed/modified through the inputValuesForDisplay
     property.
-    The getInputValuesForJackson ensure the serialization as a list. It is private to keep this behavior
+    The getInputValuesForJackson ensure the serialization as a map. It is private to keep this behavior
     internal. This needs access READ_WRITE to work.
     So Jackson uses the InputValuesDeserializer for deserialization and the getInputValuesForJackson for serialization.
     All other methods for inputValues are ignored by jackson, and are meant to make available the appropriate input
