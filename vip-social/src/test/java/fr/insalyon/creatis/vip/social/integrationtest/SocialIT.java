@@ -68,7 +68,7 @@ public class SocialIT extends BaseSpringIT {
 
         // Send test messages
         setCurrentUser(admin);
-        sendMessageAs(admin, new String[]{emailUser1, emailUser3}, "test subject", "test message");
+        sendMessageAs(admin, new String[]{user1.getId(), user3.getId()}, "test subject", "test message");
 
         sendGroupMessageAs(user1, nameGroup1, "subject user 1", "message user 1");
 
@@ -127,7 +127,7 @@ public class SocialIT extends BaseSpringIT {
 
     @Test
     public void testSendMessage() throws Exception {
-        sendMessageAs(admin, new String[]{emailUser1, emailUser3}, "subject user 2", "message user 2");
+        sendMessageAs(admin, new String[]{user1.getId(), user3.getId()}, "subject user 2", "message user 2");
 
         // verify entry numbers in each table
         assertRowsNbInTable("VIPSocialMessage", 2);
@@ -181,7 +181,7 @@ public class SocialIT extends BaseSpringIT {
                 VipException.class, () ->
                 sendMessageAs(
                     nonExistentUser,
-                                new String[]{emailUser1, emailUser3},
+                                new String[]{user1.getId(), user3.getId()},
                                 "subject user 2", "message user 2")
         );
 
@@ -282,7 +282,7 @@ public class SocialIT extends BaseSpringIT {
         copyMessageToVipSupportAs
                 (
                         user1,
-                        new String[]{emailUser1, emailUser3},
+                        new String[]{user1.getId(), user3.getId()},
                         "subject test copy message to Vip support",
                         "message test copy message to Vip support"
                 );
@@ -313,7 +313,7 @@ public class SocialIT extends BaseSpringIT {
     //FIXME : does not check if the sender exists
     @Test
     public void testCatchCopyMessageToVipSupport() throws VipException {
-        copyMessageToVipSupportAs(nonExistentUser, new String[]{emailUser1, emailUser3}, "subject test copy message to Vip support", "message test copy message to Vip support");
+        copyMessageToVipSupportAs(nonExistentUser, new String[]{user1.getId(), user3.getId()}, "subject test copy message to Vip support", "message test copy message to Vip support");
 
         // Nothing changes
 
