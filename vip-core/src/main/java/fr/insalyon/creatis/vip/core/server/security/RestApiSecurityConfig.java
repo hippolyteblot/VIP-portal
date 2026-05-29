@@ -87,7 +87,6 @@ public class RestApiSecurityConfig {
                         .requestMatchers(antMatcher("/rest/authenticate")).permitAll()
                         .requestMatchers(antMatcher("/rest/session")).permitAll()
                         .requestMatchers(new RegexRequestMatcher("/rest/pipelines\\?public", "GET")).permitAll()
-                        .requestMatchers(new RegexRequestMatcher("/rest/applications\\?public", "GET")).permitAll()
                         .requestMatchers(antMatcher("/rest/publications")).permitAll()
                         .requestMatchers(antMatcher("/rest/reset-password")).permitAll()
                         .requestMatchers(antMatcher("/rest/register")).permitAll()
