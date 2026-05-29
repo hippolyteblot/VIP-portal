@@ -31,7 +31,7 @@ public class LFCPermissionBusinessTest {
         Map<Group, CoreConstants.GROUP_ROLE> groups = new HashMap<>();
         UserTestUtils.baseUser1.setGroups(groups);
         UserTestUtils.baseUser2.setGroups(groups);
-        LFCPermissionBusiness sut = new LFCPermissionBusiness();
+        LFCPermissionBusiness sut = new LFCPermissionBusiness(null);
 
         // First, test users does not belong to the group
         Assertions.assertFalse(sut.isLFCPathAllowed(UserTestUtils.baseUser1, path, LFCPermissionBusiness.LFCAccessType.UPLOAD, false));

@@ -21,6 +21,8 @@ public interface MessageDAO {
     public void remove(long id) throws DAOException;
     
     public void removeByReceiver(long id, String receiver) throws DAOException;
+
+    public Message get(long id) throws DAOException;
     
     public int verifyMessages(String email) throws DAOException;
 }

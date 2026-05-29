@@ -1,24 +1,36 @@
 package fr.insalyon.creatis.vip.social.models;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
+import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 
 import java.util.Date;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  *
  * @author Rafael Silva
  */
+@JsonView(DataViews.User.class)
 public class Message implements IsSerializable {
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private long id;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private User sender;
     private User[] receivers;
+    @NotBlank
     private String title;
+    @NotBlank
     private String message;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String posted;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Date postedDate;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private boolean read;
 
     public Message() {

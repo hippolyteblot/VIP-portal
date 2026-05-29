@@ -37,6 +37,17 @@ public class PasswordBusiness extends CommonBusiness {
         }
     }
 
+    public void setPassword(String email, String newPassword) throws VipException {
+        try {
+            userDAO.resetPassword(email, MD5.get(newPassword));
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException ex) {
+            logger.error("Error setting password for {}", email, ex);
+            throw new VipException(ex);
+        } catch (DAOException ex) {
+            throw new VipException(ex);
+        }
+    }
+
 
     public void reset(String email, String code, String password) throws VipException {
         try {

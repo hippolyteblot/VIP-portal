@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.core.server.business.base;
 
 import java.util.function.Supplier;
 
+import fr.insalyon.creatis.vip.core.server.business.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +15,16 @@ public abstract class CommonBusiness {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
+    protected Server server;
     protected CorePermissions permissions;
     protected Supplier<User> userSupplier;
     protected PageBuilder pageBuilder;
+
+
+    @Autowired
+    public void setServer(Server server) {
+        this.server = server;
+    }
 
     @Autowired
     public void setUserSupplier(Supplier<User> userSupplier) {
@@ -33,8 +41,16 @@ public abstract class CommonBusiness {
         this.pageBuilder = pageBuilder;
     }
 
+    public Server getServer() {
+        return server;
+    }
+
     public User getUser() {
         return userSupplier.get();
+    }
+
+    public String getUserEmail() {
+        return getUser().getEmail();
     }
 
     public UserLevel getUserLevel() {

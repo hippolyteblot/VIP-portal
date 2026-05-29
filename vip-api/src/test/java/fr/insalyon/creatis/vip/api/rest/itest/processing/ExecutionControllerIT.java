@@ -164,7 +164,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -176,7 +176,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -189,7 +189,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
     @Test
@@ -263,7 +263,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
     }
 
 
@@ -426,7 +426,9 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         expectedParams.put("testTextInput", List.of("best test text value"));
         expectedParams.put("testFlagInput", List.of("false"));
         expectedParams.put("results-directory", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser1.getFolder()));
-        String expectedInputs = workflowExecutionBusiness.getParametersAsJSONInput(expectedParams);
+        List<Map<String, List<String>>> paramsList = new ArrayList<>();
+        paramsList.add(expectedParams);
+        String expectedInputs = workflowExecutionBusiness.getParametersAsJSONInput(paramsList);
         Assertions.assertEquals(expectedInputs, inputs);
 
         // verify created workflow

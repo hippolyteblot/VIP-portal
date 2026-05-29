@@ -107,10 +107,6 @@ abstract public class BaseRestApiSpringIT extends BaseWebSpringIT {
         return lfcBusiness;
     }
 
-    protected void configureDataFS() throws VipException {
-        DataConfigurator.configureFS(this);
-    }
-
     protected AppVersion configureBoutiquesTestApp(String appName, String groupName, String versionName) throws VipException, GRIDAClientException, IOException {
         return configureTestApp(appName, groupName, versionName);
     }

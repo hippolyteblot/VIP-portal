@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,15 +140,18 @@ public class WorkflowBusiness {
         return null;
     }
 
-    public synchronized String launch(User user, List<String> groups, Map<String, String> parametersMap,
-            String appName, String version, String simulationName) throws VipException {
+    public synchronized String launch(User user, List<String> groups, List<Map<String, String>> parametersMaps,
+                                      String appName, String version, String simulationName) throws VipException {
         Workflow workflow = null;
 
         try {
             checkVIPCapacities(user, simulationName);
 
             AppVersion appVersion = appVersionBusiness.getVersion(appName, version);
-            Map<String, List<String>> parameters = getParameters(appVersion.getDescriptor(), parametersMap, user, groups);
+            List<Map<String, List<String>>> parametersMapList = new ArrayList<>();
+            for (Map<String, String> parameterMap : parametersMaps) {
+                parametersMapList.add(getParameters(appVersion.getDescriptor(), parameterMap, user, groups));
+            }
 
             List<Resource> resources = resourceBusiness.getAvailableForExecution(user, appVersion);
             if (resources.isEmpty()) {
@@ -159,22 +163,22 @@ public class WorkflowBusiness {
 
             appVersion.getSettings().put(ApplicationConstants.DEFAULT_EXECUTOR_GASW, resource.getType().toString());
             try {
-                workflow = workflowExecutionBusiness.launch(engine.getEndpoint(), appVersion, user, simulationName, parameters, resource.getConfiguration());
+                workflow = workflowExecutionBusiness.launch(engine.getEndpoint(), appVersion, user, simulationName, parametersMapList, resource.getConfiguration());
             } catch (Exception e) {
                 String mailSubject = "[VIP] Warn: Workflow submission failed!!";
                 String mailContent = "An error occured while submitting a workflow";
                 Exception exceptionToRethrow = e;
 
-                if (e instanceof VipException vipEx && vipEx.getVipErrorCode().isEmpty()) {
-                    // intended errors, only warning by mail
-                    logger.warn("Error occuring during workflow submission. Not disabling, sending mail to admins");
+                if (e instanceof VipException vipEx && ! vipEx.getVipError().equals(DefaultError.GENERIC_ERROR_WITH_MESSAGE)) {
+                    // not default error code, so it's an intended errors, only warning by mail
+                    logger.warn("Error occurred during workflow submission. Not disabling, sending mail to admins");
                 } else {
                     if ( ! (e instanceof VipException)) {
                         logger.error("Unexpected exception while launching a workflow", e);
                         exceptionToRethrow = new VipException(ApplicationError.LAUNCH_ERROR, e);
                     }
                     logger.warn(
-                            "Error occuring during workflow submission. Disabling engine and sending mail to admins");
+                            "Error occurred during workflow submission. Disabling engine and sending mail to admins");
                     mailSubject = "[VIP] Urgent: VIP engine disabled !";
                     mailContent = "Engine " + engine.getName() + " has just been disabled.";
                     engine.setStatus("disabled");
@@ -453,7 +457,12 @@ public class WorkflowBusiness {
     }
 
     public Map<String, String> relaunch(String simulationID, String currentUserFolder) throws VipException {
-        return getInputFileParser(currentUserFolder).parse(Path.of(server.getWorkflowsPath() + "/" + simulationID + "/inputs"));
+        List<Map<String, String>> inputMaps = getInputFileParser(currentUserFolder).parse(Path.of(server.getWorkflowsPath() + "/" + simulationID + "/inputs"));
+        if (inputMaps.size() != 1) {
+            throw new VipException("Expected exactly one input map, got " + inputMaps.size() + ", multiple input maps are not supported yet here");
+        }
+
+        return inputMaps.getFirst();
     }
 
     public Simulation getSimulation(String simulationID) throws VipException {

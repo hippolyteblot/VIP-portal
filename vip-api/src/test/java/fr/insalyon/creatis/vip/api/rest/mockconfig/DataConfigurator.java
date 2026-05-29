@@ -1,31 +1,27 @@
 package fr.insalyon.creatis.vip.api.rest.mockconfig;
 
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.getDataModitTS;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.testDir1;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.testFile1;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.testFile2;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.testFile3;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.testFile4;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.testFile5;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.user1Dir;
-import static fr.insalyon.creatis.vip.api.data.PathTestUtils.user2Dir;
-import static fr.insalyon.creatis.vip.api.data.UserTestUtils.baseUser1;
-import static fr.insalyon.creatis.vip.api.data.UserTestUtils.baseUser2;
-import static fr.insalyon.creatis.vip.datamanager.client.DataManagerConstants.ROOT;
-import static org.mockito.ArgumentMatchers.eq;
-
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.mockito.Mockito;
-
+import fr.insalyon.creatis.grida.client.GRIDAClient;
+import fr.insalyon.creatis.vip.api.data.UserTestUtils;
 import fr.insalyon.creatis.vip.api.rest.config.BaseRestApiSpringIT;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.datamanager.server.business.LFCBusiness;
+import fr.insalyon.creatis.vip.datamanager.integrationtest.StorageTestConfigurer;
 
 public class DataConfigurator {
 
-    public static void configureFS(BaseRestApiSpringIT testSuite) throws VipException {
+
+    public static void configureFS(StorageTestConfigurer storageTestConfigurer) throws Exception {
+        // For user2
+        // /vip/Home/fileTest2.json
+        // /vip/Home/folderTest1
+        // /vip/Home/folderTest1/fileTest3
+        // /vip/Home/folderTest1/fileTest4.pdf
+        // /vip/Home/folderTest1/fileTest5.zip
+        storageTestConfigurer.configureFolderForUser(UserTestUtils.baseUser2, "", "fileTest2.json", "folderTest1");
+        storageTestConfigurer.configureFolderForUser(UserTestUtils.baseUser2, "folderTest1", "fileTest3", "fileTest4.pdf", "fileTest5.zip");
+    }
+
+    public static void oldConfigureFS(BaseRestApiSpringIT testSuite) throws VipException {
+        /*
         // exists
         // getModifDate
         // listDir
@@ -112,6 +108,8 @@ public class DataConfigurator {
                 eq("/vip/Home/testDir1/testFile5.zip"),
                 eq(true)))
             .thenReturn(Collections.singletonList(testFile5));
+
+         */
     }
 
 }

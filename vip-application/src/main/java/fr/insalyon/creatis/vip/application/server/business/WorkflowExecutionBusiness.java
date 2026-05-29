@@ -37,7 +37,7 @@ public class WorkflowExecutionBusiness {
     }
 
     public Workflow launch(String engineEndpoint, AppVersion appVersion, User user, String simulationName,
-            Map<String, List<String>> parameters, String executorConfig) throws VipException {
+                           List<Map<String, List<String>>> parameters, String executorConfig) throws VipException {
 
         try {
             String workflowContent = appVersion.getDescriptor();
@@ -66,7 +66,7 @@ public class WorkflowExecutionBusiness {
         engine.kill(engineEndpoint, simulationID);
     }
 
-    public String getParametersAsJSONInput(Map<String, List<String>> parameters) throws VipException {
+    public String getParametersAsJSONInput(List<Map<String, List<String>>> parameters) throws VipException {
         try {
             ObjectMapper mapper = new ObjectMapper();
 

@@ -229,6 +229,33 @@ public class MessageData extends JdbcDaoSupport implements MessageDAO {
         }
     }
 
+    public Message get(long id) throws DAOException {
+
+        try {
+            PreparedStatement ps = getConnection().prepareStatement("SELECT id, sender, title, message, posted FROM VIPSocialMessage WHERE id = ?");
+            ps.setLong(1, id);
+
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) {
+                ps.close();
+                return null;
+            }
+
+                long messageId = rs.getLong("id");
+                User sender = userDAO.get(rs.getString("sender"));
+                String title = rs.getString("title");
+                String body = rs.getString("message");
+                Date posted = new Date(rs.getTimestamp("posted").getTime());
+            ps.close();
+                return new Message(messageId, sender, new User[]{}, title,
+                    body, new SimpleDateFormat("MMMM d, yyyy HH:mm").format(posted), posted, false);
+
+        } catch (SQLException ex) {
+            logger.error("Error getting message {}", id, ex);
+            throw new DAOException(ex);
+        }
+    }
+
     public int verifyMessages(String email) throws DAOException {
 
         try {

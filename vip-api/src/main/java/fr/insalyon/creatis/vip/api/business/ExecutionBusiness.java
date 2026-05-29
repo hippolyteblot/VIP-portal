@@ -148,6 +148,7 @@ public class ExecutionBusiness {
     @SuppressWarnings("unchecked")
     private Execution getExecutionFromSimulation(Simulation s, boolean summarize) throws VipException {
         // Build Carmin's execution object
+//  / Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
                 s.getSimulationName(),
@@ -164,7 +165,6 @@ public class ExecutionBusiness {
         if (summarize) {
                 return e;
         }
-
         //get the current user's folder to filter file access
         String userFolder = currentUserProvider.get().getFolder();
 
@@ -173,20 +173,18 @@ public class ExecutionBusiness {
         for (InOutData iod : inputs) {
             String key = iod.getProcessor();
             String value = iod.getPath();
-            if (e.getInputValues().containsKey(key)) {
-                e.getInputValues().put(key, new ArrayList<>());
-            }
-            ((List<Object>) e.getInputValues().get(key)).add(value);
+            ((List<Object>) e.getInputValuesForDisplay().computeIfAbsent(key, k -> new ArrayList<>())).add(value);
         }
         // retrieves results directory
-        List<Object> resDirList = (List<Object>) e.getInputValues().get(RESULTS_DIRECTORY_PARAM_NAME);
+        List<Object> resDirList = (List<Object>) e.getInputValuesForDisplay().get(RESULTS_DIRECTORY_PARAM_NAME);
         if (resDirList == null) {
             resDirList = new ArrayList<>();
         }
         if (!resDirList.isEmpty()) {
             e.setResultsLocation(resDirList);
-            e.getInputValues().remove(RESULTS_DIRECTORY_PARAM_NAME);
+            e.getInputValuesForDisplay().remove(RESULTS_DIRECTORY_PARAM_NAME);
         }
+
         List<InOutData> outputs = workflowBusiness.getOutputData(s.getID(), userFolder);
         for (InOutData iod : outputs) {
             String key = iod.getProcessor();
@@ -316,25 +314,35 @@ public class ExecutionBusiness {
     }
 
     public String initExecution(Execution execution) throws VipException {
-        Map<String, String> inputMap = new HashMap<>();
-
-        for (Entry<String,Object> restInput : execution.getInputValues().entrySet()) {
-            inputMap.put(
-                    restInput.getKey(),
-                    handleRestParameter(restInput.getKey(), restInput.getValue()));
-        }
-
-        // We handle resultsLocation the same as others restInputs, since it can either be a String or a List<String>
+        List<Map<String, String>> inputMaps = new ArrayList<>();
         Object resultsLocation = execution.getResultsLocation();
-        if (resultsLocation != null) {
-            inputMap.put(
-                    CoreConstants.RESULTS_DIRECTORY_PARAM_NAME,
-                    handleRestParameter(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME, resultsLocation));
+        boolean isInputMapList = execution.getInputValuesForInit().size() > 1;
+        for (Map<String, Object> inputValuesMap : execution.getInputValuesForInit()) {
+            Map<String, String> inputMap = new HashMap<>();
+            for (Entry<String, Object> restInput : inputValuesMap.entrySet()) {
+                if (isInputMapList && restInput.getValue() instanceof List) {
+                    throw new VipException(
+                        "Parameter '" + restInput.getKey() + "' contains a list, it should only have a single value when providing a list of input maps.");
+                }
+
+                inputMap.put(
+                        restInput.getKey(),
+                        handleRestParameter(restInput.getKey(), restInput.getValue()));
+            }
+
+            // We handle resultsLocation the same as others restInputs, since it can either be a String or a List<String>
+            if (resultsLocation != null) {
+                inputMap.put(
+                        CoreConstants.RESULTS_DIRECTORY_PARAM_NAME,
+                        handleRestParameter(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME, resultsLocation));
+            }
+
+            inputMaps.add(inputMap);
         }
 
         checkInputExecNameIsValid(execution.getName());
         return initExecution(
-            execution.getPipelineIdentifier(), inputMap, execution.getTimeout(),
+            execution.getPipelineIdentifier(), inputMaps, execution.getTimeout(),
             execution.getName(), execution.getStudyIdentifier());
     }
 
@@ -379,7 +387,7 @@ public class ExecutionBusiness {
     }
 
     private String initExecution(String pipelineId,
-            Map<String, String> inputValues,
+            List<Map<String, String>> inputValues,
             Integer timeoutInSeconds,
             String executionName,
             String studyId) throws VipException {
@@ -401,19 +409,27 @@ public class ExecutionBusiness {
             if (pp.isReturnedValue()) {
                 continue;
             }
+
+            List<Map<String, String>> mapsWithoutKey = inputValues.stream()
+                    .filter(inputMap -> !inputMap.containsKey(pp.getName()))
+                    .toList();
+
             // ok if input is present
-            if (inputValues.get(pp.getName()) != null) {
+            if (mapsWithoutKey.isEmpty()) {
                 continue;
             }
+
             // then ok if input has a default value (and we set it)
             if (pp.getDefaultValue() != null) {
-                inputValues.put(pp.getName(), pp.getDefaultValue().toString());
+                mapsWithoutKey.forEach(inputMap -> inputMap.put(pp.getName(), pp.getDefaultValue().toString()));
                 continue;
             }
+
             // then ok if it is optional
             if (pp.isOptional()) {
                 continue;
             }
+
             // error : pp is an empty input with no default value and it is not optional
             logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
             throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
@@ -424,17 +440,19 @@ public class ExecutionBusiness {
         if (overriddenInputs != null) {
             for (String key : overriddenInputs.keySet()) {
                 String value = overriddenInputs.get(key);
-                if (inputValues.containsKey(value)) {
-                    inputValues.put(key, inputValues.get(value));
-                } else {
-                    logger.error("Error initialising {}, missing {} parameter", pipelineId, value);
-                    throw new VipException(ApiError.INPUT_FIELD_MISSING, value);
+                for (Map<String, String> inputMap : inputValues) {
+                    if (inputMap.containsKey(value)) {
+                        inputMap.put(key, inputMap.get(value));
+                    } else {
+                        logger.error("Error initialising {}, missing {} parameter", pipelineId, value);
+                        throw new VipException(ApiError.INPUT_FIELD_MISSING, value);
+                    }
                 }
             }
         }
 
-        boolean inputsContainsResultsDirectoryInput = inputValues
-                .containsKey(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME);
+        boolean inputsContainsResultsDirectoryInput = inputValues.stream()
+                .allMatch(inputMap -> inputMap.containsKey(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME));
         boolean pipelineHasResultsDirectoryInput = p.getParameters().stream()
                 .anyMatch(param -> param.getName().equals(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME));
 

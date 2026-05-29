@@ -54,8 +54,9 @@ public class GroupBusiness extends CommonBusiness {
 
         try {
             checkAuto(group);
-            gridaClient.createFolder(server.getDataManagerGroupsHome(),
-            group.getName().replaceAll(" ", "_"));
+            gridaClient.createFolder(
+                    server.getDataManagerGroupsHome(),
+                    group.getName().replaceAll(" ", "_"));
             
             groupDAO.add(group);
         } catch (GRIDAClientException ex) {
@@ -139,6 +140,21 @@ public class GroupBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
+    public List<Group> searchGroups(String query, int limit) throws VipException {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        String normalized = query.trim().toLowerCase();
+
+        return get(false, false).stream()
+                .filter((group) -> group.getName() != null && group.getName().toLowerCase().contains(normalized))
+                .limit(safeLimit)
+                .collect(Collectors.toList());
+    }
+
+    @VIPExternalSafe
     public Group get(String groupName) throws VipException {
         if (groupName == null) {
             return null;
@@ -146,6 +162,17 @@ public class GroupBusiness extends CommonBusiness {
         return get().stream()
                 .filter(g -> groupName.equals(g.getName()))
                 .findAny().orElse(null);
+    }
+
+    public Group getByName(String groupName) throws VipException {
+        if (groupName == null) {
+            return null;
+        }
+        try {
+            return groupDAO.getByName(groupName);
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
     }
 
     public List<Group> getPublic() throws VipException {

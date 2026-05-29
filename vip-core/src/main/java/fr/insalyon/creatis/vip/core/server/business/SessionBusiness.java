@@ -62,6 +62,7 @@ public class SessionBusiness {
         session.id = user.getSession();
         session.email = user.getEmail();
         session.userlevel = user.getLevel();
+        session.confirmed = user.isConfirmed();
         return session;
     }
 

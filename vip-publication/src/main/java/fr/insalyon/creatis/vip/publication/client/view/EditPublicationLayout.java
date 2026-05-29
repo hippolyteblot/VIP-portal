@@ -15,6 +15,7 @@ import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.publication.client.rpc.PublicationService;
 import fr.insalyon.creatis.vip.publication.models.Publication;
+import fr.insalyon.creatis.vip.publication.models.PublicationType;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.common.AbstractFormLayout;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
@@ -40,7 +41,6 @@ public class EditPublicationLayout extends AbstractFormLayout {
     private Long idPub;
     private ComboBoxItem vipApplication;
 
-    private final String[] PUBLICATION_TYPES = {"Article In Conference Proceedings", "Journal Article", "Book Chapter", "Other"};
     private final String DEFAULT_PUBLICATION_YEAR = "2022";
     private final String DEFAULT_PUBLICATION_APPLICATION_LABEL = "Choose VIP application used in the list";
 
@@ -72,8 +72,8 @@ public class EditPublicationLayout extends AbstractFormLayout {
 
         publicationType = new ComboBoxItem();
         publicationType.setWidth(250);
-        publicationType.setValueMap(PUBLICATION_TYPES);
-        publicationType.setDefaultValue(PUBLICATION_TYPES[0]);
+        publicationType.setValueMap(publicationTypeOptions());
+        publicationType.setDefaultValue(PublicationType.ConferenceArticle.toString());
         publicationType.setTitleOrientation(TitleOrientation.TOP);
         publicationType.setShowTitle(false);
 
@@ -139,7 +139,7 @@ public class EditPublicationLayout extends AbstractFormLayout {
             this.newPublication = true;
             WidgetUtil.resetIButton(saveButton, "Add", CoreConstants.ICON_ADD);
             this.titleField.setValue((String) null);
-            this.publicationType.setValue(PUBLICATION_TYPES[0]);
+            this.publicationType.setValue(PublicationType.ConferenceArticle.toString());
             this.publicationTypeName.setValue((String) null);
             this.publicationDate.setValue(DEFAULT_PUBLICATION_YEAR);
             this.doiField.setValue((String) null);
@@ -211,5 +211,11 @@ public class EditPublicationLayout extends AbstractFormLayout {
             }
         };
         service.getApplications(callback);
+    }
+
+    private String[] publicationTypeOptions() {
+        return Arrays.stream(PublicationType.values())
+                .map(PublicationType::toString)
+                .toArray(String[]::new);
     }
 }

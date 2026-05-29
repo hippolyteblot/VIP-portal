@@ -47,7 +47,7 @@ public class GateLabInputs {
     @PostConstruct
     public final void init() throws VipException {
         inputfile = server.getWorkflowsPath() + "/" + workflowID + "/inputs.json";
-        inputsMap = inputFileParser.parse(Path.of(inputfile));
+        inputsMap = inputFileParser.parse(Path.of(inputfile)).getFirst();
     }
 
     public Map<String, String> getWorkflowInputs() {

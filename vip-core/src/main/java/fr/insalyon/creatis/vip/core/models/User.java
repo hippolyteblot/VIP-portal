@@ -62,6 +62,10 @@ public class User implements IsSerializable {
                 new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()), null, countryCode, 1, null,lastUpdatePublications, 0, false, null);
     }
 
+    public User(String id, String firstName, String lastName) {
+        this(id, firstName, lastName, null, null, null, null, null, null, null, null, null, null, null, 0,null,null,0,false,null);
+    }
+
     public User(
             String id,
             String firstName,
