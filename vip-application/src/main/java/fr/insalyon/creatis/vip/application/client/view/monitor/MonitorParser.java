@@ -1,6 +1,5 @@
 package fr.insalyon.creatis.vip.application.client.view.monitor;
 
-import com.smartgwt.client.widgets.tab.Tab;
 import fr.insalyon.creatis.vip.application.client.view.common.AbstractSimulationTab;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class MonitorParser {
         final String simulationId,
         final String simulationName,
         final String applicationName,
-        final SimulationStatus status,
+        final WorkflowStatus status,
         final Date launchedDate) {
 
         for (MonitorParserInterface parser : parsers) {

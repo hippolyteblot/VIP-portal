@@ -19,7 +19,7 @@ import fr.insalyon.creatis.vip.application.client.rpc.WorkflowService;
 import fr.insalyon.creatis.vip.application.models.Activity;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Simulation;
+import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.models.SimulationInput;
 import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
 import fr.insalyon.creatis.vip.application.server.business.BoutiquesBusiness;
@@ -62,7 +62,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @throws VipException
      */
     @Override
-    public List<Simulation> getSimulations() throws VipException {
+    public List<Workflow> getSimulations() throws VipException {
         if (isSystemAdministrator()) {
             return workflowBusiness.getSimulations(null, null);
         } else {
@@ -78,7 +78,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @throws VipException
      */
     @Override
-    public List<Simulation> getSimulations(Date lastDate) throws VipException {
+    public List<Workflow> getSimulations(Date lastDate) throws VipException {
         if (isSystemAdministrator()) {
             return workflowBusiness.getSimulations(null, lastDate);
         } else {
@@ -97,8 +97,8 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @throws VipException
      */
     @Override
-    public List<Simulation> getSimulations(String userName, String application,
-                                           String status, Date startDate, Date endDate) throws VipException {
+    public List<Workflow> getSimulations(String userName, String application,
+                                         String status, Date startDate, Date endDate) throws VipException {
         User user = getSessionUser();
         if (user.isSystemAdministrator() || (userName != null && userName.equalsIgnoreCase(user.getFullName()))) {
             return workflowBusiness.getSimulations(userName, application, status, startDate, endDate);
@@ -412,7 +412,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @return
      * @throws VipException
      */
-    public Simulation getSimulation(String simulationID) throws VipException {
+    public Workflow getSimulation(String simulationID) throws VipException {
         return workflowBusiness.getSimulation(simulationID);
     }
 
@@ -489,17 +489,17 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
 
     /**
      *
-     * @param simulationList
+     * @param workflowList
      * @param type
      * @return
      * @throws VipException
      */
-    public List<String> getPerformanceStats(List<Simulation> simulationList, int type) throws VipException {
+    public List<String> getPerformanceStats(List<Workflow> workflowList, int type) throws VipException {
 
         try {
-            return workflowBusiness.getPerformanceStats(simulationList, type);
+            return workflowBusiness.getPerformanceStats(workflowList, type);
         } catch (WorkflowsDBDAOException ex) {
-            logger.error("Error getting perf stats for {}", simulationList, ex);
+            logger.error("Error getting perf stats for {}", workflowList, ex);
             throw new VipException(ex);
         }
     }

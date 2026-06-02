@@ -8,10 +8,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
-import fr.insalyon.creatis.vip.application.models.Activity;
-import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Simulation;
-import fr.insalyon.creatis.vip.application.models.SimulationInput;
+import fr.insalyon.creatis.vip.application.models.*;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Pair;
 
@@ -34,9 +31,9 @@ public interface WorkflowService extends RemoteService {
         }
     }
 
-    public List<Simulation> getSimulations() throws VipException;
+    public List<Workflow> getSimulations() throws VipException;
     
-    public List<Simulation> getSimulations(Date lastDate) throws VipException;
+    public List<Workflow> getSimulations(Date lastDate) throws VipException;
 
     public String getApplicationDescriptorString(String applicationName, String applicationVersion) throws VipException;
 
@@ -78,9 +75,9 @@ public interface WorkflowService extends RemoteService {
 
     public Map<String, String> relaunchSimulation(String simulationID) throws VipException;
 
-    public List<Simulation> getSimulations(String user, String application, String status, Date startDate, Date endDate) throws VipException;
+    public List<Workflow> getSimulations(String user, String application, String status, Date startDate, Date endDate) throws VipException;
 
-    public Simulation getSimulation(String simulationID) throws VipException;
+    public Workflow getSimulation(String simulationID) throws VipException;
 
     public String getFile(String baseDir, String fileName);
 
@@ -92,7 +89,7 @@ public interface WorkflowService extends RemoteService {
 
     public List<SimulationInput> getWorkflowsInputByUserAndAppName(String user, String appName);
 
-    public List<String> getPerformanceStats(List<Simulation> simulationList, int type) throws VipException;
+    public List<String> getPerformanceStats(List<Workflow> workflowList, int type) throws VipException;
 
     public List<InOutData> getOutputData(String simulationID) throws VipException;
 

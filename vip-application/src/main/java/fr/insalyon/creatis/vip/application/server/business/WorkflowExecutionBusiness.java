@@ -13,8 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow;
-import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.server.business.simulation.WorkflowEngineInstantiator;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -47,7 +46,7 @@ public class WorkflowExecutionBusiness {
             String id = engine.launch(engineEndpoint, workflowContent, inputs, settingsJSON, executorConfig, proxyFileName);
 
             return new Workflow(id, user.getFullName(),
-                    WorkflowStatus.Running, new Date(), null, simulationName,
+                    fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, new Date(), null, simulationName,
                     appVersion.getApplicationName(), appVersion.getVersion(), "",
                     engineEndpoint, null);
 
@@ -58,7 +57,7 @@ public class WorkflowExecutionBusiness {
         }
     }
 
-    public SimulationStatus getStatus(String engineEndpoint, String simulationID) throws VipException {
+    public WorkflowStatus getStatus(String engineEndpoint, String simulationID) throws VipException {
         return engine.getStatus(engineEndpoint, simulationID);
     }
 
