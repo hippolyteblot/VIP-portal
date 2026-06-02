@@ -87,6 +87,11 @@ public class MessageController {
         messageBusiness.remove(id);
     }
 
+    @DeleteMapping("/groups/{id}")
+    public void deleteGroupMessage(@PathVariable long id) throws VipException {
+        messageBusiness.removeGroupMessage(id);
+    }
+
     @PutMapping("/{id}/read")
     public void markAsRead(@PathVariable long id) throws VipException {
         messageBusiness.markAsRead(id);
