@@ -1,9 +1,11 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { messagesApi, type BackendGroupMessage, type BackendMessage } from '@/api/messages.api'
+import { groupsApi } from '@/api/groups.api'
 import { useAuthStore } from '@/stores/auth.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import type { MessageItem, SendMessagePayload } from '@/types/message.types'
+import type { Group } from '@/types/group.types'
 
 interface GroupThread {
   name: string
@@ -65,6 +67,7 @@ export const useMessagesStore = defineStore('messages', () => {
   const messages = ref<MessageItem[]>([])
   const sentMessages = ref<MessageItem[]>([])
   const groupMessages = ref<MessageItem[]>([])
+  const availableGroups = ref<Group[]>([])
   const isLoading = ref(false)
   const isLoadingSent = ref(false)
   const isLoadingGroups = ref(false)
@@ -89,6 +92,13 @@ export const useMessagesStore = defineStore('messages', () => {
       return acc
     }, {})
 
+    // Ensure all fetched available groups are represented even if they have no messages
+    availableGroups.value.forEach((group: any) => {
+      if (!grouped[group.name]) {
+        grouped[group.name] = []
+      }
+    })
+
     return Object.entries(grouped)
       .map(([name, items]) => {
         const sorted = [...items].sort(
@@ -100,7 +110,16 @@ export const useMessagesStore = defineStore('messages', () => {
           latestDate: sorted[0]?.date || new Date(0).toISOString(),
         }
       })
-      .sort((a, b) => new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime())
+      .sort((a, b) => {
+        // Sort by latest date first, then by name
+        const timeDiff = new Date(b.latestDate).getTime() - new Date(a.latestDate).getTime()
+        if (timeDiff !== 0 && b.latestDate !== new Date(0).toISOString() && a.latestDate !== new Date(0).toISOString()) {
+          return timeDiff
+        }
+        if (a.messages.length > 0 && b.messages.length === 0) return -1
+        if (b.messages.length > 0 && a.messages.length === 0) return 1
+        return a.name.localeCompare(b.name)
+      })
   })
 
   async function fetchMessages(startDate?: number) {
@@ -117,15 +136,26 @@ export const useMessagesStore = defineStore('messages', () => {
 
   async function fetchGroupMessages(startDate?: number): Promise<void> {
     isLoadingGroups.value = true
-    const groups = authStore.user?.groups ?? []
-    if (groups.length === 0) {
+
+    if (authStore.user?.level === 'Administrator') {
+      try {
+        const adminGroupsPage = await groupsApi.getAll()
+        availableGroups.value = adminGroupsPage.data
+      } catch {
+        availableGroups.value = []
+      }
+    } else {
+      availableGroups.value = (authStore.user?.groupsWithRoles as any) ?? authStore.user?.groups ?? []
+    }
+
+    if (availableGroups.value.length === 0) {
       groupMessages.value = []
       isLoadingGroups.value = false
       return
     }
 
     const results = await Promise.allSettled(
-      groups.map((group) => messagesApi.getGroupMessages(group.name, startDate)),
+      availableGroups.value.map((group) => messagesApi.getGroupMessages(group.name, startDate)),
     )
 
     let hasFailure = false
@@ -160,6 +190,21 @@ export const useMessagesStore = defineStore('messages', () => {
   }
 
   async function sendMessage(payload: SendMessagePayload) {
+    if (payload.isGroupMessage) {
+      const groupName = parseRecipients(payload.to)[0]
+      if (!groupName) {
+        notifications.error('Please provide a group name.')
+        return
+      }
+      try {
+        await messagesApi.sendGroup(groupName, payload.subject, payload.body)
+        notifications.success('Group message sent.')
+      } catch {
+        notifications.error('Unable to send group message.')
+      }
+      return
+    }
+
     const recipients = parseRecipients(payload.to)
     if (recipients.length === 0) {
       notifications.error('Please provide at least one recipient.')
@@ -167,12 +212,7 @@ export const useMessagesStore = defineStore('messages', () => {
     }
 
     try {
-      await messagesApi.send({
-        recipients,
-        subject: payload.subject,
-        message: payload.body,
-        isGroupMessage: payload.isGroupMessage,
-      })
+      await messagesApi.send(recipients, payload.subject, payload.body)
       notifications.success('Message sent.')
     } catch {
       notifications.error('Unable to send message.')
@@ -193,6 +233,14 @@ export const useMessagesStore = defineStore('messages', () => {
 
     await messagesApi.deleteSent(numericId)
     sentMessages.value = sentMessages.value.filter((message) => message.id !== id)
+  }
+
+  async function deleteGroupMessage(id: string) {
+    const numericId = Number(id.replace('g-', ''))
+    if (Number.isNaN(numericId)) return
+
+    await messagesApi.deleteGroupMessage(numericId)
+    groupMessages.value = groupMessages.value.filter((message) => message.id !== id)
   }
 
   async function markAsRead(id: string) {
@@ -227,6 +275,7 @@ export const useMessagesStore = defineStore('messages', () => {
     sendMessage,
     deleteMessage,
     deleteSentMessage,
+    deleteGroupMessage,
     markAsRead,
   }
 })

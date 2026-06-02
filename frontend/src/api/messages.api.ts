@@ -28,11 +28,18 @@ export interface BackendGroupMessage {
   postedDate?: string | number
 }
 
-interface SendMessageRequest {
-  recipients: string[]
-  subject: string
+/** Payload for POST /internal/messages — matches backend Message model */
+interface SendMessagePayload {
+  receivers: { id: string }[]
+  title: string
   message: string
-  isGroupMessage?: boolean
+}
+
+/** Payload for POST /internal/messages/groups — matches backend GroupMessage model */
+interface SendGroupMessagePayload {
+  groupName: string
+  title: string
+  message: string
 }
 
 export const messagesApi = {
@@ -57,14 +64,28 @@ export const messagesApi = {
       })
       .then((r) => r.data),
 
-  send: (payload: SendMessageRequest) =>
-    backendClient.post('/internal/messages', payload).then((r) => r.data),
+  send: (receivers: string[], title: string, message: string) =>
+    backendClient.post<void>('/internal/messages', {
+      receivers: receivers.map((id) => ({ id })),
+      title,
+      message,
+    } satisfies SendMessagePayload).then((r) => r.data),
+
+  sendGroup: (groupName: string, title: string, message: string) =>
+    backendClient.post<void>('/internal/messages/groups', {
+      groupName,
+      title,
+      message,
+    } satisfies SendGroupMessagePayload).then((r) => r.data),
 
   deleteReceived: (id: number) =>
     backendClient.delete(`/internal/messages/${id}`).then((r) => r.data),
 
   deleteSent: (id: number) =>
     backendClient.delete(`/internal/messages/send/${id}`).then((r) => r.data),
+
+  deleteGroupMessage: (id: number) =>
+    backendClient.delete(`/internal/messages/groups/${id}`).then((r) => r.data),
 
   markAsRead: (id: number) =>
     backendClient.put(`/internal/messages/${id}/read`).then((r) => r.data),

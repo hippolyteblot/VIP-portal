@@ -1,4 +1,5 @@
 import type { Group } from './group.types'
+import type { GroupWithRole } from './user.types'
 
 export interface ProfileUser {
   id: string
@@ -11,7 +12,9 @@ export interface ProfileUser {
   level: string
   termsOfUse: string | null
   lastUpdatePublications: string | null
+  welcomeDismissed: string | null
   groups: Group[]
+  groupsWithRoles?: GroupWithRole[]
   apiKey: string | null
 }
 

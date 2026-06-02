@@ -118,8 +118,8 @@ describe('useAuthStore', () => {
 
   it('clears auth state on logout even if API fails', async () => {
     const store = useAuthStore()
-    store.session = { id: 'session-3', email: 'x@y.z', userlevel: 'User' }
-    store.user = { email: 'x@y.z' }
+    store.session = { id: 'session-3', email: 'x@y.z', userlevel: 'User' } as any
+    store.user = { email: 'x@y.z' } as any
     store.initialized = true
 
     mocked.logout.mockRejectedValue(new Error('logout failed'))

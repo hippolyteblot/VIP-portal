@@ -8,14 +8,30 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import { groupsApi } from '@/api/groups.api'
 import { usersApi } from '@/api/users.api'
 import { useMessagesStore } from '@/stores/messages.store'
+import { useAuthStore } from '@/stores/auth.store'
 import { useFormatters } from '@/composables/useFormatters'
 import { getGroupBadgeColor } from '@/utils/groupColor'
+import { computed } from 'vue'
 import type { SendMessagePayload } from '@/types/message.types'
 import type { UserSuggestion } from '@/types/user.types'
 import type { Group } from '@/types/group.types'
 
 const messagesStore = useMessagesStore()
+const authStore = useAuthStore()
 const { formatRelativeTime } = useFormatters()
+
+const isAdmin = computed(() => authStore.user?.level === 'Administrator')
+
+const canSendGroupMessage = computed(() => {
+  if (isAdmin.value) return true
+  return authStore.user?.groupsWithRoles?.some((g) => g.role === 'Admin') ?? false
+})
+
+function canDeleteGroupMessage(groupName: string | undefined): boolean {
+  if (isAdmin.value) return true
+  if (!groupName) return false
+  return authStore.user?.groupsWithRoles?.some((g) => g.role === 'Admin' && g.name === groupName) ?? false
+}
 
 const showComposeModal = ref(false)
 const expandedId = ref<string | null>(null)
@@ -141,7 +157,7 @@ watch(
   (threads) => {
     if (activeTab.value !== 'groups') return
     if (!selectedGroup.value && threads.length > 0) {
-      selectedGroup.value = threads[0].name
+      selectedGroup.value = threads[0]?.name ?? null
     }
   },
   { deep: true },
@@ -189,9 +205,19 @@ watch(
       groupSearchTimer.value = window.setTimeout(async () => {
         isSearchingGroups.value = true
         try {
-          const results = await groupsApi.search(query, 10)
-          if (activeQuery.value === query) {
-            groupSuggestions.value = results
+          if (isAdmin.value) {
+            const results = await groupsApi.search(query, 10)
+            if (activeQuery.value === query) {
+              groupSuggestions.value = results
+            }
+          } else {
+            // For normal users, only suggest groups where they are an Admin
+            if (activeQuery.value === query) {
+              const myAdminGroups = authStore.user?.groupsWithRoles?.filter((g) => g.role === 'Admin') ?? []
+              groupSuggestions.value = myAdminGroups.filter((g) =>
+                g.name.toLowerCase().includes(query.toLowerCase()),
+              )
+            }
           }
         } catch {
           if (activeQuery.value === query) {
@@ -420,9 +446,19 @@ watch(composeMode, (mode) => {
               <p class="font-medium text-gray-900">
                 {{ msg.subject }}
               </p>
-              <p class="text-xs text-gray-500">
-                {{ formatRelativeTime(msg.date) }}
-              </p>
+              <div class="flex items-center gap-2">
+                <AppButton
+                  v-if="canDeleteGroupMessage(msg.groupName)"
+                  variant="ghost"
+                  size="sm"
+                  @click.stop="messagesStore.deleteGroupMessage(msg.id)"
+                >
+                  <Trash2 class="h-4 w-4 text-red-600" />
+                </AppButton>
+                <p class="text-xs text-gray-500">
+                  {{ formatRelativeTime(msg.date) }}
+                </p>
+              </div>
             </div>
             <p class="text-sm text-gray-500">
               {{ msg.from }}
@@ -484,7 +520,7 @@ watch(composeMode, (mode) => {
           </button>
         </div>
         <form class="mt-4 space-y-4" @submit.prevent="sendMessage">
-          <div class="flex flex-wrap gap-2">
+          <div v-if="canSendGroupMessage" class="flex flex-wrap gap-2">
             <AppButton
               type="button"
               :variant="composeMode === 'users' ? 'primary' : 'secondary'"
@@ -583,7 +619,7 @@ watch(composeMode, (mode) => {
             />
           </div>
           <p class="text-xs text-gray-500">
-            Multi-recipient is supported with commas. Use "Message groups" to target a group.
+            Multi-recipient is supported with commas.
           </p>
           <div class="flex justify-end gap-2 pt-2">
             <AppButton type="button" variant="secondary" @click="showComposeModal = false">

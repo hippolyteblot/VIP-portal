@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -10,6 +10,10 @@ const auth = useAuthStore()
 
 const recentApplications = ref<RecentApplication[]>([])
 
+const showWelcome = computed(() =>
+  auth.isAuthenticated && auth.user != null && auth.user.welcomeDismissed == null
+)
+
 onMounted(() => {
     recentApplications.value = getRecentApplications(4)
 })
@@ -17,6 +21,7 @@ onMounted(() => {
 
 
 <template>
+
     <div class="space-y-8">
         <div>
             <h1 class="text-2xl font-bold">

@@ -77,4 +77,10 @@ export const usersApi = {
         params: { q: query, limit },
       })
       .then((r) => r.data),
+
+  dismissWelcome: (id: string) =>
+    backendClient.put(`/internal/users/${encodeURIComponent(id)}/welcome/dismiss`).then((r) => r.data),
+
+  resetAllWelcome: () =>
+    backendClient.put('/internal/users/welcome/reset-all').then((r) => r.data),
 }
