@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -9,6 +9,7 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import { useApplicationsStore } from '@/stores/applications.store'
 import { useAppVersionsStore } from '@/stores/appversions.stores'
 import { useNotificationsStore } from '@/stores/notifications.store'
+import { useWorkflowsStore } from '@/stores/workflows.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
 import { rememberRecentApplication } from '@/utils/recentApplications'
@@ -16,9 +17,11 @@ import { useBoutiquesLaunchForm } from '@/composables/useBoutiquesLaunchForm'
 import { useDuplicatedLaunchInputs } from '@/composables/useDuplicatedLaunchInputs'
 
 const route = useRoute()
+const router = useRouter()
 const applicationsStore = useApplicationsStore()
 const appversionsStore = useAppVersionsStore()
 const notificationsStore = useNotificationsStore()
+const workflowsStore = useWorkflowsStore()
 
 const application = ref<Application | null>(null)
 const selectedVersion = ref<AppVersion | null>(null)
@@ -108,15 +111,15 @@ async function loadVersion(versionName: string) {
   }
 }
 
-function onLaunchSubmit() {
+async function onLaunchSubmit() {
   if (!application.value || !selectedVersion.value) return
   if (!validateForm()) return
 
   const payload = buildSubmissionPayload()
-  if (payload) {
-    lastSubmissionPayload.value = payload
-    window.localStorage.setItem('vip.lastLaunchPayload', JSON.stringify(payload))
-  }
+  if (!payload) return
+
+  lastSubmissionPayload.value = payload
+  window.localStorage.setItem('vip.lastLaunchPayload', JSON.stringify(payload))
 
   rememberRecentApplication({
     name: application.value.name,
@@ -124,7 +127,26 @@ function onLaunchSubmit() {
     version: selectedVersion.value.version,
   })
 
-  notificationsStore.success('Application launched', `Your application "${application.value.fullName || application.value.name}" has been launched successfully.`)
+  const inputs: Record<string, unknown> = {}
+  for (const input of payload.inputs) {
+    const singleValue = input.values.find((v) => v.instanceId === '0')
+    if (input.values.length === 1 && singleValue) {
+      inputs[input.id] = singleValue.value
+    } else {
+      inputs[input.id] = input.values.map((v) => v.value)
+    }
+  }
+
+  const workflow = await workflowsStore.launchWorkflow({
+    applicationName: payload.applicationName,
+    applicationVersion: payload.version,
+    workflowName: payload.executionName,
+    inputs,
+  })
+
+  if (workflow) {
+    router.push({ name: 'workflow-detail', params: { id: workflow.id } })
+  }
 }
 
 onMounted(async () => {
