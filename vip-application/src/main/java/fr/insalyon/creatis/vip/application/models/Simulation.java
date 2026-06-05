@@ -99,7 +99,8 @@ public class Simulation implements IsSerializable {
     public void setSimulationName(String simulationName) {
         this.simulationName = simulationName;
     }
-      public Date getEndDate() {
+    
+    public Date getEndDate() {
             return endDate;
     }
 

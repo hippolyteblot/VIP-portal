@@ -149,7 +149,6 @@ public class ExecutionBusiness {
     @SuppressWarnings("unchecked")
     private Execution getExecutionFromSimulation(Simulation s, boolean summarize) throws VipException {
         // Build Carmin's execution object
-//  / Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
                 s.getSimulationName(),
@@ -159,7 +158,7 @@ public class ExecutionBusiness {
                 null, //study identifier (not available in VIP yet)
                 null, //  error codes and mesasges (not available in VIP yet)
                 s.getDate().getTime(), // startDate
-                s.getEndDate() != null ? ((Date) s.getEndDate()).getTime() : null,
+                s.getEndDate() != null ? s.getEndDate().getTime() : null,
                 null // results location (handled later as a special input in VIP
         );
 
