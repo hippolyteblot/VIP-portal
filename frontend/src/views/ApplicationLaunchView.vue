@@ -127,14 +127,12 @@ async function onLaunchSubmit() {
     version: selectedVersion.value.version,
   })
 
-  const inputs: Record<string, unknown> = {}
+  const inputs: Record<string, { value: string }> = {}
   for (const input of payload.inputs) {
-    const singleValue = input.values.find((v) => v.instanceId === '0')
-    if (input.values.length === 1 && singleValue) {
-      inputs[input.id] = singleValue.value
-    } else {
-      inputs[input.id] = input.values.map((v) => v.value)
-    }
+    const strValue = input.values
+      .map((v) => String(v.value))
+      .join('@@')
+    inputs[input.id] = { value: strValue }
   }
 
   const workflow = await workflowsStore.launchWorkflow({

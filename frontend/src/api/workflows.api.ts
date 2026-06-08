@@ -1,11 +1,11 @@
 import { backendClient } from './client'
 import type { PrecisePage } from '@/types/application.types'
-import type { Workflow, WorkflowLaunchPayload, WorkflowUpdatePayload } from '@/types/workflow.types'
+import type { Workflow, WorkflowLaunchPayload, WorkflowListParams } from '@/types/workflow.types'
 
 export const workflowsApi = {
-  list: (offset = 0, quantity = 10) =>
+  list: (params?: WorkflowListParams) =>
     backendClient
-      .get<PrecisePage<Workflow>>('/internal/workflows', { params: { offset, quantity } })
+      .get<PrecisePage<Workflow>>('/internal/workflows', { params })
       .then((r) => r.data),
 
   get: (wid: string) =>
@@ -18,8 +18,15 @@ export const workflowsApi = {
       .post<Workflow>('/internal/workflows', payload)
       .then((r) => r.data),
 
-  updateStatus: (wid: string, payload: WorkflowUpdatePayload) =>
+  kill: (wid: string) =>
     backendClient
-      .put<Workflow>(`/internal/workflows/${encodeURIComponent(wid)}`, payload)
+      .post(`/internal/workflows/${encodeURIComponent(wid)}/kill`)
+      .then((r) => r.data),
+
+  clean: (wid: string, deleteFiles = true) =>
+    backendClient
+      .post(`/internal/workflows/${encodeURIComponent(wid)}/clean`, null, {
+        params: { deleteFiles },
+      })
       .then((r) => r.data),
 }

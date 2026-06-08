@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { workflowsApi } from '@/api/workflows.api'
 import { useNotificationsStore } from '@/stores/notifications.store'
-import type { Workflow, WorkflowLaunchPayload } from '@/types/workflow.types'
+import type { Workflow, WorkflowLaunchPayload, WorkflowListParams } from '@/types/workflow.types'
 
 export const useWorkflowsStore = defineStore('workflows', () => {
   const currentWorkflow = ref<Workflow | null>(null)
@@ -22,10 +22,10 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     }
   }
 
-  async function listWorkflows(offset = 0, quantity = 10) {
+  async function listWorkflows(params?: WorkflowListParams) {
     isLoading.value = true
     try {
-      const page = await workflowsApi.list(offset, quantity)
+      const page = await workflowsApi.list(params)
       workflows.value = page.data
       total.value = page.total
     } catch {
@@ -46,6 +46,34 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     }
   }
 
+  async function killWorkflow(wid: string): Promise<boolean> {
+    try {
+      await workflowsApi.kill(wid)
+      notifications.success('Workflow killed.')
+      if (currentWorkflow.value?.id === wid) {
+        currentWorkflow.value = await workflowsApi.get(wid)
+      }
+      return true
+    } catch {
+      notifications.error('Unable to kill workflow.')
+      return false
+    }
+  }
+
+  async function cleanWorkflow(wid: string, deleteFiles = true): Promise<boolean> {
+    try {
+      await workflowsApi.clean(wid, deleteFiles)
+      notifications.success('Workflow cleaned.')
+      if (currentWorkflow.value?.id === wid) {
+        currentWorkflow.value = await workflowsApi.get(wid)
+      }
+      return true
+    } catch {
+      notifications.error('Unable to clean workflow.')
+      return false
+    }
+  }
+
   return {
     currentWorkflow,
     workflows,
@@ -54,5 +82,7 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     fetchWorkflow,
     listWorkflows,
     launchWorkflow,
+    killWorkflow,
+    cleanWorkflow,
   }
 })

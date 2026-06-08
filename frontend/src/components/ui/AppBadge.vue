@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type BadgeVariant =
+export type BadgeVariant =
   | 'primary'
   | 'success'
   | 'warning'

@@ -4,8 +4,8 @@ export type WorkflowStatus =
   | 'Failed'
   | 'Killed'
   | 'Cleaned'
-  | 'Waiting'
-  | 'Error'
+  | 'Queued'
+  | 'Unknown'
 
 export interface Workflow {
   id: string
@@ -13,7 +13,7 @@ export interface Workflow {
   applicationVersion: string
   workflowName: string
   status: WorkflowStatus
-  inputs: Record<string, unknown>
+  inputs: Record<string, { type: string; value: string }>
   outputs: Record<string, string>
   userId: string
   startDate: string
@@ -25,9 +25,15 @@ export interface WorkflowLaunchPayload {
   applicationName: string
   applicationVersion: string
   workflowName: string
-  inputs: Record<string, unknown>
+  inputs: Record<string, { value: string }>
 }
 
-export interface WorkflowUpdatePayload {
-  status: WorkflowStatus
+export interface WorkflowListParams {
+  offset?: number
+  quantity?: number
+  application?: string
+  status?: string
+  startDate?: string
+  endDate?: string
+  tag?: string
 }
