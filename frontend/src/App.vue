@@ -13,7 +13,6 @@ const isAuthRoute = computed(() => ['login', 'register', 'activate'].includes(ro
 </script>
 
 <template>
-  
   <AppToast />
 
   <template v-if="!isRouteResolved || isLandingRoute">

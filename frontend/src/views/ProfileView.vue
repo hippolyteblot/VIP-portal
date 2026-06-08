@@ -127,6 +127,7 @@ function normalizeProfile(input: unknown): ProfileUser | null {
     level: typeof raw.level === 'string' ? raw.level : 'Beginner',
     termsOfUse: typeof raw.termsOfUse === 'string' ? raw.termsOfUse : null,
     lastUpdatePublications: typeof raw.lastUpdatePublications === 'string' ? raw.lastUpdatePublications : null,
+    welcomeDismissed: typeof raw.welcomeDismissed === 'string' ? raw.welcomeDismissed : null,
     groups: Array.isArray(raw.groups) ? (raw.groups as Group[]) : [],
     apiKey: typeof raw.apiKey === 'string' ? raw.apiKey : null,
   }
