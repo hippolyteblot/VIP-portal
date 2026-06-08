@@ -31,6 +31,7 @@ export interface WorkflowLaunchPayload {
 export interface WorkflowListParams {
   offset?: number
   quantity?: number
+  search?: string
   application?: string
   status?: string
   startDate?: string

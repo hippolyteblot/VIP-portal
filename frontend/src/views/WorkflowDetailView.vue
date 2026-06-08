@@ -129,7 +129,7 @@ onMounted(() => {
           <dl class="space-y-2 text-sm">
             <div class="flex justify-between">
               <dt class="text-gray-500">ID</dt>
-              <dd class="font-mono text-xs text-gray-900">{{ wf.id }}</dd>
+              <dd class="font-mono text-s text-gray-900">{{ wf.id }}</dd>
             </div>
             <div class="flex justify-between">
               <dt class="text-gray-500">Application</dt>
