@@ -27,7 +27,7 @@ public class ExecutionTestUtils {
         // TODO Test with int or float params
         WORKFLOW_1 = new Workflow("pipelineTest1", "3", "execId1",
                 UserTestUtils.baseUser1.getFullName(),
-                new GregorianCalendar(2016, 9, 2).getTime(),
+                new GregorianCalendar(2016, 9, 2).getTime(), null,
                 "Exec test 1", WorkflowStatus.Running.toString(), "engine 1", null);
         execution1 = getExecution(WORKFLOW_1, ExecutionStatus.RUNNING);
         execution1.setInputValuesForDisplay(new HashMap<String,Object>() {{
@@ -44,7 +44,7 @@ public class ExecutionTestUtils {
 
         WORKFLOW_2 = new Workflow("pipelineTest2", "4.2", "execId2",
                 UserTestUtils.baseUser1.getFullName(),
-                new GregorianCalendar(2016, 4, 29).getTime(),
+                new GregorianCalendar(2016, 4, 29).getTime(), null,
                 "Exec test 2", WorkflowStatus.Completed.toString(), "engine 1", null);
         execution2 = getExecution(WORKFLOW_2, ExecutionStatus.FINISHED);
         execution2.setInputValuesForDisplay(new HashMap<String,Object>() {{
@@ -117,6 +117,7 @@ public class ExecutionTestUtils {
                 simu.getID(),
                 simu.getUserId(),
                 simu.getStartDate(),
+                simu.getEndDate(),
                 newName,
                 simu.getStatus().toString(),
                 simu.getEngineName(),

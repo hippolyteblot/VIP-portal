@@ -5,6 +5,7 @@ import static fr.insalyon.creatis.vip.core.client.view.CoreConstants.RESULTS_DIR
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -147,18 +148,17 @@ public class ExecutionBusiness {
     @SuppressWarnings("unchecked")
     private Execution getExecutionFromSimulation(Workflow s, boolean summarize) throws VipException {
         // Build Carmin's execution object
-//  / Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
                 s.getWorkflowName(),
                 pipelineBusiness.getPipelineIdentifier(s.getApplicationName(), s.getApplicationVersion()),
                 0,// timeout (no timeout set in VIP)
                 s.getStatus() == null ? null : convertVIPtoCarminStatus(s.getStatus()),
-                null, // study identifier (not available in VIP yet)
-                null,// error codes and mesasges (not available in VIP yet)
-                s.getStartDate().getTime(),
-                null,// last status modification date (not available in VIP yet)
-                null// results location (not available in VIP yet)
+                null, //study identifier (not available in VIP yet)
+                null, //  error codes and mesasges (not available in VIP yet)
+                s.getDate().getTime(), // startDate
+                s.getEndDate() != null ? s.getEndDate().getTime() : null,
+                null // results location (handled later as a special input in VIP
         );
 
         if (summarize) {

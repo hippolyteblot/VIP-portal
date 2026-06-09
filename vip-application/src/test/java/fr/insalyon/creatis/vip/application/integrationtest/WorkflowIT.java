@@ -33,7 +33,7 @@ public class WorkflowIT extends BaseSpringIT {
     public void setUp() throws DAOException, VipException {
 
         workflow = new Workflow("pipelineTest1", "3", "execId1",
-                "fullName", new GregorianCalendar(2016, 9, 2).getTime(),
+                "fullName", new GregorianCalendar(2016, 9, 2).getTime(), null,
                 "Exec test 1", WorkflowStatus.Running.toString(), "test engine", null);
 
 
