@@ -25,10 +25,10 @@ public class ExecutionTestUtils {
 
     static {
         // TODO Test with int or float params
-        WORKFLOW_1 = new Workflow("pipelineTest1", "3", "execId1",
-                UserTestUtils.baseUser1.getFullName(),
+        WORKFLOW_1 = new Workflow("execId1", "Exec test 1", "pipelineTest1", "3",
+                UserTestUtils.baseUser1.getFullName(), WorkflowStatus.Running.toString(),
                 new GregorianCalendar(2016, 9, 2).getTime(), null,
-                "Exec test 1", WorkflowStatus.Running.toString(), "engine 1", null);
+                "engine 1", null);
         execution1 = getExecution(WORKFLOW_1, ExecutionStatus.RUNNING);
         execution1.setInputValuesForDisplay(new HashMap<String,Object>() {{
                                       put("param 1", "value 1");
@@ -42,10 +42,10 @@ public class ExecutionTestUtils {
                 new InOutData("42", "param 2", "Integer"));
         simulation1OutData = Collections.emptyList();
 
-        WORKFLOW_2 = new Workflow("pipelineTest2", "4.2", "execId2",
-                UserTestUtils.baseUser1.getFullName(),
+        WORKFLOW_2 = new Workflow("execId2", "Exec test 2", "pipelineTest2", "4.2",
+                UserTestUtils.baseUser1.getFullName(), WorkflowStatus.Completed.toString(),
                 new GregorianCalendar(2016, 4, 29).getTime(), null,
-                "Exec test 2", WorkflowStatus.Completed.toString(), "engine 1", null);
+                 "engine 1", null);
         execution2 = getExecution(WORKFLOW_2, ExecutionStatus.FINISHED);
         execution2.setInputValuesForDisplay(new HashMap<String,Object>() {{
                                       put("param2-1", "5.3");
@@ -112,14 +112,14 @@ public class ExecutionTestUtils {
 
     public static Workflow copySimulationWithNewName(Workflow simu, String newName) {
         Workflow newWorkflow = new Workflow(
+                simu.getID(),
+                newName,
                 simu.getApplicationName(),
                 simu.getApplicationVersion(),
-                simu.getID(),
                 simu.getUserId(),
+                simu.getStatus().toString(),
                 simu.getStartDate(),
                 simu.getEndDate(),
-                newName,
-                simu.getStatus().toString(),
                 simu.getEngineName(),
                 null
         );

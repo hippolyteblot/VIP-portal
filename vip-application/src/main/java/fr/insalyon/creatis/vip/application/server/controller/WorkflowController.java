@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.application.server.controller;
 
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
+import fr.insalyon.creatis.vip.application.server.business.util.NewWorkflowBusiness;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
@@ -16,10 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/workflows")
 public class WorkflowController {
 
-    private final WorkflowBusiness workflowBusiness;
+    private final NewWorkflowBusiness workflowBusiness;
 
     @Autowired
-    public WorkflowController(WorkflowBusiness workflowBusiness) {
+    public WorkflowController(NewWorkflowBusiness workflowBusiness) {
         this.workflowBusiness = workflowBusiness;
     }
 
@@ -59,7 +60,6 @@ public class WorkflowController {
 
     @PostMapping
     public Workflow launch(@RequestBody @Valid Workflow workflow) throws VipException {
-        return null;
-        //return workflowBusiness.launch(workflow);
+        return workflowBusiness.launch(workflow);
     }
 }

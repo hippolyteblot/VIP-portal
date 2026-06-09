@@ -1,9 +1,14 @@
 package fr.insalyon.creatis.vip.application.server.business;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
+import fr.insalyon.creatis.vip.application.models.Engine;
+import fr.insalyon.creatis.vip.application.models.Resource;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +26,12 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 
 @Service
-public class WorkflowExecutionBusiness {
+public class WorkflowExecutionBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Server server;
     private WorkflowEngineInstantiator engine;
-
 
     @Autowired
     public WorkflowExecutionBusiness(Server server, WorkflowEngineInstantiator engine) {
@@ -53,6 +57,25 @@ public class WorkflowExecutionBusiness {
         } catch (JsonProcessingException ex) {
             logger.error("Error launching simulation {} ({}/{})",
                     simulationName, appVersion.getApplicationName(), appVersion.getVersion(), ex);
+            throw new VipException(ex);
+        }
+    }
+
+    public String launch(String workflowName, Resource resource, Engine engine, AppVersion appVersion,
+                           List<Map<String, List<String>>> parameters) throws VipException {
+
+        try {
+            String workflowContent = appVersion.getDescriptor();
+            String inputs = (parameters != null) ? getParametersAsJSONInput(parameters) : null;
+            String proxyFileName = server.getServerProxy(server.getVoName());
+            Map<String,String> settings = new HashMap<>(appVersion.getSettings());
+            settings.put(ApplicationConstants.DEFAULT_EXECUTOR_GASW, resource.getType().toString());
+            String settingsJSON = new ObjectMapper().writeValueAsString(settings);
+            return this.engine.launch(engine.getEndpoint(), workflowContent, inputs, settingsJSON, resource.getConfiguration(), proxyFileName);
+
+        } catch (JsonProcessingException ex) {
+            logger.error("Error launching simulation {} ({}/{})",
+                    workflowName, appVersion.getApplicationName(), appVersion.getVersion(), ex);
             throw new VipException(ex);
         }
     }

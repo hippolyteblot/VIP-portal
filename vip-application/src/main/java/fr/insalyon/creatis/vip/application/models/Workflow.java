@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
+import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import jakarta.validation.constraints.NotBlank;
 
@@ -33,6 +34,8 @@ public class Workflow implements IsSerializable {
     private String userId;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Date startDate;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Date endDate;
 
     @JsonIgnore
     private String engineName;
@@ -42,19 +45,32 @@ public class Workflow implements IsSerializable {
     public Workflow() {
     }
 
-    public Workflow(String application, String applicationVersion,
-                    String id, String userId, Date startDate,
-                    String workflowName, String status, String engineName, String tags) {
+    public Workflow(String id, String workflowName, String applicationName, String applicationVersion,
+                    String userId, String status, Date startDate, Date endDate,
+                    String engineName, String tags) {
 
-        this.applicationName = application;
-        this.applicationVersion = applicationVersion;
         this.id = id;
-        this.userId = userId;
-        this.startDate = startDate;
         this.workflowName = workflowName;
+        this.applicationName = applicationName;
+        this.applicationVersion = applicationVersion;
+        this.userId = userId;
         this.status = WorkflowStatus.valueOf(status);
+        this.startDate = startDate;
+        this.endDate = endDate;
         this.engineName = engineName;
         this.tags = tags;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public void setUser(User user) {
+        this.userId = user.getId();
     }
 
     public String getApplicationName() {
@@ -67,6 +83,10 @@ public class Workflow implements IsSerializable {
 
     public Date getStartDate() {
         return startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
     }
 
     public String getUserId() {
@@ -84,7 +104,7 @@ public class Workflow implements IsSerializable {
     public void setStatus(WorkflowStatus status) {
         this.status = status;
     }
-    
+
     public String getEngineName() {
         return engineName;
     }

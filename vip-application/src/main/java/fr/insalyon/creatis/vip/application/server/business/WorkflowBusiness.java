@@ -672,16 +672,16 @@ public class WorkflowBusiness {
 
     private Workflow parseWorkflow(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow) {
         return new Workflow(
-                    workflow.getApplication(),
-                    workflow.getApplicationVersion(),
-                    workflow.getId(),
-                    workflow.getUsername(),
-                    workflow.getStartedTime(),
-                    workflow.getFinishedTime(),
-                    workflow.getDescription(),
-                    workflow.getStatus().name(),
-                    workflow.getEngine(),
-                    workflow.getTags());
+                workflow.getId(),
+                workflow.getDescription(),
+                workflow.getApplication(),
+                workflow.getApplicationVersion(),
+                workflow.getUsername(),
+                workflow.getStatus().name(),
+                workflow.getStartedTime(),
+                workflow.getFinishedTime(),
+                workflow.getEngine(),
+                workflow.getTags());
     }
 
     private void checkRunningSimulations(List<Workflow> workflows) throws VipException, WorkflowsDBDAOException {

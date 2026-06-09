@@ -5,7 +5,6 @@ import static fr.insalyon.creatis.vip.core.client.view.CoreConstants.RESULTS_DIR
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -142,11 +141,11 @@ public class ExecutionBusiness {
             throw new VipException(ApiError.INVALID_EXAMPLE_ID, executionId);
         }
 
-        return getExecutionFromSimulation(s, summarize);
+        return getExecutionFromWorkflow(s, summarize);
     }
 
     @SuppressWarnings("unchecked")
-    private Execution getExecutionFromSimulation(Workflow s, boolean summarize) throws VipException {
+    private Execution getExecutionFromWorkflow(Workflow s, boolean summarize) throws VipException {
         // Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
@@ -156,7 +155,7 @@ public class ExecutionBusiness {
                 s.getStatus() == null ? null : convertVIPtoCarminStatus(s.getStatus()),
                 null, //study identifier (not available in VIP yet)
                 null, //  error codes and mesasges (not available in VIP yet)
-                s.getDate().getTime(), // startDate
+                s.getStartDate().getTime(),
                 s.getEndDate() != null ? s.getEndDate().getTime() : null,
                 null // results location (handled later as a special input in VIP
         );
@@ -254,7 +253,7 @@ public class ExecutionBusiness {
         for (Workflow s : workflows) {
             if (!(s == null) && !(s.getStatus() == WorkflowStatus.Cleaned)) {
                 count++;
-                executions.add(getExecutionFromSimulation(s, true));
+                executions.add(getExecutionFromWorkflow(s, true));
                 if (count >= maxReturned) {
                     logger.warn("Only the {} most recent pipelines were returned.", maxReturned);
                     break;
@@ -275,7 +274,7 @@ public class ExecutionBusiness {
                 ApplicationConstants.WORKKFLOW_EXAMPLE_TAG);
         List<Execution> executions = new ArrayList<>();
         for (Workflow workflow : workflows) {
-            executions.add(getExecutionFromSimulation(workflow, true));
+            executions.add(getExecutionFromWorkflow(workflow, true));
         }
         return executions;
     }
