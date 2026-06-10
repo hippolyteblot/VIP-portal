@@ -11,12 +11,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
+import fr.insalyon.creatis.vip.application.models.Workflow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus;
 import fr.insalyon.creatis.vip.api.exception.ApiError;
 import fr.insalyon.creatis.vip.api.model.Execution;
 import fr.insalyon.creatis.vip.api.model.ExecutionStatus;
@@ -24,9 +24,8 @@ import fr.insalyon.creatis.vip.api.model.PathProperties;
 import fr.insalyon.creatis.vip.api.model.Pipeline;
 import fr.insalyon.creatis.vip.api.model.PipelineParameter;
 import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Simulation;
 import fr.insalyon.creatis.vip.application.models.Task;
 import fr.insalyon.creatis.vip.application.server.business.SimulationBusiness;
 import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
@@ -77,7 +76,7 @@ public class ExecutionBusiness {
     }
 
     public String getLog(String executionId, Integer invocationId, String type) throws VipException {
-        Simulation s = workflowBusiness.getSimulation(executionId);
+        Workflow s = workflowBusiness.getSimulation(executionId);
         List<Task> tasks = simulationBusiness.getJobsList(s.getID());
 
         if (tasks.isEmpty()) {
@@ -128,11 +127,11 @@ public class ExecutionBusiness {
     public Execution getExecution(String executionId, boolean summarize, boolean onlyExample)
             throws VipException {
         // Get simulation object
-        Simulation s = workflowBusiness.getSimulation(executionId, true); // check running execution for update
+        Workflow s = workflowBusiness.getSimulation(executionId, true); // check running execution for update
 
         // Return null if execution doesn't exist or is cleaned (cleaned status is not
         // supported in Carmin)
-        if (s == null || s.getStatus() == SimulationStatus.Cleaned) {
+        if (s == null || s.getStatus() == WorkflowStatus.Cleaned) {
             logger.error("Error accessing invalid execution {}. (is cleaned : {})", executionId, s != null);
             throw new VipException(ApiError.INVALID_EXECUTION_ID, executionId);
         }
@@ -142,24 +141,23 @@ public class ExecutionBusiness {
             throw new VipException(ApiError.INVALID_EXAMPLE_ID, executionId);
         }
 
-        return getExecutionFromSimulation(s, summarize);
+        return getExecutionFromWorkflow(s, summarize);
     }
 
     @SuppressWarnings("unchecked")
-    private Execution getExecutionFromSimulation(Simulation s, boolean summarize) throws VipException {
+    private Execution getExecutionFromWorkflow(Workflow s, boolean summarize) throws VipException {
         // Build Carmin's execution object
-//  / Build Carmin's execution object
         Execution e = new Execution(
                 s.getID(),
-                s.getSimulationName(),
+                s.getWorkflowName(),
                 pipelineBusiness.getPipelineIdentifier(s.getApplicationName(), s.getApplicationVersion()),
                 0,// timeout (no timeout set in VIP)
                 s.getStatus() == null ? null : convertVIPtoCarminStatus(s.getStatus()),
-                null, // study identifier (not available in VIP yet)
-                null,// error codes and mesasges (not available in VIP yet)
-                s.getDate().getTime(),
-                null,// last status modification date (not available in VIP yet)
-                null// results location (not available in VIP yet)
+                null, //study identifier (not available in VIP yet)
+                null, //  error codes and mesasges (not available in VIP yet)
+                s.getStartDate().getTime(),
+                s.getEndDate() != null ? s.getEndDate().getTime() : null,
+                null // results location (handled later as a special input in VIP
         );
 
         if (summarize) {
@@ -235,13 +233,13 @@ public class ExecutionBusiness {
         return e;
     }
 
-    private boolean isSimulationAnExample(Simulation simulation) {
-        return simulation.getTags() != null &&
-                simulation.getTags().contains(ApplicationConstants.WORKKFLOW_EXAMPLE_TAG);
+    private boolean isSimulationAnExample(Workflow workflow) {
+        return workflow.getTags() != null &&
+                workflow.getTags().contains(ApplicationConstants.WORKKFLOW_EXAMPLE_TAG);
     }
 
     public List<Execution> listExecutions(int maxReturned) throws VipException {
-        List<Simulation> simulations = workflowBusiness.getSimulations(
+        List<Workflow> workflows = workflowBusiness.getSimulations(
                 currentUserProvider.get().getFullName(),
                 null, // application
                 null, // status
@@ -249,13 +247,13 @@ public class ExecutionBusiness {
                 null, // startDate
                 null // endDate
         );
-        logger.debug("Found {} simulations", simulations.size());
+        logger.debug("Found {} simulations", workflows.size());
         ArrayList<Execution> executions = new ArrayList<>();
         int count = 0;
-        for (Simulation s : simulations) {
-            if (!(s == null) && !(s.getStatus() == SimulationStatus.Cleaned)) {
+        for (Workflow s : workflows) {
+            if (!(s == null) && !(s.getStatus() == WorkflowStatus.Cleaned)) {
                 count++;
-                executions.add(getExecutionFromSimulation(s, true));
+                executions.add(getExecutionFromWorkflow(s, true));
                 if (count >= maxReturned) {
                     logger.warn("Only the {} most recent pipelines were returned.", maxReturned);
                     break;
@@ -267,22 +265,22 @@ public class ExecutionBusiness {
     }
 
     public List<Execution> listExamples() throws VipException {
-        List<Simulation> simulations = workflowBusiness.getSimulations(
+        List<Workflow> workflows = workflowBusiness.getSimulations(
                 null, // User must be null to take examples from other users
                 null, // application
-                WorkflowStatus.Completed.name(), // status
+                fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed.name(), // status
                 null, // startDate
                 null, // endDate
                 ApplicationConstants.WORKKFLOW_EXAMPLE_TAG);
         List<Execution> executions = new ArrayList<>();
-        for (Simulation simulation : simulations) {
-            executions.add(getExecutionFromSimulation(simulation, true));
+        for (Workflow workflow : workflows) {
+            executions.add(getExecutionFromWorkflow(workflow, true));
         }
         return executions;
     }
 
     public int countExecutions() throws VipException {
-        List<Simulation> simulations = workflowBusiness.getSimulations(
+        List<Workflow> workflows = workflowBusiness.getSimulations(
                 currentUserProvider.get().getFullName(),
                 null, // application
                 null, // status
@@ -290,10 +288,10 @@ public class ExecutionBusiness {
                 null, // endDate
                 null // endDate
         );
-        logger.debug("Counting executions, found {} simulations.", simulations.size());
+        logger.debug("Counting executions, found {} simulations.", workflows.size());
         int count = 0;
-        for (Simulation s : simulations) {
-            if (!(s == null) && !(s.getStatus() == SimulationStatus.Cleaned)) {
+        for (Workflow s : workflows) {
+            if (!(s == null) && !(s.getStatus() == WorkflowStatus.Cleaned)) {
                 count++;
             }
         }
@@ -498,8 +496,8 @@ public class ExecutionBusiness {
 
     public void deleteExecution(String executionId, Boolean deleteFiles) throws VipException {
         checkIfUserCanAccessExecution(executionId);
-        Simulation s = workflowBusiness.getSimulation(executionId);
-        if (s.getStatus() != SimulationStatus.Completed && s.getStatus() != SimulationStatus.Killed) {
+        Workflow s = workflowBusiness.getSimulation(executionId);
+        if (s.getStatus() != WorkflowStatus.Completed && s.getStatus() != WorkflowStatus.Killed) {
             logger.error("Cannot delete exec {}, it is {}", executionId, s.getStatus());
             throw new VipException(
                     "Cannot delete execution " + executionId + " because status is " + s.getStatus().toString());
@@ -524,7 +522,7 @@ public class ExecutionBusiness {
         return pathResults;
     }
 
-    private ExecutionStatus convertVIPtoCarminStatus(SimulationStatus s) {
+    private ExecutionStatus convertVIPtoCarminStatus(WorkflowStatus s) {
 
         switch (s) {
             case Running:
@@ -549,8 +547,8 @@ public class ExecutionBusiness {
         if (user.isSystemAdministrator()) {
             return;
         }
-        Simulation s = workflowBusiness.getSimulation(executionId);
-        if (s.getUserName().equals(user.getFullName())) {
+        Workflow s = workflowBusiness.getSimulation(executionId);
+        if (s.getUserId().equals(user.getFullName())) {
             return;
         }
         logger.error("Permission denied for {} on exec {}", user, executionId);

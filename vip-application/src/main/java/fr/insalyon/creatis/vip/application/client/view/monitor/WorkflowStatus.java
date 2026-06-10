@@ -4,7 +4,7 @@ package fr.insalyon.creatis.vip.application.client.view.monitor;
  *
  * @author Rafael Ferreira da Silva
  */
-public enum SimulationStatus {
+public enum WorkflowStatus {
 
     Running,
     Completed,

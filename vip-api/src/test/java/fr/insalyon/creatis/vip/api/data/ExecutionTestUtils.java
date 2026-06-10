@@ -3,9 +3,9 @@ package fr.insalyon.creatis.vip.api.data;
 import fr.insalyon.creatis.vip.api.model.Execution;
 import fr.insalyon.creatis.vip.api.model.ExecutionStatus;
 import fr.insalyon.creatis.vip.api.tools.spring.JsonCustomObjectMatcher;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Simulation;
+import fr.insalyon.creatis.vip.application.models.Workflow;
 
 import org.hamcrest.Matcher;
 
@@ -19,17 +19,17 @@ public class ExecutionTestUtils {
     public static final Map<String,Function> executionSuppliers;
 
     public static final Execution execution1,   execution2;
-    public static final Simulation simulation1, simulation2;
+    public static final Workflow WORKFLOW_1, WORKFLOW_2;
     public static final List<InOutData> simulation1InData, simulation2InData;
     public static final List<InOutData> simulation1OutData, simulation2OutData;
 
     static {
         // TODO Test with int or float params
-        simulation1 = new Simulation("pipelineTest1", "3", null, "execId1",
-                UserTestUtils.baseUser1.getFullName(),
-                new GregorianCalendar(2016, 9, 2).getTime(),
-                "Exec test 1", SimulationStatus.Running.toString(), "engine 1", null);
-        execution1 = getExecution(simulation1, ExecutionStatus.RUNNING);
+        WORKFLOW_1 = new Workflow("execId1", "Exec test 1", "pipelineTest1", "3",
+                UserTestUtils.baseUser1.getFullName(), WorkflowStatus.Running.toString(),
+                new GregorianCalendar(2016, 9, 2).getTime(), null,
+                "engine 1", null);
+        execution1 = getExecution(WORKFLOW_1, ExecutionStatus.RUNNING);
         execution1.setInputValuesForDisplay(new HashMap<String,Object>() {{
                                       put("param 1", "value 1");
                                       put("param 2", "42");
@@ -42,11 +42,11 @@ public class ExecutionTestUtils {
                 new InOutData("42", "param 2", "Integer"));
         simulation1OutData = Collections.emptyList();
 
-        simulation2 = new Simulation("pipelineTest2", "4.2", null, "execId2",
-                UserTestUtils.baseUser1.getFullName(),
-                new GregorianCalendar(2016, 4, 29).getTime(),
-                "Exec test 2", SimulationStatus.Completed.toString(), "engine 1", null);
-        execution2 = getExecution(simulation2, ExecutionStatus.FINISHED);
+        WORKFLOW_2 = new Workflow("execId2", "Exec test 2", "pipelineTest2", "4.2",
+                UserTestUtils.baseUser1.getFullName(), WorkflowStatus.Completed.toString(),
+                new GregorianCalendar(2016, 4, 29).getTime(), null,
+                 "engine 1", null);
+        execution2 = getExecution(WORKFLOW_2, ExecutionStatus.FINISHED);
         execution2.setInputValuesForDisplay(new HashMap<String,Object>() {{
                                       put("param2-1", "5.3");
                                   }}
@@ -63,14 +63,14 @@ public class ExecutionTestUtils {
         executionSuppliers = getExecutionSuppliers();
     }
 
-    private static Execution getExecution(Simulation simulation, ExecutionStatus executionStatus) {
+    private static Execution getExecution(Workflow workflow, ExecutionStatus executionStatus) {
         // TODO : startDate should be in seconds
         Object resultsDirectory = null;
         return new Execution(
-            simulation.getID(),
-            simulation.getSimulationName(),
-            simulation.getApplicationName() + "/" + simulation.getApplicationVersion(),
-            0, executionStatus, null, null, simulation.getDate().getTime(), null,
+            workflow.getID(),
+            workflow.getWorkflowName(),
+            workflow.getApplicationName() + "/" + workflow.getApplicationVersion(),
+            0, executionStatus, null, null, workflow.getStartDate().getTime(), null,
             resultsDirectory);
     }
 
@@ -110,20 +110,20 @@ public class ExecutionTestUtils {
         return newExecution;
     }
 
-    public static Simulation copySimulationWithNewName(Simulation simu, String newName) {
-        Simulation newSimulation = new Simulation(
+    public static Workflow copySimulationWithNewName(Workflow simu, String newName) {
+        Workflow newWorkflow = new Workflow(
+                simu.getID(),
+                newName,
                 simu.getApplicationName(),
                 simu.getApplicationVersion(),
-                simu.getApplicationClass(),
-                simu.getID(),
-                simu.getUserName(),
-                simu.getDate(),
-                newName,
+                simu.getUserId(),
                 simu.getStatus().toString(),
-                simu.getEngine(),
+                simu.getStartDate(),
+                simu.getEndDate(),
+                simu.getEngineName(),
                 null
         );
-        return newSimulation;
+        return newWorkflow;
     }
 
     @SuppressWarnings("unchecked")

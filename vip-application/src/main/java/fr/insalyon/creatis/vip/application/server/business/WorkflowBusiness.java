@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import fr.insalyon.creatis.vip.application.models.*;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -30,8 +31,6 @@ import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Input;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Output;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Processor;
-import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow;
-import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.InputDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.OutputDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.ProcessorDAO;
@@ -40,15 +39,8 @@ import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowsDBDAOException;
 import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.progress.ProcessorStatus;
-import fr.insalyon.creatis.vip.application.models.Activity;
-import fr.insalyon.creatis.vip.application.models.AppVersion;
-import fr.insalyon.creatis.vip.application.models.Application;
-import fr.insalyon.creatis.vip.application.models.Engine;
-import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Resource;
-import fr.insalyon.creatis.vip.application.models.Simulation;
 import fr.insalyon.creatis.vip.application.server.business.simulation.parser.InputFileParser;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.application.server.dao.SimulationStatsDAO;
@@ -142,7 +134,7 @@ public class WorkflowBusiness {
 
     public synchronized String launch(User user, List<String> groups, List<Map<String, String>> parametersMaps,
                                       String appName, String version, String simulationName) throws VipException {
-        Workflow workflow = null;
+        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = null;
 
         try {
             checkVIPCapacities(user, simulationName);
@@ -294,7 +286,7 @@ public class WorkflowBusiness {
                         && fr.insalyon.creatis.boutiques.model.Input.Type.FILE.equals(input.getType()));
     }
 
-    public List<Simulation> getSimulations(User user, Date lastDate) throws VipException {
+    public List<Workflow> getSimulations(User user, Date lastDate) throws VipException {
         try {
             return parseWorkflows(workflowDAO.get(user != null ? user.getFullName() : null, lastDate));
 
@@ -304,17 +296,17 @@ public class WorkflowBusiness {
         }
     }
 
-    public List<Simulation> getSimulations(String userName, String application, String status,
-            Date startDate, Date endDate) throws VipException {
+    public List<Workflow> getSimulations(String userName, String application, String status,
+                                         Date startDate, Date endDate) throws VipException {
 
         return getSimulations(userName, application, status, startDate, endDate, null);
     }
 
-    public List<Simulation> getSimulations(String userName, String application, String status, Date startDate, Date endDate, String tag) throws VipException {
-        WorkflowStatus wStatus = (status != null) ? WorkflowStatus.valueOf(status) : null;
+    public List<Workflow> getSimulations(String userName, String application, String status, Date startDate, Date endDate, String tag) throws VipException {
+        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus = (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
         List<String> users = (userName != null) ? Collections.singletonList(userName) : Collections.emptyList();
         List<String> applications = (application != null) ? Collections.singletonList(application) : new ArrayList<>();
-        List<Simulation> simulations = new ArrayList<>();
+        List<Workflow> workflows = new ArrayList<>();
 
         try {
             if (endDate != null) {
@@ -324,10 +316,10 @@ public class WorkflowBusiness {
                 endDate = calendar.getTime();
             }
 
-            simulations = parseWorkflows(workflowDAO.get(users, applications, wStatus, null, startDate, endDate, tag));
-            checkRunningSimulations(simulations);
+            workflows = parseWorkflows(workflowDAO.get(users, applications, wStatus, null, startDate, endDate, tag));
+            checkRunningSimulations(workflows);
 
-            return simulations;
+            return workflows;
 
         } catch (WorkflowsDBDAOException ex) {
             logger.error("Error searching simulations for users {}", users, ex);
@@ -335,8 +327,8 @@ public class WorkflowBusiness {
         }
     }
 
-    private List<Workflow> getSimulationsAdminGroup(String userEmail, List<String> filterApplications, 
-            WorkflowStatus filterStatus, Date filterStartDate, Date filterEndDate, String filterTag) throws WorkflowsDBDAOException, DAOException, VipException {
+    private List<fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow> getSimulationsAdminGroup(String userEmail, List<String> filterApplications,
+                                                                                                        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus filterStatus, Date filterStartDate, Date filterEndDate, String filterTag) throws WorkflowsDBDAOException, DAOException, VipException {
 
         Set<Group> adminGroups = new HashSet<>();
         Set<String> adminApps = new HashSet<>();
@@ -362,15 +354,15 @@ public class WorkflowBusiness {
         }
     }
 
-    public List<Simulation> getSimulationsWithGroupAdminRights(User user, String application, String status, Date startDate, Date endDate, String tag)
+    public List<Workflow> getSimulationsWithGroupAdminRights(User user, String application, String status, Date startDate, Date endDate, String tag)
             throws VipException {
         
-        WorkflowStatus wStatus = (status != null) ? WorkflowStatus.valueOf(status) : null;
+        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus = (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
         List<String> users = List.of(user.getFullName());
         List<String> applications = (application != null) ? Collections.singletonList(application) : new ArrayList<>();
 
-        List<Simulation> simulations = new ArrayList<>();
-        List<Workflow> workflows = new ArrayList<>();
+        List<Workflow> simulations = new ArrayList<>();
+        List<fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow> workflows = new ArrayList<>();
 
         try {
             if (endDate != null) {
@@ -385,8 +377,8 @@ public class WorkflowBusiness {
 
             // this is to avoid duplicates + sort them by date
             workflows = new ArrayList<>(workflows.stream()
-                    .collect(Collectors.toMap(Workflow::getId, w -> w, (e, r) -> e)).values())
-                    .stream().sorted(Comparator.comparing(Workflow::getStartedTime).reversed())
+                    .collect(Collectors.toMap(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow::getId, w -> w, (e, r) -> e)).values())
+                    .stream().sorted(Comparator.comparing(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow::getStartedTime).reversed())
                     .collect(Collectors.toList());
 
             simulations = parseWorkflows(workflows);
@@ -403,8 +395,8 @@ public class WorkflowBusiness {
     public void kill(String simulationID) throws VipException {
 
         try {
-            Workflow workflow = workflowDAO.get(simulationID);
-            workflow.setStatus(WorkflowStatus.Killed);
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = workflowDAO.get(simulationID);
+            workflow.setStatus(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Killed);
             workflowDAO.update(workflow);
             workflowExecutionBusiness.kill(workflow.getEngine(), simulationID);
 
@@ -418,8 +410,8 @@ public class WorkflowBusiness {
             throws VipException {
 
         try {
-            Workflow workflow = workflowDAO.get(simulationID);
-            workflow.setStatus(WorkflowStatus.Cleaned);
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = workflowDAO.get(simulationID);
+            workflow.setStatus(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Cleaned);
             workflowDAO.update(workflow);
             if(deleteFiles){
                 for (Output output : outputDAO.get(simulationID)) {
@@ -465,15 +457,15 @@ public class WorkflowBusiness {
         return inputMaps.getFirst();
     }
 
-    public Simulation getSimulation(String simulationID) throws VipException {
+    public Workflow getSimulation(String simulationID) throws VipException {
         return getSimulation(simulationID, false);
     }
 
-    public Simulation getSimulation(String simulationID, boolean refresh) throws VipException {
-        Simulation simulation;
+    public Workflow getSimulation(String simulationID, boolean refresh) throws VipException {
+        Workflow simulation;
 
         try {
-            Workflow workflow = workflowDAO.get(simulationID);
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = workflowDAO.get(simulationID);
             if (workflow == null) {
                 logger.error("Cannot find execution with id {}", simulationID);
                 throw new VipException("Cannot find execution with id " + simulationID);
@@ -569,7 +561,7 @@ public class WorkflowBusiness {
     }
 
     public List<String> getPerformanceStats(
-            List<Simulation> simulationIDList, int type)
+            List<Workflow> simulationIDList, int type)
             throws VipException, WorkflowsDBDAOException {
 
         if (simulationIDList == null || simulationIDList.isEmpty()) {
@@ -577,7 +569,7 @@ public class WorkflowBusiness {
             throw new VipException("Error getting performance stats");
         }
 
-        List<String> workflowIDList = simulationIDList.stream().map(Simulation::getID).collect(Collectors.toList());
+        List<String> workflowIDList = simulationIDList.stream().map(Workflow::getID).collect(Collectors.toList());
 
         try {
             switch (type) {
@@ -631,7 +623,7 @@ public class WorkflowBusiness {
     public void updateDescription(String simulationID, String newDescription)
             throws VipException {
         try {
-            Workflow w= workflowDAO.get(simulationID);
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow w= workflowDAO.get(simulationID);
             w.setDescription(newDescription);
             workflowDAO.update(w);
         } catch (WorkflowsDBDAOException ex) {
@@ -640,7 +632,7 @@ public class WorkflowBusiness {
         }
     }
 
-    public List<Simulation> getRunningSimulations() throws VipException {
+    public List<Workflow> getRunningSimulations() throws VipException {
         try {
             return parseWorkflows(workflowDAO.getRunning());
 
@@ -674,37 +666,37 @@ public class WorkflowBusiness {
         }
     }
 
-    private List<Simulation> parseWorkflows(List<Workflow> list) {
+    private List<Workflow> parseWorkflows(List<fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow> list) {
         return list.stream().map(this::parseWorkflow).collect(Collectors.toList());
     }
 
-    private Simulation parseWorkflow(Workflow workflow) {
-        return new Simulation(
-                    workflow.getApplication(),
-                    workflow.getApplicationVersion(),
-                    workflow.getApplicationClass(),
-                    workflow.getId(),
-                    workflow.getUsername(),
-                    workflow.getStartedTime(),
-                    workflow.getDescription(),
-                    workflow.getStatus().name(),
-                    workflow.getEngine(),
-                    workflow.getTags());
+    private Workflow parseWorkflow(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow) {
+        return new Workflow(
+                workflow.getId(),
+                workflow.getDescription(),
+                workflow.getApplication(),
+                workflow.getApplicationVersion(),
+                workflow.getUsername(),
+                workflow.getStatus().name(),
+                workflow.getStartedTime(),
+                workflow.getFinishedTime(),
+                workflow.getEngine(),
+                workflow.getTags());
     }
 
-    private void checkRunningSimulations(List<Simulation> simulations) throws VipException, WorkflowsDBDAOException {
-        for (Simulation simulation : simulations) {
+    private void checkRunningSimulations(List<Workflow> workflows) throws VipException, WorkflowsDBDAOException {
+        for (Workflow simulation : workflows) {
 
-            if (simulation.getStatus() == SimulationStatus.Running
-                    || simulation.getStatus() == SimulationStatus.Unknown) {
-                SimulationStatus simulationStatus = workflowExecutionBusiness.getStatus(simulation.getEngine(), simulation.getID());
+            if (simulation.getStatus() == WorkflowStatus.Running
+                    || simulation.getStatus() == WorkflowStatus.Unknown) {
+                WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(simulation.getEngineName(), simulation.getID());
                 logger.debug("Simulation {} : old status : {}, new status : {} ",
-                        simulation.getID(), simulation.getStatus(), simulationStatus);
+                        simulation.getID(), simulation.getStatus(), workflowStatus);
 
-                if (simulationStatus != simulation.getStatus()) {
-                    simulation.setStatus(simulationStatus);
-                    Workflow workflow = workflowDAO.get(simulation.getID());
-                    workflow.setStatus(WorkflowStatus.valueOf(simulationStatus.name()));
+                if (workflowStatus != simulation.getStatus()) {
+                    simulation.setStatus(workflowStatus);
+                    fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = workflowDAO.get(simulation.getID());
+                    workflow.setStatus(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(workflowStatus.name()));
                     workflowDAO.update(workflow);
                 }
             }
@@ -713,8 +705,8 @@ public class WorkflowBusiness {
 
     public void markCompleted(String simulationID) throws VipException {
         try {
-            Workflow workflow = workflowDAO.get(simulationID);
-            workflow.setStatus(WorkflowStatus.Completed);
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = workflowDAO.get(simulationID);
+            workflow.setStatus(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed);
             workflowDAO.update(workflow);
 
         } catch (WorkflowsDBDAOException ex) {
@@ -725,7 +717,7 @@ public class WorkflowBusiness {
 
     public void changeSimulationUser(String simulationId, String user) throws VipException {
         try {
-            Workflow workflow = workflowDAO.get(simulationId);
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow workflow = workflowDAO.get(simulationId);
             workflow.setUsername(user);
             workflowDAO.update(workflow);
 
