@@ -1,6 +1,7 @@
 package fr.insalyon.creatis.vip.application.models;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import fr.insalyon.creatis.boutiques.model.Input;
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesInput;
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import jakarta.validation.constraints.NotNull;
@@ -11,32 +12,24 @@ import java.util.List;
 @JsonView(DataViews.User.class)
 public class WorkflowInput {
 
-    @NotNull
-    private BoutiquesInput.InputType type;
     private List<String> values;
     @Size(max=3)
     private List<Double> interval;
 
-    public WorkflowInput(BoutiquesInput.InputType type, List<String> values) {
-        this.type = type;
-        this.values = values;
+    public static WorkflowInput ofList(List<String> values) {
+        WorkflowInput workflowInput = new WorkflowInput();
+        workflowInput.setValues(values);
+        return workflowInput;
     }
 
-    public WorkflowInput(List<Double> interval) {
-        this.type = BoutiquesInput.InputType.NUMBER;
-        this.interval = interval;
+    public static WorkflowInput ofinterval(List<Double> values) {
+        WorkflowInput workflowInput = new WorkflowInput();
+        workflowInput.setInterval(values);
+        return workflowInput;
     }
 
     public boolean isInterval() {
         return interval != null;
-    }
-
-    public BoutiquesInput.InputType getType() {
-        return type;
-    }
-
-    public void setType(BoutiquesInput.InputType type) {
-        this.type = type;
     }
 
     public List<String> getValues() {

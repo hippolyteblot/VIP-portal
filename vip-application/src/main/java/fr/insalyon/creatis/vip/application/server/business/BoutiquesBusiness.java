@@ -9,11 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import fr.insalyon.creatis.boutiques.model.Input;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -261,7 +259,7 @@ public class BoutiquesBusiness {
         if (!customProperties.containsKey(customKeyName)) {
             return null;
         }
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<>();
         Object overriddenInputs = customProperties.get(customKeyName);
         if (overriddenInputs instanceof Map) {
             Map<String, String> oi = (Map<String, String>) overriddenInputs;
@@ -271,5 +269,11 @@ public class BoutiquesBusiness {
             }
         }
         return result;
+    }
+
+    public Optional<Input> getInput(BoutiquesDescriptor boutiquesDescriptor, String inputId) {
+        return boutiquesDescriptor.getInputs().stream()
+                .filter(i -> inputId.equals(i.getId()))
+                .findAny();
     }
 }

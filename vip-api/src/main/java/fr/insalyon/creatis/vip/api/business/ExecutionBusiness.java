@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
 
-import fr.insalyon.creatis.vip.application.models.Workflow;
+import fr.insalyon.creatis.vip.application.models.*;
+import fr.insalyon.creatis.vip.application.server.business.util.NewWorkflowBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +26,6 @@ import fr.insalyon.creatis.vip.api.model.Pipeline;
 import fr.insalyon.creatis.vip.api.model.PipelineParameter;
 import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
-import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Task;
 import fr.insalyon.creatis.vip.application.server.business.SimulationBusiness;
 import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
@@ -50,6 +49,7 @@ public class ExecutionBusiness {
     // other modules dependencies
     private final SimulationBusiness simulationBusiness;
     private final WorkflowBusiness workflowBusiness;
+    private final NewWorkflowBusiness newWorkflowBusiness;
     private final PipelineBusiness pipelineBusiness;
     private final UserBusiness userBusiness;
     private final ExternalPlatformBusiness externalPlatformBusiness;
@@ -58,6 +58,7 @@ public class ExecutionBusiness {
     public ExecutionBusiness(Supplier<User> currentUserProvider,
                              SimulationBusiness simulationBusiness,
                              WorkflowBusiness workflowBusiness,
+                             NewWorkflowBusiness newWorkflowBusiness,
                              PipelineBusiness pipelineBusiness,
                              DataApiBusiness dataApiBusiness,
                              UserBusiness userBusiness,
@@ -65,6 +66,7 @@ public class ExecutionBusiness {
         this.currentUserProvider = currentUserProvider;
         this.simulationBusiness = simulationBusiness;
         this.workflowBusiness = workflowBusiness;
+        this.newWorkflowBusiness = newWorkflowBusiness;
         this.pipelineBusiness = pipelineBusiness;
         this.dataApiBusiness = dataApiBusiness;
         this.userBusiness = userBusiness;
@@ -312,59 +314,120 @@ public class ExecutionBusiness {
     }
 
     public String initExecution(Execution execution) throws VipException {
-        List<Map<String, String>> inputMaps = new ArrayList<>();
+        List<Map<String, WorkflowInput>> inputsMapsList = new ArrayList<>();
         Object resultsLocation = execution.getResultsLocation();
         boolean isInputMapList = execution.getInputValuesForInit().size() > 1;
         for (Map<String, Object> inputValuesMap : execution.getInputValuesForInit()) {
-            Map<String, String> inputMap = new HashMap<>();
+            Map<String, WorkflowInput> inputsMap = new HashMap<>();
             for (Entry<String, Object> restInput : inputValuesMap.entrySet()) {
                 if (isInputMapList && restInput.getValue() instanceof List) {
+                    logger.error("Parameter '{}' contains a list, it should only have a single value when providing a list of input maps.", restInput.getKey());
                     throw new VipException(
                         "Parameter '" + restInput.getKey() + "' contains a list, it should only have a single value when providing a list of input maps.");
                 }
 
-                inputMap.put(
+                inputsMap.put(
                         restInput.getKey(),
                         handleRestParameter(restInput.getKey(), restInput.getValue()));
             }
 
             // We handle resultsLocation the same as others restInputs, since it can either be a String or a List<String>
             if (resultsLocation != null) {
-                inputMap.put(
+                inputsMap.put(
                         CoreConstants.RESULTS_DIRECTORY_PARAM_NAME,
                         handleRestParameter(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME, resultsLocation));
             }
 
-            inputMaps.add(inputMap);
+            inputsMapsList.add(inputsMap);
         }
 
         checkInputExecNameIsValid(execution.getName());
         return initExecution(
-            execution.getPipelineIdentifier(), inputMaps, execution.getTimeout(),
+            execution.getPipelineIdentifier(), inputsMapsList, execution.getTimeout(),
             execution.getName(), execution.getStudyIdentifier());
     }
 
-    private String handleRestParameter(String parameterName, Object restParameterValue)
+    private WorkflowInput handleRestParameter(String parameterName, Object restParameterValue)
             throws VipException {
-        if (restParameterValue instanceof List) {
-            StringBuilder paramBuilder = new StringBuilder();
-            boolean isFirst = true;
-            for (Object listElement : (List) restParameterValue) {
-                if (!isFirst) {
-                    paramBuilder.append(ApplicationConstants.SEPARATOR_LIST);
-                }
-                String inputValue = listElement.toString();
-                checkInputIsValid(parameterName, inputValue);
-                paramBuilder.append(inputValue);
-                isFirst = false;
+        List<String> workflowInputList = new ArrayList<>();
+        if (restParameterValue instanceof List valueAsList) {
+            for (Object singleElement : valueAsList) {
+                checkInputIsValid(parameterName, singleElement.toString());
+                workflowInputList.add(singleElement.toString());
             }
-            logger.info("Handling list parameter for parameter [" + parameterName +"]");
-            return paramBuilder.toString();
         } else {
             String inputValue = restParameterValue.toString();
             checkInputIsValid(parameterName, inputValue);
-            return restParameterValue.toString();
+            workflowInputList.add(inputValue);
         }
+        return WorkflowInput.ofList(workflowInputList);
+    }
+
+    private String initExecution(String pipelineId,
+                                 List<Map<String, WorkflowInput>> inputMapsList,
+                                 Integer timeoutInSeconds,
+                                 String executionName,
+                                 String studyId) throws VipException {
+        // studyId and timeout not implemented yet.
+        if (studyId != null) {
+            logger.warn("Study identifier ({}) was ignored.", studyId);
+        }
+        if (timeoutInSeconds != null && timeoutInSeconds != 0) {
+            logger.warn("Timeout value ({}) was ignored.", timeoutInSeconds);
+        }
+
+        // Check that all pipeline inputs are present
+        // TODO : do that in (New)WorkflowBusiness (and/or do less and rely on boutiques to manage default values)
+        Pipeline p = pipelineBusiness.getPipelineWithResultsDirectory(pipelineId);
+        for (PipelineParameter pp : p.getParameters()) {
+            // always true on vip
+            if (pp.isReturnedValue()) {
+                continue;
+            }
+
+            List<Map<String, WorkflowInput>> mapsWithoutKey = inputMapsList.stream()
+                    .filter(inputMap -> !inputMap.containsKey(pp.getName()))
+                    .toList();
+
+            // ok if input is present
+            if (mapsWithoutKey.isEmpty()) {
+                continue;
+            }
+
+            // then ok if input has a default value (and we set it)
+            if (pp.getDefaultValue() != null) {
+                mapsWithoutKey.forEach(
+                        inputMap -> inputMap.put(
+                                pp.getName(),
+                                WorkflowInput.ofList(List.of(pp.getDefaultValue().toString()))));
+                continue;
+            }
+
+            // then ok if it is optional
+            if (pp.isOptional()) {
+                continue;
+            }
+
+            // error : pp is an empty input with no default value and it is not optional
+            logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
+            throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
+        }
+
+        // Get application name and version
+        String applicationName = pipelineBusiness.getApplicationName(pipelineId);
+        String applicationVersion = pipelineBusiness.getApplicationVersion(pipelineId);
+
+        CarminWorkflow carminWorkflow = new CarminWorkflow(
+                null,
+                executionName,
+                applicationName,
+                applicationVersion,
+                currentUserProvider.get().getId(),
+                null, null, null, null, null);
+        carminWorkflow.setInputsMapsList(inputMapsList);
+
+        // Launch the workflow
+        return newWorkflowBusiness.launch(carminWorkflow).getID();
     }
 
     private void checkInputIsValid(String inputName, String inputValue) throws VipException {
@@ -382,112 +445,6 @@ public class ExecutionBusiness {
                     input, ApplicationConstants.EXEC_NAME_VALID_CHARS);
             throw new VipException(ApiError.INVALID_EXECUTION_NAME, "Authorized characters are " + ApplicationConstants.EXEC_NAME_VALID_CHARS);
         }
-    }
-
-    private String initExecution(String pipelineId,
-            List<Map<String, String>> inputValues,
-            Integer timeoutInSeconds,
-            String executionName,
-            String studyId) throws VipException {
-        // We cannot easily initialize an execution without starting it.
-        // So we will just launch the execution, and launch an error in case
-        // playExecution is not true.
-        // Set warnings
-        if (studyId != null) {
-            logger.warn("Study identifier ({}) was ignored.", studyId);
-        }
-        if (timeoutInSeconds != null && timeoutInSeconds != 0) {
-            logger.warn("Timeout value ({}) was ignored.", timeoutInSeconds);
-        }
-
-        // Check that all pipeline inputs are present
-        Pipeline p = pipelineBusiness.getPipelineWithResultsDirectory(pipelineId);
-        for (PipelineParameter pp : p.getParameters()) {
-            // always true on vip
-            if (pp.isReturnedValue()) {
-                continue;
-            }
-
-            List<Map<String, String>> mapsWithoutKey = inputValues.stream()
-                    .filter(inputMap -> !inputMap.containsKey(pp.getName()))
-                    .toList();
-
-            // ok if input is present
-            if (mapsWithoutKey.isEmpty()) {
-                continue;
-            }
-
-            // then ok if input has a default value (and we set it)
-            if (pp.getDefaultValue() != null) {
-                mapsWithoutKey.forEach(inputMap -> inputMap.put(pp.getName(), pp.getDefaultValue().toString()));
-                continue;
-            }
-
-            // then ok if it is optional
-            if (pp.isOptional()) {
-                continue;
-            }
-
-            // error : pp is an empty input with no default value and it is not optional
-            logger.error("Error initialising {}, missing {} parameter", pipelineId, pp.getName());
-            throw new VipException(ApiError.INPUT_FIELD_MISSING, pp.getName());
-        }
-
-        // fill in overriddenInputs from explicit inputs
-        Map<String, String> overriddenInputs = p.getOverriddenInputs();
-        if (overriddenInputs != null) {
-            for (String key : overriddenInputs.keySet()) {
-                String value = overriddenInputs.get(key);
-                for (Map<String, String> inputMap : inputValues) {
-                    if (inputMap.containsKey(value)) {
-                        inputMap.put(key, inputMap.get(value));
-                    } else {
-                        logger.error("Error initialising {}, missing {} parameter", pipelineId, value);
-                        throw new VipException(ApiError.INPUT_FIELD_MISSING, value);
-                    }
-                }
-            }
-        }
-
-        boolean inputsContainsResultsDirectoryInput = inputValues.stream()
-                .allMatch(inputMap -> inputMap.containsKey(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME));
-        boolean pipelineHasResultsDirectoryInput = p.getParameters().stream()
-                .anyMatch(param -> param.getName().equals(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME));
-
-        if (inputsContainsResultsDirectoryInput && !pipelineHasResultsDirectoryInput) {
-            logger.error("Missing results-directory for {}", pipelineId);
-            throw new VipException(ApiError.INVALID_EXECUTION_INIT,
-                    "Input has parameter results-directory but it is not defined in pipeline.");
-        }
-
-        // Get user groups
-        List<String> groupNames = new ArrayList<>();
-        for (Group g : userBusiness
-                .getUserGroups(currentUserProvider.get().getEmail())
-                .keySet()) {
-            groupNames.add(g.getName());
-        }
-
-        // Get application name and version
-        String applicationName = pipelineBusiness.getApplicationName(pipelineId);
-        String applicationVersion = pipelineBusiness.getApplicationVersion(pipelineId);
-
-        logger.info("Launching workflow with the following parameters: ");
-        logger.info(currentUserProvider.get().toString());
-        logger.info(groupNames.toString());
-        logger.info(inputValues.toString());
-        logger.info(applicationName);
-        logger.info(applicationVersion);
-        logger.info(executionName);
-
-        // Launch the workflow
-        return workflowBusiness.launch(
-                currentUserProvider.get(),
-                groupNames,
-                inputValues,
-                applicationName,
-                applicationVersion,
-                executionName);
     }
 
     public void killExecution(String executionId) throws VipException {

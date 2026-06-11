@@ -21,11 +21,11 @@ public class Workflow implements IsSerializable {
 
     private String id;
     @NotBlank
+    private String workflowName;
+    @NotBlank
     private String applicationName;
     @NotBlank
     private String applicationVersion;
-    @NotBlank
-    private String workflowName;
     private WorkflowStatus status;
     private Map<String,WorkflowInput> inputs;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
