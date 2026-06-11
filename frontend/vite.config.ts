@@ -9,8 +9,9 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
 
-  const backendUrl = 'http://192.168.122.177:8080'
-  const base = mode === 'production' ? '/new_front' : '/'
+  //const backendUrl = 'http://192.168.122.177:8080'
+  const backendUrl = 'http://192.168.122.15:8080'
+  const base = mode === 'production' ? '/new_front/' : '/'
 
   return {
     base,

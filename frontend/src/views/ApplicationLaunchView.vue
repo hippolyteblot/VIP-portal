@@ -127,18 +127,26 @@ async function onLaunchSubmit() {
     version: selectedVersion.value.version,
   })
 
-  const inputs: Record<string, { value: string }> = {}
+  const inputs: Record<string, { type: string; values: string[] }> = {}
   for (const input of payload.inputs) {
-    const strValue = input.values
-      .map((v) => String(v.value))
-      .join('@@')
-    inputs[input.id] = { value: strValue }
+    const inputMeta = inputParams.value.find((p) => p.id === input.id)
+    const type = inputMeta?.type === 'Boolean' ? 'Flag' : inputMeta?.type ?? 'String'
+    const values = input.values
+      .filter((v) => v.value != null && v.value !== '')
+      .map((v) => {
+        if (v.value instanceof File) return v.value.name
+        return String(v.value)
+      })
+    if (values.length > 0) {
+      inputs[input.id] = { type, values }
+    }
   }
 
   const workflow = await workflowsStore.launchWorkflow({
     applicationName: payload.applicationName,
     applicationVersion: payload.version,
     workflowName: payload.executionName,
+    resultsDirectory: payload.resultsDirectory,
     inputs,
   })
 

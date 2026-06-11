@@ -187,7 +187,15 @@ onMounted(() => {
             <tbody class="divide-y divide-gray-100">
               <tr v-for="(input, name) in wf.inputs" :key="name">
                 <td class="px-4 py-2 font-medium text-gray-900">{{ name }}</td>
-                <td class="px-4 py-2 font-mono text-xs text-gray-600">{{ input.value }}</td>
+                <td class="px-4 py-2 font-mono text-xs text-gray-600">
+                  <template v-if="input.interval">
+                    {{ input.interval.join(' – ') }}
+                  </template>
+                  <template v-else-if="input.values?.length">
+                    {{ input.values.join(', ') }}
+                  </template>
+                  <span v-else class="text-gray-400">—</span>
+                </td>
               </tr>
             </tbody>
           </table>

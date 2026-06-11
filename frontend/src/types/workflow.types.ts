@@ -13,7 +13,11 @@ export interface Workflow {
   applicationVersion: string
   workflowName: string
   status: WorkflowStatus
-  inputs: Record<string, { type: string; value: string }>
+  inputs: Record<string, {
+    type: string
+    values?: string[]
+    interval?: number[]
+  }>
   outputs: Record<string, string>
   userId: string
   startDate: string
@@ -25,7 +29,8 @@ export interface WorkflowLaunchPayload {
   applicationName: string
   applicationVersion: string
   workflowName: string
-  inputs: Record<string, { value: string }>
+  resultsDirectory?: string
+  inputs: Record<string, { type: string; values: string[] }>
 }
 
 export interface WorkflowListParams {
