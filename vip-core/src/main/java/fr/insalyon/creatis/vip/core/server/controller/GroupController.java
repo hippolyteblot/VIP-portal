@@ -1,5 +1,7 @@
 package fr.insalyon.creatis.vip.core.server.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +41,12 @@ public class GroupController {
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity)
             throws VipException {
         return groupBusiness.get(onlyApplications, onlyResources, offset, quantity);
+    }
+
+    @GetMapping(params = "q")
+    public List<Group> search(@RequestParam String q,
+            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int limit) throws VipException {
+        return groupBusiness.searchGroups(q, limit);
     }
 
     @GetMapping(value = "{id}")

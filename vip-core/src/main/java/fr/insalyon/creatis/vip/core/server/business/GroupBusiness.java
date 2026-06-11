@@ -140,6 +140,21 @@ public class GroupBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
+    public List<Group> searchGroups(String query, int limit) throws VipException {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        String normalized = query.trim().toLowerCase();
+
+        return get(false, false).stream()
+                .filter((group) -> group.getName() != null && group.getName().toLowerCase().contains(normalized))
+                .limit(safeLimit)
+                .collect(Collectors.toList());
+    }
+
+    @VIPExternalSafe
     public Group get(String groupName) throws VipException {
         if (groupName == null) {
             return null;

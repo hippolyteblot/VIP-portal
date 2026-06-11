@@ -12,4 +12,5 @@ public class Session {
     public String email;
     public String password;
     public UserLevel userlevel;
+    public Boolean confirmed;
 }

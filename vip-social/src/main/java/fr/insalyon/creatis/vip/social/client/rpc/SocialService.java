@@ -37,7 +37,7 @@ public interface SocialService extends RemoteService {
     
     public List<GroupMessage> getGroupMessages(String groupName, Date startDate) throws SocialException;
     
-    public void markMessageAsRead(long id, String receiver) throws SocialException;
+    public void markMessageAsRead(long id) throws SocialException;
     
     public void removeMessage(long id) throws SocialException;
     

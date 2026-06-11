@@ -3,6 +3,8 @@ package fr.insalyon.creatis.vip.core.server.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.models.ActivationCode;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
@@ -47,6 +50,12 @@ public class UserController {
     return userBusiness.getAll(offset, quantity);
     }
 
+    @GetMapping(params = "q")
+    public List<User> search(@RequestParam String q,
+            @RequestParam(defaultValue = "50") @Positive @Max(value = 50) int limit) throws VipException {
+        return userBusiness.searchUsers(q, limit);
+    }
+
     @GetMapping(value = "me")
     public User getCurrentUser() throws VipException {
         return userBusiness.getCurrentUser();
@@ -64,6 +73,7 @@ public class UserController {
         }
     }
 
+
     @DeleteMapping(value = "{id}")
     public void remove(@PathVariable String id) throws VipException {
         // existance of user is checked inside remove function
@@ -78,6 +88,14 @@ public class UserController {
             userBusiness.update(user);
             return userBusiness.get(id);
         }
+    }
+
+    @PutMapping(value = "{id}/password")
+    public void updatePassword(@PathVariable String id, @RequestBody @Valid UserAndPassword form) throws VipException {
+        if (!id.equals(form.user.getId())) {
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, "id", "User id do not match!");
+        }
+        userBusiness.updateUserPassword(id, form.password);
     }
 
     @PostMapping
@@ -96,5 +114,14 @@ public class UserController {
         User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
         logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
         return createdUser;
+    }
+
+    @PutMapping(value = "{id}/activate")
+    public void activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode) throws VipException {
+        User user = userBusiness.get(id);
+        if (user == null) {
+            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
+        }
+        authenticationBusiness.activate(user.getEmail(), activationCode.getCode());
     }
 }

@@ -165,8 +165,10 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
             logger.info("received param {} : {}", p.getKey(), p.getValue());
         }
         fillInOverriddenInputs(parametersMap, applicationName, applicationVersion);
+        List<Map<String, String>> parametersMaps = new ArrayList<>();
+        parametersMaps.add(parametersMap);
         String simulationID = workflowBusiness.launch(user, groups,
-                parametersMap, applicationName, applicationVersion, simulationName);
+                parametersMaps, applicationName, applicationVersion, simulationName);
 
         trace(logger, "Simulation '" + simulationName + "' launched with ID '" + simulationID + "'.");
     }

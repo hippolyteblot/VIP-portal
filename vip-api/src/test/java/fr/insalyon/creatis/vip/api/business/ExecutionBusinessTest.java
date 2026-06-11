@@ -77,10 +77,23 @@ public class ExecutionBusinessTest {
     }
 
     private Simulation prepareSimulation(String exedId, SimulationStatus status, int userIndex) {
-        User creator = prepareTestUser(userIndex, false);
-        return new Simulation(null, null, null, exedId, creator.getFullName(), null, null,
-                status.name(), null, null);
-    }
+       User creator = prepareTestUser(userIndex, false);
+        
+            return new Simulation(
+                "simuName",
+                "1.0",
+                null,
+                exedId,
+                creator.getFullName(),
+                new java.util.Date(),
+                null,
+                "description",
+                status.toString(),
+                "engine",
+                null
+            );
+                
+        }
 
     private WorkflowBusiness prepareMockedWorkflowBusiness(String execId, Simulation simu) throws Exception {
         WorkflowBusiness mockedWb = Mockito.mock(WorkflowBusiness.class);

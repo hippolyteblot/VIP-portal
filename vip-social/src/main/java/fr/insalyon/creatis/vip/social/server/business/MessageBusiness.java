@@ -9,11 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.EmailTemplateUtils;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.social.client.SocialConstants;
 import fr.insalyon.creatis.vip.social.models.GroupMessage;
@@ -23,7 +25,7 @@ import fr.insalyon.creatis.vip.social.server.dao.MessageDAO;
 
 @Service
 @Transactional
-public class MessageBusiness {
+public class MessageBusiness extends CommonBusiness {
 
     private final MessageDAO messageDAO;
     private final GroupMessageDAO groupMessageDAO;
@@ -42,23 +44,25 @@ public class MessageBusiness {
         this.emailTemplateUtils = emailTemplateUtils;
     }
 
-    public List<Message> getMessagesByUser(String email, Date startDate)
+    public List<Message> getMessagesByUser(Date startDate)
             throws VipException {
 
         try {
+            User currentUser = userBusiness.getCurrentUser();
             return messageDAO.getMessagesByUser(
-                    email, SocialConstants.MESSAGE_MAX_DISPLAY, startDate);
+                    currentUser.getEmail(), SocialConstants.MESSAGE_MAX_DISPLAY, startDate);
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
 
-    public List<Message> getSentMessagesByUser(String email, Date startDate)
+    public List<Message> getSentMessagesByUser(Date startDate)
             throws VipException {
 
         try {
+            User currentUser = userBusiness.getCurrentUser();
             return messageDAO.getSentMessagesByUser(
-                    email, SocialConstants.MESSAGE_MAX_DISPLAY, startDate);
+                    currentUser.getEmail(), SocialConstants.MESSAGE_MAX_DISPLAY, startDate);
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
@@ -76,15 +80,18 @@ public class MessageBusiness {
         }
     }
 
-    public void markAsRead(long id, String receiver) throws VipException {
+    public void markAsRead(long id) throws VipException {
         try {
-            messageDAO.markAsRead(id, receiver);
+            User currentUser = userBusiness.getCurrentUser();
+            messageDAO.markAsRead(id, currentUser.getEmail());
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
 
     public void remove(long id) throws VipException {
+        assertCurrentUserCanDeleteSentMessage(id);
+
         try {
             messageDAO.remove(id);
         } catch (DAOException ex) {
@@ -92,15 +99,18 @@ public class MessageBusiness {
         }
     }
 
-    public void removeByReceiver(long id, String receiver) throws VipException {
+    public void removeByReceiver(long id) throws VipException {
         try {
-            messageDAO.removeByReceiver(id, receiver);
+            User currentUser = userBusiness.getCurrentUser();
+            messageDAO.removeByReceiver(id, currentUser.getEmail());
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
     }
 
     public void removeGroupMessage(long id) throws VipException {
+        assertCurrentUserCanDeleteGroupMessage(id);
+
         try {
            groupMessageDAO.remove(id);
         } catch (DAOException ex) {
@@ -109,11 +119,15 @@ public class MessageBusiness {
     }
 
     public void sendMessage(
-            User user, String[] recipients, String subject, String message)
+            String[] recipients, String subject, String message)
             throws VipException {
 
+        User user = userBusiness.getCurrentUser();
+        assertCurrentUserCanSendMessage(user);
+
         try {
-            if (recipients[0].equals("All")) {
+            // Handle "All" special case
+            if (recipients.length > 0 && recipients[0].equals("All")) {
                 List<String> users = new ArrayList<>();
                 for (User u : userBusiness.getUsers()) {
                     // Dont send mail to locked users
@@ -122,6 +136,30 @@ public class MessageBusiness {
                     }
                 }
                 recipients = users.toArray(new String[]{});
+            } else {
+                // If callers (GWT or others) still send emails, detect that
+                // by checking for an '@' in the first element and treat the
+                // array as emails. Otherwise treat elements as user IDs and
+                // resolve them to emails.
+                List<String> emails = new ArrayList<>();
+                if (recipients.length > 0 && recipients[0].contains("@")) {
+                    // recipients are already emails
+                    for (String email : recipients) {
+                        User recipient = userBusiness.getUserData(email);
+                        if (recipient != null && !recipient.isAccountLocked()) {
+                            emails.add(email);
+                        }
+                    }
+                } else {
+                    // Convert recipient IDs to emails
+                    for (String recipientId : recipients) {
+                        User recipient = userBusiness.get(recipientId);
+                        if (recipient != null && !recipient.isAccountLocked()) {
+                            emails.add(recipient.getEmail());
+                        }
+                    }
+                }
+                recipients = emails.toArray(new String[]{});
             }
 
             String emailContent = emailTemplateUtils.sendMessage(user, subject, message);
@@ -142,8 +180,10 @@ public class MessageBusiness {
     }
 
     public void copyMessageToVipSupport(
-            User sender, String[] recipients, String subject, String message)
+            String[] recipients, String subject, String message)
             throws VipException {
+
+        User sender = userBusiness.getCurrentUser();
 
         String emailContent = emailTemplateUtils.vipSupportCopy(sender, Arrays.asList(recipients), subject, message);
 
@@ -157,8 +197,10 @@ public class MessageBusiness {
     }
 
     public void sendMessageToVipSupport(
-            User user, String subject, String message, List<String> workflowIDs,
+            String subject, String message, List<String> workflowIDs,
             List<String> simulationNames) throws VipException {
+
+        User user = userBusiness.getCurrentUser();
 
         String emailContent = emailTemplateUtils.sendMessageToVipSupport(user, subject, message, workflowIDs, simulationNames);
 
@@ -168,14 +210,18 @@ public class MessageBusiness {
     }
 
     public void sendGroupMessage(
-            User user, String groupName, List<User> users, String subject,
+            String groupName, String subject,
             String message) throws VipException {
+
+        User user = userBusiness.getCurrentUser();
+        assertCurrentUserCanSendGroupMessage(user, groupName);
 
         try {
             groupMessageDAO.add(user.getEmail(), groupName, subject, message);
 
             String emailContent = emailTemplateUtils.sendGroupMessage(user, groupName, subject, message);
 
+            List<User> users = userBusiness.getUsersFromGroup(groupName);
             for (User u : users) {
                 // Dont send mail to locked users and to itself
                 if (!u.isAccountLocked() &&
@@ -189,10 +235,66 @@ public class MessageBusiness {
         }
     }
 
+
     public int verifyMessages(String email) throws VipException {
 
         try {
             return messageDAO.verifyMessages(email);
+        } catch (DAOException ex) {
+            throw new VipException(ex);
+        }
+    }
+
+    private void assertCurrentUserCanSendMessage(User user) throws VipException {
+        if (user == null || (!user.isSystemAdministrator() && !user.isDeveloper())) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+    }
+
+    private void assertCurrentUserCanSendGroupMessage(User user, String groupName) throws VipException {
+        if (user == null || (!user.isSystemAdministrator() && !user.isGroupAdmin(groupName))) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+    }
+
+    private void assertCurrentUserCanDeleteSentMessage(long id) throws VipException {
+        User currentUser = userBusiness.getCurrentUser();
+
+        if (currentUser == null) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+        if (currentUser.isSystemAdministrator()) {
+            return;
+        }
+
+        try {
+            Message message = messageDAO.get(id);
+            if (message == null || message.getSender() == null || !currentUser.getEmail().equals(message.getSender().getEmail())) {
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+        } catch (DAOException ex) {
+            throw new VipException(ex);
+        }
+    }
+
+    private void assertCurrentUserCanDeleteGroupMessage(long id) throws VipException {
+        User currentUser = userBusiness.getCurrentUser();
+
+        if (currentUser == null) {
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+        if (currentUser.isSystemAdministrator()) {
+            return;
+        }
+
+        try {
+            GroupMessage groupMessage = groupMessageDAO.get(id);
+            if (groupMessage == null) {
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+            if (!currentUser.isGroupAdmin(groupMessage.getGroupName())) {
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
         } catch (DAOException ex) {
             throw new VipException(ex);
         }

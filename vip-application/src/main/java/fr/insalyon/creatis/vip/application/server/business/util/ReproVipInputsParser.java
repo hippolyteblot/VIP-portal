@@ -36,8 +36,12 @@ public class ReproVipInputsParser {
         this.providerInformations.put("vip_url", vipURL);
     }
 
-    public void parse(Map<String, String> inputs) throws VipException {
-        simplifiedInputs = getExpandedInputs(inputs);
+    public void parse(List<Map<String, String>> inputsList) throws VipException {
+        if (inputsList.size() != 1) {
+            throw new VipException("Expected exactly one input map, got " + inputsList.size() + ", multiple input maps are not supported yet here");
+        }
+
+        simplifiedInputs = getExpandedInputs(inputsList.getFirst());
         Pair<ProviderType, Map<String, List<String>>> type = detectType(simplifiedInputs);
         
         providerInformations.put("storage_type", type.getA().toString());
