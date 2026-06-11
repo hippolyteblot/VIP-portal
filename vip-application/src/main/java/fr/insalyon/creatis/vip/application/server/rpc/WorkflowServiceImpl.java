@@ -9,27 +9,21 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import fr.insalyon.creatis.vip.application.server.business.util.NewWorkflowBusiness;
+import fr.insalyon.creatis.vip.application.server.business.*;
+import fr.insalyon.creatis.vip.application.server.business.util.WorkflowLaunchBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import fr.insalyon.creatis.boutiques.model.BoutiquesDescriptor;
 import fr.insalyon.creatis.devtools.FileUtils;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowsDBDAOException;
 import fr.insalyon.creatis.vip.application.client.rpc.WorkflowService;
 import fr.insalyon.creatis.vip.application.models.Activity;
-import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.models.InOutData;
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.models.SimulationInput;
-import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
-import fr.insalyon.creatis.vip.application.server.business.BoutiquesBusiness;
-import fr.insalyon.creatis.vip.application.server.business.InputBusiness;
-import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationInputDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreException;
-import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.Pair;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
@@ -41,11 +35,11 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private WorkflowBusiness workflowBusiness;
-    private NewWorkflowBusiness newWorkflowBusiness;
+    private WorkflowLaunchBusiness workflowLaunchBusiness;
+    private ListWorkflowsBusiness listWorkflowsBusiness;
     private InputBusiness inputBusiness;
     private ApplicationInputDAO applicationInputDAO;
     private BoutiquesBusiness boutiquesBusiness;
-    private AppVersionBusiness appVersionBusiness;
 
     @Override
     public void init() throws ServletException {
@@ -53,9 +47,9 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         inputBusiness = getBean(InputBusiness.class);
         applicationInputDAO = getBean(ApplicationInputDAO.class);
         workflowBusiness = getBean(WorkflowBusiness.class);
-        newWorkflowBusiness = getBean(NewWorkflowBusiness.class);
+        workflowLaunchBusiness = getBean(WorkflowLaunchBusiness.class);
+        listWorkflowsBusiness = getBean(ListWorkflowsBusiness.class);
         boutiquesBusiness = getBean(BoutiquesBusiness.class);
-        appVersionBusiness = getBean(AppVersionBusiness.class);
     }
 
     /**
@@ -67,9 +61,9 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     @Override
     public List<Workflow> getSimulations() throws VipException {
         if (isSystemAdministrator()) {
-            return workflowBusiness.getSimulations(null, null);
+            return listWorkflowsBusiness.getAllWorkflows(null);
         } else {
-            return workflowBusiness.getSimulations(getSessionUser(), null);
+            return listWorkflowsBusiness.getCurrentUserWorflows(null);
         }
     }
 
@@ -83,9 +77,9 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     @Override
     public List<Workflow> getSimulations(Date lastDate) throws VipException {
         if (isSystemAdministrator()) {
-            return workflowBusiness.getSimulations(null, lastDate);
+            return listWorkflowsBusiness.getAllWorkflows(lastDate);
         } else {
-            return workflowBusiness.getSimulations(getSessionUser(), lastDate);
+            return listWorkflowsBusiness.getCurrentUserWorflows(lastDate);
         }
     }
 
@@ -104,7 +98,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
                                          String status, Date startDate, Date endDate) throws VipException {
         User user = getSessionUser();
         if (user.isSystemAdministrator() || (userName != null && userName.equalsIgnoreCase(user.getFullName()))) {
-            return workflowBusiness.getSimulations(userName, application, status, startDate, endDate);
+            return listWorkflowsBusiness.searchAndRefreshWorkflows(userName, application, status, startDate, endDate);
         } else if (userName == null) {
             return workflowBusiness.getSimulationsWithGroupAdminRights(user, application, status, startDate, endDate,
                     null);
@@ -139,7 +133,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         // fill in overriddenInputs from explicit inputs
 
         trace(logger, "Launching simulation '" + simulationName + "' (" + applicationName + ").");
-        Workflow workflow  = newWorkflowBusiness.launch(simulationName, applicationName, applicationVersion, parametersMap);
+        Workflow workflow  = workflowLaunchBusiness.launch(simulationName, applicationName, applicationVersion, parametersMap);
 
         trace(logger, "Simulation '" + simulationName + "' launched with ID '" + workflow.getID() + "'.");
     }
@@ -379,12 +373,12 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
 
     /**
      *
-     * @param simulationID
+     * @param workflowId
      * @return
      * @throws VipException
      */
-    public Workflow getSimulation(String simulationID) throws VipException {
-        return workflowBusiness.getSimulation(simulationID);
+    public Workflow getSimulation(String workflowId) throws VipException {
+        return listWorkflowsBusiness.getNotRefreshedSimulation(workflowId);
     }
 
     public String getFile(String baseDir, String fileName) {

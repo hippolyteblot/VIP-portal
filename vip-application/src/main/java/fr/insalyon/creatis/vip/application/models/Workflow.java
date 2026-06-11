@@ -33,6 +33,8 @@ public class Workflow implements IsSerializable {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String userId;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String userFullName;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Date startDate;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Date endDate;
@@ -46,14 +48,32 @@ public class Workflow implements IsSerializable {
     }
 
     public Workflow(String id, String workflowName, String applicationName, String applicationVersion,
-                    String userId, String status, Date startDate, Date endDate,
+                    User user, String status, Date startDate, Date endDate,
                     String engineName, String tags) {
 
         this.id = id;
         this.workflowName = workflowName;
         this.applicationName = applicationName;
         this.applicationVersion = applicationVersion;
-        this.userId = userId;
+        this.userId = user.getId();
+        this.userFullName = user.getFullName();
+        this.status = WorkflowStatus.valueOf(status);
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.engineName = engineName;
+        this.tags = tags;
+    }
+
+    public Workflow(String id, String workflowName, String applicationName, String applicationVersion,
+                    String userFullName, String status, Date startDate, Date endDate,
+                    String engineName, String tags) {
+
+        this.id = id;
+        this.workflowName = workflowName;
+        this.applicationName = applicationName;
+        this.applicationVersion = applicationVersion;
+        this.userId = null;
+        this.userFullName = userFullName;
         this.status = WorkflowStatus.valueOf(status);
         this.startDate = startDate;
         this.endDate = endDate;

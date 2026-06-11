@@ -12,7 +12,8 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 import fr.insalyon.creatis.vip.application.models.*;
-import fr.insalyon.creatis.vip.application.server.business.util.NewWorkflowBusiness;
+import fr.insalyon.creatis.vip.application.server.business.ListWorkflowsBusiness;
+import fr.insalyon.creatis.vip.application.server.business.util.WorkflowLaunchBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,6 @@ import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
-import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.CarminProperties;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
@@ -49,27 +49,27 @@ public class ExecutionBusiness {
     // other modules dependencies
     private final SimulationBusiness simulationBusiness;
     private final WorkflowBusiness workflowBusiness;
-    private final NewWorkflowBusiness newWorkflowBusiness;
+    private final WorkflowLaunchBusiness workflowLaunchBusiness;
+    private final ListWorkflowsBusiness listWorkflowsBusiness;
     private final PipelineBusiness pipelineBusiness;
-    private final UserBusiness userBusiness;
     private final ExternalPlatformBusiness externalPlatformBusiness;
 
     @Autowired
     public ExecutionBusiness(Supplier<User> currentUserProvider,
                              SimulationBusiness simulationBusiness,
                              WorkflowBusiness workflowBusiness,
-                             NewWorkflowBusiness newWorkflowBusiness,
+                             WorkflowLaunchBusiness workflowLaunchBusiness,
+                             ListWorkflowsBusiness listWorkflowsBusiness,
                              PipelineBusiness pipelineBusiness,
                              DataApiBusiness dataApiBusiness,
-                             UserBusiness userBusiness,
                              ExternalPlatformBusiness externalPlatformBusiness) {
         this.currentUserProvider = currentUserProvider;
         this.simulationBusiness = simulationBusiness;
         this.workflowBusiness = workflowBusiness;
-        this.newWorkflowBusiness = newWorkflowBusiness;
+        this.workflowLaunchBusiness = workflowLaunchBusiness;
+        this.listWorkflowsBusiness = listWorkflowsBusiness;
         this.pipelineBusiness = pipelineBusiness;
         this.dataApiBusiness = dataApiBusiness;
-        this.userBusiness = userBusiness;
         this.externalPlatformBusiness = externalPlatformBusiness;
     }
 
@@ -78,7 +78,7 @@ public class ExecutionBusiness {
     }
 
     public String getLog(String executionId, Integer invocationId, String type) throws VipException {
-        Workflow s = workflowBusiness.getSimulation(executionId);
+        Workflow s = listWorkflowsBusiness.getNotRefreshedSimulation(executionId);
         List<Task> tasks = simulationBusiness.getJobsList(s.getID());
 
         if (tasks.isEmpty()) {
@@ -129,7 +129,7 @@ public class ExecutionBusiness {
     public Execution getExecution(String executionId, boolean summarize, boolean onlyExample)
             throws VipException {
         // Get simulation object
-        Workflow s = workflowBusiness.getSimulation(executionId, true); // check running execution for update
+        Workflow s = listWorkflowsBusiness.getRefreshedSimulation(executionId); // check running execution for update
 
         // Return null if execution doesn't exist or is cleaned (cleaned status is not
         // supported in Carmin)
@@ -241,7 +241,7 @@ public class ExecutionBusiness {
     }
 
     public List<Execution> listExecutions(int maxReturned) throws VipException {
-        List<Workflow> workflows = workflowBusiness.getSimulations(
+        List<Workflow> workflows = listWorkflowsBusiness.searchAndRefreshWorkflows(
                 currentUserProvider.get().getFullName(),
                 null, // application
                 null, // status
@@ -267,7 +267,7 @@ public class ExecutionBusiness {
     }
 
     public List<Execution> listExamples() throws VipException {
-        List<Workflow> workflows = workflowBusiness.getSimulations(
+        List<Workflow> workflows = listWorkflowsBusiness.searchAndRefreshWorkflows(
                 null, // User must be null to take examples from other users
                 null, // application
                 fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed.name(), // status
@@ -282,7 +282,7 @@ public class ExecutionBusiness {
     }
 
     public int countExecutions() throws VipException {
-        List<Workflow> workflows = workflowBusiness.getSimulations(
+        List<Workflow> workflows = listWorkflowsBusiness.searchAndRefreshWorkflows(
                 currentUserProvider.get().getFullName(),
                 null, // application
                 null, // status
@@ -422,12 +422,12 @@ public class ExecutionBusiness {
                 executionName,
                 applicationName,
                 applicationVersion,
-                currentUserProvider.get().getId(),
+                currentUserProvider.get(),
                 null, null, null, null, null);
         carminWorkflow.setInputsMapsList(inputMapsList);
 
         // Launch the workflow
-        return newWorkflowBusiness.launch(carminWorkflow).getID();
+        return workflowLaunchBusiness.launch(carminWorkflow).getID();
     }
 
     private void checkInputIsValid(String inputName, String inputValue) throws VipException {
@@ -453,7 +453,7 @@ public class ExecutionBusiness {
 
     public void deleteExecution(String executionId, Boolean deleteFiles) throws VipException {
         checkIfUserCanAccessExecution(executionId);
-        Workflow s = workflowBusiness.getSimulation(executionId);
+        Workflow s = listWorkflowsBusiness.getNotRefreshedSimulation(executionId);
         if (s.getStatus() != WorkflowStatus.Completed && s.getStatus() != WorkflowStatus.Killed) {
             logger.error("Cannot delete exec {}, it is {}", executionId, s.getStatus());
             throw new VipException(
@@ -504,7 +504,7 @@ public class ExecutionBusiness {
         if (user.isSystemAdministrator()) {
             return;
         }
-        Workflow s = workflowBusiness.getSimulation(executionId);
+        Workflow s = listWorkflowsBusiness.getNotRefreshedSimulation(executionId);
         if (s.getUserId().equals(user.getFullName())) {
             return;
         }

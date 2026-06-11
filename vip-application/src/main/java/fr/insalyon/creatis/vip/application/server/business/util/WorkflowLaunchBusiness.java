@@ -8,8 +8,6 @@ import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.*;
-import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesApplication;
-import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesInput;
 import fr.insalyon.creatis.vip.application.server.business.*;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -33,7 +31,7 @@ import static fr.insalyon.creatis.vip.core.client.CoreModule.user;
 
 @Service
 @Transactional
-public class NewWorkflowBusiness extends CommonBusiness {
+public class WorkflowLaunchBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -49,11 +47,11 @@ public class NewWorkflowBusiness extends CommonBusiness {
     private final BoutiquesBusiness boutiquesBusiness;
 
     @Autowired
-    public NewWorkflowBusiness(Server server, WorkflowDAO workflowDAO, AppVersionBusiness appVersionBusiness,
-                               ExternalPlatformBusiness externalPlatformBusiness,
-                               LfcPathsBusiness lfcPathsBusiness, ResourceBusiness resourceBusiness,
-                               EngineBusiness engineBusiness, WorkflowExecutionBusiness workflowExecutionBusiness,
-                               EmailBusiness emailBusiness, BoutiquesBusiness boutiquesBusiness) {
+    public WorkflowLaunchBusiness(Server server, WorkflowDAO workflowDAO, AppVersionBusiness appVersionBusiness,
+                                  ExternalPlatformBusiness externalPlatformBusiness,
+                                  LfcPathsBusiness lfcPathsBusiness, ResourceBusiness resourceBusiness,
+                                  EngineBusiness engineBusiness, WorkflowExecutionBusiness workflowExecutionBusiness,
+                                  EmailBusiness emailBusiness, BoutiquesBusiness boutiquesBusiness) {
         this.server = server;
         this.workflowDAO = workflowDAO;
         this.appVersionBusiness = appVersionBusiness;
@@ -67,7 +65,7 @@ public class NewWorkflowBusiness extends CommonBusiness {
     }
 
     public Workflow launch(String workflowName, String applicationName, String applicationVersion, Map<String, String> parametersMap) throws VipException {
-        Workflow workflow = new Workflow(null, workflowName, applicationName, applicationVersion, getUser().getId(), null, null, null, null, null);
+        Workflow workflow = new Workflow(null, workflowName, applicationName, applicationVersion, getUser(), null, null, null, null, null);
         Map<String,WorkflowInput> inputsMap = new HashMap<>();
         for (String inputName : parametersMap.keySet()) {
             String valuesStr = parametersMap.get(inputName);
