@@ -1,22 +1,23 @@
 package fr.insalyon.creatis.vip.application.server.business.util;
 
+import fr.insalyon.creatis.boutiques.model.BoutiquesDescriptor;
+import fr.insalyon.creatis.boutiques.model.Input;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowsDBDAOException;
+import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.*;
+import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesApplication;
 import fr.insalyon.creatis.vip.application.models.boutiquesTools.BoutiquesInput;
-import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
-import fr.insalyon.creatis.vip.application.server.business.EngineBusiness;
-import fr.insalyon.creatis.vip.application.server.business.ResourceBusiness;
-import fr.insalyon.creatis.vip.application.server.business.WorkflowExecutionBusiness;
+import fr.insalyon.creatis.vip.application.server.business.*;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
-import fr.insalyon.creatis.vip.datamanager.client.view.DataManagerException;
 import fr.insalyon.creatis.vip.datamanager.server.DataManagerUtil;
 import fr.insalyon.creatis.vip.datamanager.server.business.ExternalPlatformBusiness;
 import fr.insalyon.creatis.vip.datamanager.server.business.LfcPathsBusiness;
@@ -45,13 +46,14 @@ public class NewWorkflowBusiness extends CommonBusiness {
     private final EngineBusiness engineBusiness;
     private final WorkflowExecutionBusiness workflowExecutionBusiness;
     private final EmailBusiness emailBusiness;
+    private final BoutiquesBusiness boutiquesBusiness;
 
     @Autowired
     public NewWorkflowBusiness(Server server, WorkflowDAO workflowDAO, AppVersionBusiness appVersionBusiness,
                                ExternalPlatformBusiness externalPlatformBusiness,
                                LfcPathsBusiness lfcPathsBusiness, ResourceBusiness resourceBusiness,
                                EngineBusiness engineBusiness, WorkflowExecutionBusiness workflowExecutionBusiness,
-                               EmailBusiness emailBusiness) {
+                               EmailBusiness emailBusiness, BoutiquesBusiness boutiquesBusiness) {
         this.server = server;
         this.workflowDAO = workflowDAO;
         this.appVersionBusiness = appVersionBusiness;
@@ -61,17 +63,54 @@ public class NewWorkflowBusiness extends CommonBusiness {
         this.engineBusiness = engineBusiness;
         this.workflowExecutionBusiness = workflowExecutionBusiness;
         this.emailBusiness = emailBusiness;
+        this.boutiquesBusiness = boutiquesBusiness;
+    }
+
+    public Workflow launch(String workflowName, String applicationName, String applicationVersion, Map<String, String> parametersMap) throws VipException {
+        Workflow workflow = new Workflow(null, workflowName, applicationName, applicationVersion, getUser().getId(), null, null, null, null, null);
+        Map<String,WorkflowInput> inputsMap = new HashMap<>();
+        for (String inputName : parametersMap.keySet()) {
+            String valuesStr = parametersMap.get(inputName);
+
+            if (valuesStr.contains(ApplicationConstants.SEPARATOR_INPUT)) {
+                String[] values = valuesStr.split(ApplicationConstants.SEPARATOR_INPUT);
+                if (values.length != 3) {
+                    throw new VipException("Error in range format.");
+                }
+                Double start = Double.parseDouble(values[0]);
+                Double stop = Double.parseDouble(values[1]);
+                Double step = Double.parseDouble(values[2]);
+                inputsMap.put(inputName, WorkflowInput.ofinterval(List.of(start,stop,step)));
+            } else if (valuesStr.contains(ApplicationConstants.SEPARATOR_LIST)) {
+                String[] values = valuesStr.split(ApplicationConstants.SEPARATOR_LIST);
+                inputsMap.put(inputName, WorkflowInput.ofList(Arrays.asList(values)));
+            } else {
+                inputsMap.put(inputName, WorkflowInput.ofList(List.of(valuesStr)));
+            }
+        }
+        workflow.setInputs(inputsMap);
+        return launch(workflow);
     }
 
     public synchronized Workflow launch(Workflow workflow) throws VipException {
         checkVIPCapacities(getUser(), workflow.getWorkflowName());
 
-        // TODO check stuff : no id, no status
-        // checkWorkflowForLaunch
-
         AppVersion appVersion = appVersionBusiness.getVersion(workflow.getApplicationName(), workflow.getApplicationVersion());
-        List<Map<String, List<String>>> parametersMapList = new ArrayList<>();
-        parametersMapList.add(getParameters(appVersion, workflow));
+        BoutiquesDescriptor boutiquesDescriptor = boutiquesBusiness.parseBoutiquesString(appVersion.getDescriptor());
+
+        // TODO check stuff : no id, no status
+        // TODO : check boutiques constraint, optional and stuff
+        // TODO : check input format (character white list, see API). Maybe also boutiques types
+        // TODO : check results-directory mandatory
+
+        // get the inputs as a list of maps of String -> List<String>
+        // from CARMIN it is already like that. from the internal API or GWT, it is just a map of String -> List<String>
+        // 3 other things to do :
+        //    - transform the number intervals (start, end, step) into actual values
+        //    - transform the VIP paths into actual/real paths
+        //    - managing custom "vip:overriddenInputs" in boutiques
+        // TODO : maybe see if we can store the actual values inside the workflow itself
+        List<Map<String, List<String>>> actualInputs = getActualValuesInputs(workflow, boutiquesDescriptor);
 
         List<Resource> resources = resourceBusiness.getAvailableForExecution(getUser(), appVersion);
         if (resources.isEmpty()) {
@@ -82,39 +121,57 @@ public class NewWorkflowBusiness extends CommonBusiness {
 
         String workflowId;
         try {
-            workflowId = workflowExecutionBusiness.launch(workflow.getWorkflowName(), resource, engine, appVersion, parametersMapList);
+            workflowId = workflowExecutionBusiness.launch(workflow.getWorkflowName(), resource, engine, appVersion, actualInputs);
         } catch (Exception e) {
-            String mailSubject = "[VIP] Warn: Workflow submission failed!!";
-            String mailContent = "An error occured while submitting a workflow";
-            Exception exceptionToRethrow = e;
-
-            if (e instanceof VipException vipEx && ! vipEx.getVipError().equals(DefaultError.GENERIC_ERROR_WITH_MESSAGE)) {
-                // not default error code, so it's an intended errors, only warning by mail
-                logger.warn("Error occurred during workflow submission. Not disabling, sending mail to admins");
-            } else {
-                if ( ! (e instanceof VipException)) {
-                    logger.error("Unexpected exception while launching a workflow", e);
-                    exceptionToRethrow = new VipException(ApplicationError.LAUNCH_ERROR, e);
-                }
-                logger.warn(
-                        "Error occurred during workflow submission. Disabling engine and sending mail to admins");
-                mailSubject = "[VIP] Urgent: VIP engine disabled !";
-                mailContent = "Engine " + engine.getName() + " has just been disabled.";
-                engine.setStatus("disabled");
-                engineBusiness.update(engine);
-            }
-            mailContent += "\n\nException:" + e.getMessage() + "\nStacktrace: " + e.getStackTrace();
-            emailBusiness.sendEmailToAdmins(mailSubject, mailContent, true, user.getEmail());
-            throw (VipException) exceptionToRethrow;
+            // this method manage the email sending, and return the exception to make bubble up
+            throw sendMailsOnLaunchException(e, engine);
         }
-        logger.info("Launched workflow {}", workflow);
-
+        logger.info("Launched workflow {}", workflow.getID());
         workflow.setId(workflowId);
         workflow.setStatus(WorkflowStatus.Running);
         workflow.setStartDate(new Date());
         workflow.setUser(getUser());
         addWorkflowInDb(workflow, engine);
         return workflow;
+    }
+
+    private VipException sendMailsOnLaunchException(Exception e, Engine engine) {
+        String mailSubject = "[VIP] Warn: Workflow submission failed!!";
+        String mailContent = "An error occured while submitting a workflow";
+        VipException exceptionToRethrow;
+
+        if (e instanceof VipException vipEx && ! vipEx.getVipError().equals(DefaultError.GENERIC_ERROR_WITH_MESSAGE)) {
+            // not default error code, so it's an intended errors, only warning by mail
+            logger.warn("Error occurred during workflow submission. Not disabling, sending mail to admins");
+            exceptionToRethrow = vipEx;
+        } else {
+            if ( e instanceof VipException vipEx) {
+                exceptionToRethrow = vipEx;
+            } else {
+                logger.error("Unexpected exception while launching a workflow", e);
+                exceptionToRethrow = new VipException(ApplicationError.LAUNCH_ERROR, e);
+            }
+            logger.warn(
+                    "Error occurred during workflow submission. Disabling engine and sending mail to admins");
+            mailSubject = "[VIP] Urgent: VIP engine disabled !";
+            mailContent = "Engine " + engine.getName() + " has just been disabled.";
+            engine.setStatus("disabled");
+            try {
+                engineBusiness.update(engine);
+            } catch (VipException ex) {
+                logger.error("Error updating the engine {} after a exec failed. Ignoring as there is already an exception going on", engine.getName(), ex);
+                mailContent += "\n(Also, there was an error updating the engine, see logs)";
+                // ignoring as there is already an exception going on
+            }
+        }
+        mailContent += "\n\nException:" + e.getMessage() + "\nStacktrace: " + e.getStackTrace();
+        try {
+            emailBusiness.sendEmailToAdmins(mailSubject, mailContent, true, user.getEmail());
+        } catch (VipException ex) {
+            logger.error("Error sending the email informing of an execution launch error. Ignoring as there is already an exception going on", ex);
+            // ignoring as there is already an exception going on
+        }
+        return exceptionToRethrow;
     }
 
     private void addWorkflowInDb(Workflow workflow, Engine engine) throws VipException {
@@ -164,37 +221,75 @@ public class NewWorkflowBusiness extends CommonBusiness {
             throw new VipException(ApplicationError.USER_MAX_EXECS, runningWorkflows);
         }
     }
-
-    private Map<String, List<String>> getParameters(AppVersion appVersion, Workflow workflow) throws VipException {
-        Map<String, List<String>> parameters = new HashMap<>();
-
-        // TODO : verify boutiques types
-        // TODO : manage results-dir properly
-
-        for (String inputName : workflow.getInputs().keySet()) {
-            WorkflowInput workflowInput = workflow.getInputs().get(inputName);
-            List<String> data = new ArrayList<>();
-            if (workflowInput.isInterval()) {
-                List<Double> interval = workflowInput.getInterval();
-                if (interval.size() != 3) {
-                    throw new VipException("Input interval must have 3 elements");
-                }
-                for (double d = interval.get(0); d <= interval.get(1); d += interval.get(2)) {
-                    data.add(d + "");
-                }
-            } else if (workflowInput.getType() == BoutiquesInput.InputType.FILE) {
-                // TODO : check file exist
-                for (String inputValue : workflowInput.getValues()) {
-                    data.add(transformParameter(inputName, inputValue));
-                }
-            } else {
-                data.addAll(workflowInput.getValues());
+    private List<Map<String, List<String>>> getActualValuesInputs(Workflow workflow, BoutiquesDescriptor boutiquesDescriptor) throws VipException {
+        if (workflow instanceof CarminWorkflow carminWorkflow) {
+            List<Map<String, List<String>>> actualValuesInputs = new ArrayList<>();
+            for (Map<String,WorkflowInput> inputsMap : carminWorkflow.getInputsMapsList()) {
+                actualValuesInputs.add(getActualValuesInputs(inputsMap, boutiquesDescriptor));
             }
+            return actualValuesInputs;
+        } else {
+            return List.of(getActualValuesInputs(workflow.getInputs(), boutiquesDescriptor));
+        }
+
+    }
+
+    private Map<String, List<String>> getActualValuesInputs(Map<String,WorkflowInput> inputsMap, BoutiquesDescriptor boutiquesDescriptor) throws VipException {
+        Map<String, String> overriddenInputs = boutiquesBusiness.getOverriddenInputs(boutiquesDescriptor);
+        Map<String, List<String>> actualValuesInputsMap = new HashMap<>();
+
+        for (String inputName : inputsMap.keySet()) {
+            WorkflowInput workflowInput = inputsMap.get(inputName);
+            List<String> data = getInputActualValues(inputName, workflowInput, boutiquesDescriptor);
             if ( ! data.isEmpty()) {
-                parameters.put(inputName, data);
+                actualValuesInputsMap.put(inputName, data);
             }
         }
-        return parameters;
+        // overridden inputs are hidden inputs that must be copied from others
+        if (overriddenInputs != null) {
+            for (String key : overriddenInputs.keySet()) {
+                String value = overriddenInputs.get(key);
+                if (actualValuesInputsMap.containsKey(value)) {
+                    actualValuesInputsMap.put(key, actualValuesInputsMap.get(value));
+                } else {
+                    logger.error("Overriding an missing parameter {}", value);
+                    throw new VipException("Overriding an missing parameter " + value);
+                }
+            }
+        }
+        return actualValuesInputsMap;
+    }
+
+    private List<String> getInputActualValues(String inputName, WorkflowInput workflowInput, BoutiquesDescriptor boutiquesDescriptor) throws VipException {
+        Input.Type inputType;
+        if (CoreConstants.RESULTS_DIRECTORY_PARAM_NAME.equals(inputName)) {
+            inputType = Input.Type.FILE;
+        } else {
+            Optional<Input> boutiqueInput = boutiquesBusiness.getInput(boutiquesDescriptor, inputName);
+            if (boutiqueInput.isEmpty()) {
+                logger.error("Launching with an unknown descriptor input : {}", inputName);
+                throw new VipException("Launching with an unknown descriptor input : " + inputName);
+            }
+            inputType = boutiqueInput.get().getType();
+        }
+        List<String> data = new ArrayList<>();
+        if (workflowInput.isInterval()) {
+            List<Double> interval = workflowInput.getInterval();
+            if (interval.size() != 3) {
+                throw new VipException("A number interval as input must have 3 elements");
+            }
+            for (double d = interval.get(0); d <= interval.get(1); d += interval.get(2)) {
+                data.add(d + "");
+            }
+        } else if (inputType == Input.Type.FILE) {
+            // TODO : check file exist
+            for (String inputValue : workflowInput.getValues()) {
+                data.add(transformParameter(inputName, inputValue));
+            }
+        } else {
+            data.addAll(workflowInput.getValues());
+        }
+        return data;
     }
 
     private String transformParameter(String parameterName, String parameterValue)

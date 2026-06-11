@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import fr.insalyon.creatis.vip.application.server.business.util.NewWorkflowBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private WorkflowBusiness workflowBusiness;
+    private NewWorkflowBusiness newWorkflowBusiness;
     private InputBusiness inputBusiness;
     private ApplicationInputDAO applicationInputDAO;
     private BoutiquesBusiness boutiquesBusiness;
@@ -51,6 +53,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         inputBusiness = getBean(InputBusiness.class);
         applicationInputDAO = getBean(ApplicationInputDAO.class);
         workflowBusiness = getBean(WorkflowBusiness.class);
+        newWorkflowBusiness = getBean(NewWorkflowBusiness.class);
         boutiquesBusiness = getBean(BoutiquesBusiness.class);
         appVersionBusiness = getBean(AppVersionBusiness.class);
     }
@@ -128,24 +131,6 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         return result;
     }
 
-    private void fillInOverriddenInputs(Map<String, String> parametersMap,
-                                        String applicationName, String applicationVersion) throws VipException {
-        AppVersion appVersion = appVersionBusiness.getVersion(applicationName, applicationVersion);
-        BoutiquesDescriptor descriptor = boutiquesBusiness.parseBoutiquesString(appVersion.getDescriptor());
-        Map<String, String> overriddenInputs = boutiquesBusiness.getOverriddenInputs(descriptor);
-        if (overriddenInputs != null) {
-            for (String key : overriddenInputs.keySet()) {
-                String value = overriddenInputs.get(key);
-                if (parametersMap.containsKey(value)) {
-                    parametersMap.put(key, parametersMap.get(value));
-                } else {
-                    logger.error("missing parameter {}", value);
-                    throw new VipException("missing parameter " + value);
-                }
-            }
-        }
-    }
-
     @Override
     public void launchSimulation(Map<String, String> parametersMap,
             String applicationName, String applicationVersion,
@@ -154,23 +139,9 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         // fill in overriddenInputs from explicit inputs
 
         trace(logger, "Launching simulation '" + simulationName + "' (" + applicationName + ").");
-        User user = getSessionUser();
+        Workflow workflow  = newWorkflowBusiness.launch(simulationName, applicationName, applicationVersion, parametersMap);
 
-        List<String> groups = new ArrayList<String>();
-        for (Group group : getUserGroupsFromSession().keySet()) {
-            groups.add(group.getName());
-        }
-
-        for (Map.Entry<String, String> p : parametersMap.entrySet()) {
-            logger.info("received param {} : {}", p.getKey(), p.getValue());
-        }
-        fillInOverriddenInputs(parametersMap, applicationName, applicationVersion);
-        List<Map<String, String>> parametersMaps = new ArrayList<>();
-        parametersMaps.add(parametersMap);
-        String simulationID = workflowBusiness.launch(user, groups,
-                parametersMaps, applicationName, applicationVersion, simulationName);
-
-        trace(logger, "Simulation '" + simulationName + "' launched with ID '" + simulationID + "'.");
+        trace(logger, "Simulation '" + simulationName + "' launched with ID '" + workflow.getID() + "'.");
     }
 
     /**
