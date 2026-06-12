@@ -46,9 +46,8 @@ USE workflowsdb;
 ALTER TABLE Workflows ADD tags VARCHAR(255);
 
 -- v4.7
-ALTER TABLE VIPApplications ALTER COLUMN note DROP NOT NULL,ALTER COLUMN note SET DEFAULT NULL;
-ALTER TABLE VIPAppVersions ALTER COLUMN note DROP NOT NULL,ALTER COLUMN note SET DEFAULT NULL;
-
+ALTER TABLE VIPApplications ADD note TEXT;
+ALTER TABLE VIPAppVersions ADD note TEXT;
 
 ALTER TABLE VIPUsers ADD id VARCHAR(8) UNIQUE;
 /* becareful the uuids generated here are hex based (limitation of sql functions) */
