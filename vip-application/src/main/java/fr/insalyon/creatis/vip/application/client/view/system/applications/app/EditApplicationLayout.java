@@ -100,12 +100,14 @@ public class EditApplicationLayout extends AbstractFormLayout {
                     List<String> groupsNames = Arrays.asList(groupsList.getValues());
                     Set<Group> groups = groupsNames.stream()
                         .map((name) -> new Group(groupsMap.get(name), false, GroupType.RESOURCE)).collect(Collectors.toSet());
-
+                    String noteValue = noteField.getValueAsString();
+                    String cleanNote = (noteValue != null) ? noteValue.trim() : null;
+                        
                     if (newApplication) {
                         save(new Application(
                             nameField.getValueAsString().trim(),
                             richTextEditor.getValue(),
-                            noteField.getValueAsString().trim(),
+                            cleanNote,
                             groups));
                     } else {
                         save(new Application(
@@ -113,7 +115,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
                             usersPickList.getValueAsString(), 
                             null,
                             richTextEditor.getValue(),
-                            noteField.getValueAsString().trim(),
+                            cleanNote,
                             groups));
                     }
                 }
@@ -159,7 +161,7 @@ public class EditApplicationLayout extends AbstractFormLayout {
             nameField.setDisabled(true);
             groupsList.setValues(groups.keySet().stream().toArray(String[]::new));
             richTextEditor.setValue(citation);
-            noteField.setValue(note);
+            noteField.setValue(note != null ? note : "");
             newApplication = false;
             removeButton.setDisabled(false);
             groupsMap = groups;
