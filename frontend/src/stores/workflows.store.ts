@@ -26,9 +26,11 @@ export const useWorkflowsStore = defineStore('workflows', () => {
     isLoading.value = true
     try {
       const page = await workflowsApi.list(params)
-      workflows.value = page.data
-      total.value = page.total
+      workflows.value = page?.data ?? []
+      total.value = page?.total ?? 0
     } catch {
+      workflows.value = []
+      total.value = 0
       notifications.error('Unable to load workflows.')
     } finally {
       isLoading.value = false

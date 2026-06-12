@@ -29,7 +29,6 @@ export interface WorkflowLaunchPayload {
   applicationName: string
   applicationVersion: string
   workflowName: string
-  resultsDirectory?: string
   inputs: Record<string, { type: string; values: string[] }>
 }
 

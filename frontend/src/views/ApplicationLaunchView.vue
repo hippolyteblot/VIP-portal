@@ -142,11 +142,14 @@ async function onLaunchSubmit() {
     }
   }
 
+  if (payload.resultsDirectory) {
+    inputs['results-directory'] = { type: 'File', values: [payload.resultsDirectory] }
+  }
+
   const workflow = await workflowsStore.launchWorkflow({
     applicationName: payload.applicationName,
     applicationVersion: payload.version,
     workflowName: payload.executionName,
-    resultsDirectory: payload.resultsDirectory,
     inputs,
   })
 
