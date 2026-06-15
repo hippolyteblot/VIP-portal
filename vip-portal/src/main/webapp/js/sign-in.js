@@ -100,10 +100,14 @@ function resetPassword() {
 }
 
 function checkSession() {
-    fetch("internal/session").then(function (response) {
-        if (response.ok) {
-            window.location = "home.html";
-        }
+    // Auto-login for demo mode
+    fetch("internal/session/demo-login", { method: "GET", credentials: "include" })
+    .finally(function () {
+        fetch("internal/session", { credentials: "include" }).then(function (response) {
+            if (response.ok) {
+                window.location = "home.html";
+            }
+        });
     });
 }
 

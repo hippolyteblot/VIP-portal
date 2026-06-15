@@ -13,6 +13,15 @@
         </script>
 
     <meta name='gwt:module' content='fr.insalyon.creatis.vip.portal.Main=fr.insalyon.creatis.vip.portal.Main'>
+    <script>
+      // Auto-login for demo mode (sync XHR ensures session before GWT loads)
+      (function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "internal/session/demo-login", false);
+        xhr.withCredentials = true;
+        try { xhr.send(); } catch(e) {}
+      })();
+    </script>
     <script language="javascript" src="fr.insalyon.creatis.vip.portal.Main/fr.insalyon.creatis.vip.portal.Main.nocache.js"></script>
     <script language="javascript" src="fr.insalyon.creatis.vip.portal.Main/jquery-1.7.2.min.js"></script>
 
