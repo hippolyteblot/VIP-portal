@@ -13,6 +13,12 @@ const auth = useAuthStore()
 const messagesStore = useMessagesStore()
 const { formatRelativeTime } = useFormatters()
 
+const displayName = computed(() => {
+  const { firstName, lastName, email } = auth.user ?? {}
+  if (firstName && lastName) return `${firstName} ${lastName}`
+  return email ?? ''
+})
+
 const recentApplications = getRecentApplications(4)
 
 const unreadMessages = computed(() =>
@@ -60,7 +66,7 @@ onMounted(() => {
   <div class="space-y-8">
     <div>
       <h1 class="text-2xl font-bold">
-        Welcome, {{ auth.user?.email }}
+        Welcome, {{ displayName }}
       </h1>
       <p>Welcome to your VIP Portal dashboard!</p>
     </div>

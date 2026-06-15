@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.store'
 import { LogOut, ChevronDown, User, Menu } from 'lucide-vue-next'
@@ -7,6 +7,18 @@ import { LogOut, ChevronDown, User, Menu } from 'lucide-vue-next'
 const router = useRouter()
 const auth = useAuthStore()
 const showMenu = ref(false)
+
+const initials = computed(() => {
+  const first = auth.user?.firstName?.charAt(0) ?? ''
+  const last = auth.user?.lastName?.charAt(0) ?? ''
+  return first || last ? `${first}${last}`.toUpperCase() : (auth.user?.email?.charAt(0).toUpperCase() ?? '?')
+})
+
+const displayName = computed(() => {
+  const { firstName, lastName, email } = auth.user ?? {}
+  if (firstName && lastName) return `${firstName} ${lastName}`
+  return email ?? ''
+})
 
 const emit = defineEmits<{
   'open-sidebar': []
@@ -43,10 +55,10 @@ async function handleLogout() {
         <div
           class="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 text-sm font-medium text-primary-700"
         >
-          FU
+          {{ initials }}
         </div>
         <span class="hidden text-sm font-medium text-gray-700 sm:block">
-          Full name
+          {{ displayName }}
         </span>
         <ChevronDown class="h-4 w-4 text-gray-400" />
       </button>
@@ -58,8 +70,8 @@ async function handleLogout() {
           @mouseleave="showMenu = false"
         >
           <div class="border-b border-gray-100 px-4 py-3">
-            <p class="text-sm font-medium text-gray-900">Full name</p>
-            <p class="truncate text-xs text-gray-500">Email</p>
+            <p class="text-sm font-medium text-gray-900">{{ displayName }}</p>
+            <p class="truncate text-xs text-gray-500">{{ auth.user?.email }}</p>
           </div>
           <RouterLink
             to="/profile"
