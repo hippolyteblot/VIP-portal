@@ -26,17 +26,22 @@ public class WorkflowController {
         this.listWorkflowsBusiness = listWorkflowsBusiness;
     }
 
-    // TODO : add filters : start date, end date
+    // TODO : add filters : status, user, application, start date, end date
     @GetMapping
     public PrecisePage<Workflow> list(
             @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
-            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity) throws VipException {
-        return null;
+            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity,
+            @RequestParam(defaultValue = "true") boolean refreshed) throws VipException {
+        PrecisePage<Workflow> workflows = listWorkflowsBusiness.getCurrentUserWorkflowsPaginated(offset, quantity, null);
+        if (refreshed) {
+            listWorkflowsBusiness.refreshRunningWorkflows(workflows.data);
+        }
+        return workflows;
     }
 
     @GetMapping(value = "{wid}")
     public Workflow get(@PathVariable String wid) throws VipException {
-        Workflow w = listWorkflowsBusiness.getRefreshedSimulation(wid);
+        Workflow w = listWorkflowsBusiness.getRefreshedWorkflow(wid);
 
         if (w == null) {
             throw new VipException(DefaultError.NOT_FOUND, Workflow.class.getSimpleName(), wid);

@@ -13,7 +13,6 @@ import org.mockito.Mockito;
 
 import fr.insalyon.creatis.vip.api.exception.ApiError;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
-import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -97,7 +96,7 @@ public class ExecutionBusinessTest {
 
     private ListWorkflowsBusiness prepareMockedWorkflowBusiness(String execId, Workflow simu) throws Exception {
         ListWorkflowsBusiness mockedWb = Mockito.mock(ListWorkflowsBusiness.class);
-        Mockito.when(mockedWb.getNotRefreshedSimulation(execId)).thenReturn(simu);
+        Mockito.when(mockedWb.getNotRefreshedWorkflow(execId)).thenReturn(simu);
         return mockedWb;
     }
 

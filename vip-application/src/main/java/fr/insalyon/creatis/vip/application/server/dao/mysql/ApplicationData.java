@@ -3,10 +3,8 @@ package fr.insalyon.creatis.vip.application.server.dao.mysql;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.sql.DataSource;
 
@@ -162,13 +160,18 @@ public class ApplicationData extends JdbcDaoSupport implements ApplicationDAO {
     }
 
     @Override
-    public List<Application> getApplicationsByGroup(Group group) throws DAOException {
+    public List<Application> getApplicationsByGroups(Set<Group> groups) throws DAOException {
         String query =  "SELECT * FROM VIPApplications a "
-        +               "JOIN VIPGroupsApplications ga ON ga.applicationname = a.name "
-        +               "WHERE ga.groupname = ?";
+                +       "JOIN VIPGroupsApplications ga ON ga.applicationname = a.name "
+                +       "WHERE ga.groupname IN ("
+                +       groups.stream().map(g -> "?").collect(Collectors.joining(", "))
+                +       ")";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
-            ps.setString(1, group.getName());
+            int index = 1;
+            for (Group group : groups) {
+                ps.setString(index++, group.getName());
+            }
 
             ResultSet rs = ps.executeQuery();
             List<Application> results = new ArrayList<>();
@@ -179,7 +182,7 @@ public class ApplicationData extends JdbcDaoSupport implements ApplicationDAO {
             return results;
 
         } catch (SQLException e) {
-            logger.error("Error getting applications for group " + group.getName(), e);
+            logger.error("Error getting applications for groups {}", groups, e);
             throw new DAOException(e);
         }
     }

@@ -25,7 +25,6 @@ import fr.insalyon.creatis.vip.application.server.dao.ApplicationInputDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreException;
 import fr.insalyon.creatis.vip.core.models.Pair;
-import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.core.server.rpc.AbstractRemoteServiceServlet;
 import jakarta.servlet.ServletException;
@@ -63,7 +62,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         if (isSystemAdministrator()) {
             return listWorkflowsBusiness.getAllWorkflows(null);
         } else {
-            return listWorkflowsBusiness.getCurrentUserWorflows(null);
+            return listWorkflowsBusiness.getCurrentUserWorkflows(null);
         }
     }
 
@@ -79,32 +78,16 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
         if (isSystemAdministrator()) {
             return listWorkflowsBusiness.getAllWorkflows(lastDate);
         } else {
-            return listWorkflowsBusiness.getCurrentUserWorflows(lastDate);
+            return listWorkflowsBusiness.getCurrentUserWorkflows(lastDate);
         }
     }
 
-    /**
-     *
-     * @param userName
-     * @param application
-     * @param status
-     * @param startDate
-     * @param endDate
-     * @return
-     * @throws VipException
-     */
     @Override
-    public List<Workflow> getSimulations(String userName, String application,
+    public List<Workflow> getSimulations(String userName, String applicationName,
                                          String status, Date startDate, Date endDate) throws VipException {
-        User user = getSessionUser();
-        if (user.isSystemAdministrator() || (userName != null && userName.equalsIgnoreCase(user.getFullName()))) {
-            return listWorkflowsBusiness.searchAndRefreshWorkflows(userName, application, status, startDate, endDate);
-        } else if (userName == null) {
-            return workflowBusiness.getSimulationsWithGroupAdminRights(user, application, status, startDate, endDate,
-                    null);
-        } else {
-            throw new VipException("You can't see another person's simulation!");
-        }
+        return listWorkflowsBusiness.refreshRunningWorkflows(
+                    listWorkflowsBusiness.searchWithAdminRightsAndIncludeCurrentUserWorkflows(
+                        userName, applicationName,status, startDate, endDate, null));
     }
 
     @Override
@@ -378,7 +361,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @throws VipException
      */
     public Workflow getSimulation(String workflowId) throws VipException {
-        return listWorkflowsBusiness.getNotRefreshedSimulation(workflowId);
+        return listWorkflowsBusiness.getNotRefreshedWorkflow(workflowId);
     }
 
     public String getFile(String baseDir, String fileName) {

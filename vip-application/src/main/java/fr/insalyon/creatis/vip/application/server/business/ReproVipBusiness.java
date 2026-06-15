@@ -75,7 +75,7 @@ public class ReproVipBusiness {
                 return false;
             }
             // verifying the application has a boutiques file
-            Workflow simulation = listWorkflowsBusiness.getNotRefreshedSimulation(workflow);
+            Workflow simulation = listWorkflowsBusiness.getNotRefreshedWorkflow(workflow);
 
             if ( ! isBoutiquesDescriptorAvailable(simulation.getApplicationName(), simulation.getApplicationVersion())) {
                 logger.warn("Boutiques descriptor not found for " + simulation.getApplicationName() + ":" + simulation.getApplicationVersion());

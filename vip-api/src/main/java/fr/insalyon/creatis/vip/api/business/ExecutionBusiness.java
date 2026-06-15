@@ -34,7 +34,6 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.CarminProperties;
-import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.datamanager.server.business.ExternalPlatformBusiness;
 
 @Service
@@ -78,7 +77,7 @@ public class ExecutionBusiness {
     }
 
     public String getLog(String executionId, Integer invocationId, String type) throws VipException {
-        Workflow s = listWorkflowsBusiness.getNotRefreshedSimulation(executionId);
+        Workflow s = listWorkflowsBusiness.getNotRefreshedWorkflow(executionId);
         List<Task> tasks = simulationBusiness.getJobsList(s.getID());
 
         if (tasks.isEmpty()) {
@@ -129,7 +128,7 @@ public class ExecutionBusiness {
     public Execution getExecution(String executionId, boolean summarize, boolean onlyExample)
             throws VipException {
         // Get simulation object
-        Workflow s = listWorkflowsBusiness.getRefreshedSimulation(executionId); // check running execution for update
+        Workflow s = listWorkflowsBusiness.getRefreshedWorkflow(executionId); // check running execution for update
 
         // Return null if execution doesn't exist or is cleaned (cleaned status is not
         // supported in Carmin)
@@ -453,7 +452,7 @@ public class ExecutionBusiness {
 
     public void deleteExecution(String executionId, Boolean deleteFiles) throws VipException {
         checkIfUserCanAccessExecution(executionId);
-        Workflow s = listWorkflowsBusiness.getNotRefreshedSimulation(executionId);
+        Workflow s = listWorkflowsBusiness.getNotRefreshedWorkflow(executionId);
         if (s.getStatus() != WorkflowStatus.Completed && s.getStatus() != WorkflowStatus.Killed) {
             logger.error("Cannot delete exec {}, it is {}", executionId, s.getStatus());
             throw new VipException(
@@ -504,7 +503,7 @@ public class ExecutionBusiness {
         if (user.isSystemAdministrator()) {
             return;
         }
-        Workflow s = listWorkflowsBusiness.getNotRefreshedSimulation(executionId);
+        Workflow s = listWorkflowsBusiness.getNotRefreshedWorkflow(executionId);
         if (s.getUserId().equals(user.getFullName())) {
             return;
         }

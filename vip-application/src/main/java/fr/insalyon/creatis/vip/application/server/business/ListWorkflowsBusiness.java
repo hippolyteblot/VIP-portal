@@ -3,12 +3,17 @@ package fr.insalyon.creatis.vip.application.server.business;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowsDBDAOException;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
+import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.Workflow;
+import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.PageBuilder;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
+import fr.insalyon.creatis.vip.core.server.inter.annotations.VIPExternalSafe;
+import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,25 +30,31 @@ public class ListWorkflowsBusiness extends CommonBusiness {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final WorkflowDAO workflowDAO;
+    private final ApplicationDAO applicationDAO;
     private final WorkflowExecutionBusiness workflowExecutionBusiness;
     private final UserBusiness userBusiness;
+    private final PageBuilder pageBuilder;
 
     @Autowired
-    public ListWorkflowsBusiness(WorkflowDAO workflowDAO, WorkflowExecutionBusiness workflowExecutionBusiness, UserBusiness userBusiness) {
+    public ListWorkflowsBusiness(WorkflowDAO workflowDAO, ApplicationDAO applicationDAO,
+                                 WorkflowExecutionBusiness workflowExecutionBusiness, UserBusiness userBusiness,
+                                 PageBuilder pageBuilder) {
         this.workflowDAO = workflowDAO;
+        this.applicationDAO = applicationDAO;
         this.workflowExecutionBusiness = workflowExecutionBusiness;
         this.userBusiness = userBusiness;
+        this.pageBuilder = pageBuilder;
     }
 
-    public Workflow getRefreshedSimulation(String workflowId) throws VipException {
-        return getSimulation(workflowId, true);
+    public Workflow getRefreshedWorkflow(String workflowId) throws VipException {
+        return getWorkflow(workflowId, true);
     }
 
-    public Workflow getNotRefreshedSimulation(String workflowId) throws VipException {
-        return getSimulation(workflowId, false);
+    public Workflow getNotRefreshedWorkflow(String workflowId) throws VipException {
+        return getWorkflow(workflowId, false);
     }
 
-    private Workflow getSimulation(String workflowId, boolean refresh) throws VipException {
+    private Workflow getWorkflow(String workflowId, boolean refresh) throws VipException {
         Workflow workflow;
 
         try {
@@ -60,7 +71,7 @@ public class ListWorkflowsBusiness extends CommonBusiness {
             }
 
             if (refresh) {
-                refreshRunningSimulations(List.of(workflow));
+                refreshRunningWorkflows(List.of(workflow));
             }
 
         } catch (WorkflowsDBDAOException ex) {
@@ -71,6 +82,12 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         return workflow;
     }
 
+    @VIPExternalSafe
+    public PrecisePage<Workflow> getCurrentUserWorkflowsPaginated(int offset, int quantity, Date lastDate) throws VipException {
+        return pageBuilder.doPrecise(offset, quantity, getCurrentUserWorkflows(lastDate));
+    }
+
+    @VIPExternalSafe
     public List<Workflow> getAllWorkflows(Date lastDate) throws VipException {
         if ( ! getUser().isSystemAdministrator() ) {
             logger.error("unauthorized access to all workflows by {}", getUser().getEmail());
@@ -79,7 +96,8 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         return getWorkflows(null, lastDate);
     }
 
-    public List<Workflow> getCurrentUserWorflows(Date lastDate) throws VipException {
+    @VIPExternalSafe
+    public List<Workflow> getCurrentUserWorkflows(Date lastDate) throws VipException {
         return getWorkflows(getUser(), lastDate);
     }
 
@@ -92,35 +110,85 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         }
     }
 
-    public List<Workflow> searchAndRefreshWorkflows(String userName, String application, String status,
-                                         Date startDate, Date endDate) throws VipException {
+    @VIPExternalSafe
+    public List<Workflow> searchOwnWorkflows(
+            String applicationName, String status, Date startDate, Date endDate, String tag) throws VipException {
+        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus = (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
 
-        return searchAndRefreshWorkflows(userName, application, status, startDate, endDate, null);
+        // no need to verify applicationName, if not relevant filter will give nothing
+        try {
+            return parseDbWorkflows(workflowDAO.get(getUser().getFullName(), applicationName, wStatus, null, startDate, endDate, tag));
+        } catch (WorkflowsDBDAOException ex) {
+            logger.error("Error searching simulations for user {}", getUserEmail(), ex);
+            throw new VipException(ex);
+        }
     }
 
-    public List<Workflow> searchAndRefreshWorkflows(String userName, String application, String status, Date startDate, Date endDate, String tag) throws VipException {
-        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus = (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
-        List<String> users = (userName != null) ? Collections.singletonList(userName) : Collections.emptyList();
-        List<String> applications = (application != null) ? Collections.singletonList(application) : new ArrayList<>();
-        List<Workflow> workflows;
+    /**
+     * Only includes the apps the user is admin of
+     */
+    @VIPExternalSafe
+    public List<Workflow> searchWithAdminRights(
+            String userName, String applicationName,
+            String status, Date startDate, Date endDate, String tag) throws VipException {
+        return searchWithAdminRights(false, userName, applicationName, status, startDate, endDate, tag);
+    }
 
-        // TODO : check rights on users and applications
+    /**
+     * To get the legacy GWT behavior.
+     * Search with admin rights and also include the current user workflow
+     */
+    @VIPExternalSafe
+    public List<Workflow> searchWithAdminRightsAndIncludeCurrentUserWorkflows(
+            String userName, String applicationName,
+            String status, Date startDate, Date endDate, String tag) throws VipException {
+        return searchWithAdminRights(true, userName, applicationName, status, startDate, endDate, tag);
+    }
+
+    @VIPExternalSafe
+    private List<Workflow> searchWithAdminRights(
+            boolean includeCurrentUserWorkflows,
+            String userName, String applicationName,
+            String status, Date startDate, Date endDate, String tag)
+            throws VipException {
+        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus = (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
+
+        // meaning the current user can see the executions from applications he is admin of
+        // also he can only filter on these applications
+        // many possibilities depending on profile, userName and applicationName
 
         try {
-            if (endDate != null) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(endDate);
-                calendar.add(Calendar.DATE, 1);
-                endDate = calendar.getTime();
+            // an admin can search everything
+            if (getUser().isSystemAdministrator()) {
+                return parseDbWorkflows(workflowDAO.get(userName, applicationName, wStatus, null, startDate, endDate, tag));
             }
 
-            workflows = parseDbWorkflows(workflowDAO.get(users, applications, wStatus, null, startDate, endDate, tag));
-            refreshRunningSimulations(workflows);
+            // only admins can filter on user
+            if (userName != null) {
+                logger.error("{} trying to search workflow for an user {}", getUserEmail(), userName);
+                throw new VipException(DefaultError.ACCESS_DENIED);
+            }
+            List<Application> adminApps = applicationDAO.getApplicationsByGroups(getUser().getAdminGroups());
 
-            return workflows;
+            // if app is given then filter on it
+            if (applicationName != null) {
+                if (adminApps.stream().noneMatch(app -> applicationName.equals(app.getName()))) {
+                    logger.error("{} trying to filter worfklows with an application he is not an admin {}", getUser().getEmail(), applicationName);
+                    throw new VipException(DefaultError.ACCESS_DENIED);
+                }
+                return parseDbWorkflows(workflowDAO.get(userName, applicationName, wStatus, null, startDate, endDate, tag));
+            }
 
+            // else it must be filtered on all the apps the user is admin of
+            // can include all his own workflows for the default view (his own + his admin ones)
+            List<String> adminAppsNames = adminApps.stream().map(Application::getName).toList();
+            if (includeCurrentUserWorkflows) {
+                return parseDbWorkflows(workflowDAO.getWithUserOrApplication(List.of(getUser().getFullName()), adminAppsNames, wStatus, null, startDate, endDate, tag));
+            } else {
+                return parseDbWorkflows(workflowDAO.getWithUserOrApplication(null, adminAppsNames, wStatus, null, startDate, endDate, tag));
+            }
         } catch (WorkflowsDBDAOException ex) {
-            logger.error("Error searching simulations for users {}", users, ex);
+            logger.error("Error searching worfklows for user {}", getUserEmail(), ex);
             throw new VipException(ex);
         }
     }
@@ -180,22 +248,28 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         }
     }
 
-    private void refreshRunningSimulations(List<Workflow> workflows) throws VipException, WorkflowsDBDAOException {
-        for (Workflow workflow : workflows) {
+    public List<Workflow> refreshRunningWorkflows(List<Workflow> workflows) throws VipException {
+        try {
+            for (Workflow workflow : workflows) {
 
-            if (workflow.getStatus() == WorkflowStatus.Running
-                    || workflow.getStatus() == WorkflowStatus.Unknown) {
-                WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(workflow.getEngineName(), workflow.getID());
-                logger.debug("Simulation {} : old status : {}, new status : {} ",
-                        workflow.getID(), workflow.getStatus(), workflowStatus);
+                if (workflow.getStatus() == WorkflowStatus.Running
+                        || workflow.getStatus() == WorkflowStatus.Unknown) {
+                    WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(workflow.getEngineName(), workflow.getID());
+                    logger.debug("Simulation {} : old status : {}, new status : {} ",
+                            workflow.getID(), workflow.getStatus(), workflowStatus);
 
-                if (workflowStatus != workflow.getStatus()) {
-                    workflow.setStatus(workflowStatus);
-                    fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow = workflowDAO.get(workflow.getID());
-                    dbWorkflow.setStatus(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(workflowStatus.name()));
-                    workflowDAO.update(dbWorkflow);
+                    if (workflowStatus != workflow.getStatus()) {
+                        workflow.setStatus(workflowStatus);
+                        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow = workflowDAO.get(workflow.getID());
+                        dbWorkflow.setStatus(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(workflowStatus.name()));
+                        workflowDAO.update(dbWorkflow);
+                    }
                 }
             }
+            return workflows;
+        } catch (WorkflowsDBDAOException ex) {
+            logger.error("Error refreshing workflows for user {}", getUserEmail(), ex);
+            throw new VipException(ex);
         }
     }
 }
