@@ -106,10 +106,6 @@ router.beforeEach(async (to) => {
     return auth.isAuthenticated ? { name: 'dashboard' } : undefined
   }
 
-  if (to.name === 'landing') {
-    return auth.isAuthenticated ? { name: 'dashboard' } : undefined
-  }
-
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' }
   }

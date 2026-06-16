@@ -16,11 +16,14 @@ const mocked = vi.hoisted(() => {
     fetchAppVersion: vi.fn(),
     notificationSuccess: vi.fn(),
     rememberRecentApplication: vi.fn(),
+    routerPush: vi.fn(),
+    launchWorkflow: vi.fn(),
   }
 })
 
 vi.mock('vue-router', () => ({
   useRoute: () => mocked.route,
+  useRouter: () => ({ push: mocked.routerPush }),
   RouterLink: {
     name: 'RouterLink',
     props: ['to'],
@@ -43,6 +46,12 @@ vi.mock('@/stores/appversions.stores', () => ({
 vi.mock('@/stores/notifications.store', () => ({
   useNotificationsStore: () => ({
     success: mocked.notificationSuccess,
+  }),
+}))
+
+vi.mock('@/stores/workflows.store', () => ({
+  useWorkflowsStore: () => ({
+    launchWorkflow: mocked.launchWorkflow,
   }),
 }))
 
@@ -111,6 +120,7 @@ describe('ApplicationLaunchView', () => {
 
   it('submits launch and stores payload when form is valid', async () => {
     const setItemSpy = vi.spyOn(window.localStorage.__proto__, 'setItem')
+    mocked.launchWorkflow.mockResolvedValue({ id: 'wf-123' })
 
     const wrapper = mount(ApplicationLaunchView)
     await flushPromises()
@@ -119,6 +129,7 @@ describe('ApplicationLaunchView', () => {
     await wrapper.get('input[placeholder="e.g. /vip/results/run-001"]').setValue('/vip/results/run-001')
 
     await wrapper.get('form').trigger('submit')
+    await flushPromises()
 
     expect(setItemSpy).toHaveBeenCalledTimes(1)
     const firstSetItemCall = setItemSpy.mock.calls[0]
@@ -146,9 +157,9 @@ describe('ApplicationLaunchView', () => {
       version: '1.0.0',
     })
 
-    expect(mocked.notificationSuccess).toHaveBeenCalledWith(
-      'Application launched',
-      'Your application "Demo Application" has been launched successfully.',
-    )
+    expect(mocked.routerPush).toHaveBeenCalledWith({
+      name: 'workflow-detail',
+      params: { id: 'wf-123' },
+    })
   })
 })

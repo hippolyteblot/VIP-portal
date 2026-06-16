@@ -21,6 +21,20 @@ vi.mock('@/stores/auth.store', () => ({
   useAuthStore: () => mocked.authStore,
 }))
 
+vi.mock('@/stores/messages.store', () => ({
+  useMessagesStore: () => ({
+    sortedMessages: [],
+    isLoading: false,
+    fetchMessages: vi.fn(),
+  }),
+}))
+
+vi.mock('@/composables/useFormatters', () => ({
+  useFormatters: () => ({
+    formatRelativeTime: vi.fn(() => 'just now'),
+  }),
+}))
+
 vi.mock('@/utils/recentApplications', () => ({
   getRecentApplications: mocked.getRecentApplications,
 }))
