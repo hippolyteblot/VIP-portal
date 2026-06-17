@@ -93,7 +93,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
     public void shouldListExecutions() throws Exception {
         when(workflowDAO.get(eq(WORKFLOW_1.getID()))).thenReturn(w1, (Workflow) null);
         when(workflowDAO.get(eq(WORKFLOW_2.getID()))).thenReturn(w2, (Workflow) null);
-        when(workflowDAO.get(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null))
+        when(workflowDAO.getWithUserOrApplication(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null))
                 .thenReturn(Arrays.asList(w1, w2), (List<Workflow>) null);
 
         // perform a getWorkflows()
@@ -114,7 +114,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldCountExecutions() throws Exception {
-        when(workflowDAO.get(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null))
+        when(workflowDAO.getWithUserOrApplication(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null))
                 .thenReturn(Arrays.asList(w1, w2), (List<Workflow>) null);
 
         // perform a getWorkflows()
@@ -243,7 +243,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
 
     @Test
     public void shouldReturn500() throws Exception {
-        when(workflowDAO.get(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null)).thenThrow(new RuntimeException("test exception"));
+        when(workflowDAO.getWithUserOrApplication(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null)).thenThrow(new RuntimeException("test exception"));
 
         // perform a getWorkflows() with an undetermined error
         mockMvc.perform(
