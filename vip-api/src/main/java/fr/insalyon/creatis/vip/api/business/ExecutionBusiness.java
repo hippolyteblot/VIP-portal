@@ -240,14 +240,9 @@ public class ExecutionBusiness {
     }
 
     public List<Execution> listExecutions(int maxReturned) throws VipException {
-        List<Workflow> workflows = listWorkflowsBusiness.searchAndRefreshWorkflows(
-                currentUserProvider.get().getFullName(),
-                null, // application
-                null, // status
-                null, // class
-                null, // startDate
-                null // endDate
-        );
+        List<Workflow> workflows =
+                listWorkflowsBusiness.refreshRunningWorkflows(
+                        listWorkflowsBusiness.getCurrentUserWorkflows(null));
         logger.debug("Found {} simulations", workflows.size());
         ArrayList<Execution> executions = new ArrayList<>();
         int count = 0;
@@ -266,7 +261,7 @@ public class ExecutionBusiness {
     }
 
     public List<Execution> listExamples() throws VipException {
-        List<Workflow> workflows = listWorkflowsBusiness.searchAndRefreshWorkflows(
+        List<Workflow> workflows = listWorkflowsBusiness.searchWithAdminRights(
                 null, // User must be null to take examples from other users
                 null, // application
                 fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed.name(), // status
@@ -281,14 +276,9 @@ public class ExecutionBusiness {
     }
 
     public int countExecutions() throws VipException {
-        List<Workflow> workflows = listWorkflowsBusiness.searchAndRefreshWorkflows(
-                currentUserProvider.get().getFullName(),
-                null, // application
-                null, // status
-                null, // startDate
-                null, // endDate
-                null // endDate
-        );
+        List<Workflow> workflows =
+                listWorkflowsBusiness.refreshRunningWorkflows(
+                        listWorkflowsBusiness.getCurrentUserWorkflows(null));
         logger.debug("Counting executions, found {} simulations.", workflows.size());
         int count = 0;
         for (Workflow s : workflows) {
