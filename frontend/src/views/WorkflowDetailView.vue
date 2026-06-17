@@ -140,11 +140,15 @@ onMounted(() => {
             </div>
             <div class="flex justify-between">
               <dt class="text-gray-500">User</dt>
-              <dd class="text-gray-900">{{ wf.userId }}</dd>
+              <dd class="text-gray-900">{{ wf.userFullName || wf.userId }}</dd>
             </div>
             <div class="flex justify-between">
               <dt class="text-gray-500">Started</dt>
               <dd class="text-gray-900">{{ formatRelativeTime(wf.startDate) }}</dd>
+            </div>
+            <div v-if="wf.endDate" class="flex justify-between">
+              <dt class="text-gray-500">Ended</dt>
+              <dd class="text-gray-900">{{ formatRelativeTime(wf.endDate) }}</dd>
             </div>
             <div class="flex justify-between">
               <dt class="text-gray-500">Engine</dt>

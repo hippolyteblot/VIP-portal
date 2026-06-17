@@ -14,13 +14,14 @@ export interface Workflow {
   workflowName: string
   status: WorkflowStatus
   inputs: Record<string, {
-    type: string
     values?: string[]
     interval?: number[]
   }>
   outputs: Record<string, string>
   userId: string
+  userFullName?: string
   startDate: string
+  endDate?: string
   engineName?: string
   tags?: string
 }

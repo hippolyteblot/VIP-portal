@@ -159,7 +159,7 @@ onMounted(loadWorkflows)
                 </AppBadge>
               </td>
               <td class="px-4 py-3 text-gray-600">
-                {{ wf.userId }}
+                {{ wf.userFullName || wf.userId }}
               </td>
               <td class="px-4 py-3 text-gray-500">
                 {{ formatRelativeTime(wf.startDate) }}
