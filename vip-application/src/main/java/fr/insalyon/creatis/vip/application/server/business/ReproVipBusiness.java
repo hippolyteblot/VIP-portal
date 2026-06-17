@@ -45,17 +45,17 @@ public class ReproVipBusiness {
     private final AppVersionBusiness appVersionBusiness;
     private final Server server;
     private final SimulationBusiness simulationBusiness;
-    private final WorkflowBusiness workflowBusiness;
+    private final ListWorkflowsBusiness listWorkflowsBusiness;
     private final ExternalPlatformBusiness externalPlatformBusiness;
 
     @Autowired
     public ReproVipBusiness(AppVersionBusiness appVersionBusiness, Server server, SimulationBusiness simulationBusiness,
-            WorkflowBusiness workflowBusiness, ExternalPlatformBusiness externalPlatformBusiness,
+                            ListWorkflowsBusiness listWorkflowsBusiness, ExternalPlatformBusiness externalPlatformBusiness,
             PublicExecutionBusiness publicExecutionBusiness) {
         this.appVersionBusiness = appVersionBusiness;
         this.server = server;
         this.simulationBusiness = simulationBusiness;
-        this.workflowBusiness = workflowBusiness;
+        this.listWorkflowsBusiness = listWorkflowsBusiness;
         this.externalPlatformBusiness = externalPlatformBusiness;
         this.publicExecutionBusiness = publicExecutionBusiness;
     }
@@ -75,7 +75,7 @@ public class ReproVipBusiness {
                 return false;
             }
             // verifying the application has a boutiques file
-            Workflow simulation = workflowBusiness.getSimulation(workflow);
+            Workflow simulation = listWorkflowsBusiness.getNotRefreshedWorkflow(workflow);
 
             if ( ! isBoutiquesDescriptorAvailable(simulation.getApplicationName(), simulation.getApplicationVersion())) {
                 logger.warn("Boutiques descriptor not found for " + simulation.getApplicationName() + ":" + simulation.getApplicationVersion());

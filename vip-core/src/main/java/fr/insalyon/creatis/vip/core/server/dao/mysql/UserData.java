@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @Transactional
@@ -886,6 +887,33 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
         } catch (SQLException ex) {
             logger.error("Error getting user with id {}", id, ex);
+            throw new DAOException(ex);
+        }
+    }
+
+    @Override
+    public List<User> getByFullNames(List<String> fullNames) throws DAOException {
+        String query =  "SELECT " + FIELDS
+                +               "FROM VIPUsers WHERE CONCAT(first_name, ' ', last_name) IN ("
+                + fullNames.stream().map(v -> "?").collect(Collectors.joining(", "))
+                + ")";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            int index = 1;
+            for (String fullName : fullNames) {
+                ps.setString(index++, fullName);
+            }
+
+            ResultSet rs = ps.executeQuery();
+            List<User> users = new ArrayList<User>();
+
+            while (rs.next()) {
+                users.add(userFromRs(rs));
+            }
+            return users;
+
+        } catch (SQLException ex) {
+            logger.error("Error getting all administrators with fullnames : {}", fullNames, ex);
             throw new DAOException(ex);
         }
     }

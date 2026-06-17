@@ -98,4 +98,6 @@ public interface UserDAO {
     void updateUserApikey(String email, String newApikey) throws DAOException;
 
     User getById(String id) throws DAOException;
+
+    List<User> getByFullNames(List<String> fullNames) throws DAOException;
 }

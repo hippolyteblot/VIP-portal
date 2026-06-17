@@ -1,5 +1,7 @@
 package fr.insalyon.creatis.vip.application.models;
 
+import fr.insalyon.creatis.vip.core.models.User;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -12,9 +14,9 @@ public class CarminWorkflow extends Workflow {
     private List<Map<String,WorkflowInput>> inputsMapsList;
 
     public CarminWorkflow(String id, String workflowName, String applicationName, String applicationVersion,
-                          String userId, String status, Date startDate, Date endDate,
+                          User user, String status, Date startDate, Date endDate,
                           String engineName, String tags) {
-        super(id, workflowName, applicationName, applicationVersion, userId, status, startDate, endDate, engineName, tags);
+        super(id, workflowName, applicationName, applicationVersion, user, status, startDate, endDate, engineName, tags);
     }
 
     public List<Map<String, WorkflowInput>> getInputsMapsList() {
