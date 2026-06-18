@@ -22,8 +22,12 @@ import fr.insalyon.creatis.vip.core.models.ActivationCode;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.models.UserAndPassword;
 import fr.insalyon.creatis.vip.core.server.business.AuthenticationBusiness;
+import fr.insalyon.creatis.vip.core.server.business.SessionBusiness;
 import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
+import fr.insalyon.creatis.vip.core.server.model.Session;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
@@ -37,11 +41,14 @@ public class UserController {
 
     private final UserBusiness userBusiness;
     private final AuthenticationBusiness authenticationBusiness;
+    private final SessionBusiness sessionBusiness;
 
     @Autowired
-    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness) {
+    public UserController(UserBusiness userBusiness, AuthenticationBusiness authenticationBusiness,
+            SessionBusiness sessionBusiness) {
         this.userBusiness = userBusiness;
         this.authenticationBusiness = authenticationBusiness;
+        this.sessionBusiness = sessionBusiness;
     }
 
     @GetMapping
@@ -117,11 +124,22 @@ public class UserController {
     }
 
     @PutMapping(value = "{id}/activate")
-    public void activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode) throws VipException {
-        User user = userBusiness.get(id);
-        if (user == null) {
-            throw new VipException(DefaultError.NOT_FOUND, User.class.getSimpleName(), id);
+    public Session activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode,
+            HttpServletRequest request, HttpServletResponse response) throws VipException {
+        // `id` is the email — the endpoint is public (permitAll), so we can't use
+        // userBusiness.get() which requires an authenticated user.
+        authenticationBusiness.activate(id, activationCode.getCode());
+
+        // Auto-login after successful activation
+        try {
+            User user = userBusiness.getUserWithSession(id);
+            Session session = sessionBusiness.getSession(user);
+            sessionBusiness.createLoginCookies(request, response, session);
+            userBusiness.updateUserLastLogin(user.getEmail());
+            return session;
+        } catch (Exception e) {
+            logger.error("Failed to create session after activation for {}", id, e);
+            throw new VipException("Failed to create session after activation", e);
         }
-        authenticationBusiness.activate(user.getEmail(), activationCode.getCode());
     }
 }
