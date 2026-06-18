@@ -59,6 +59,20 @@ vi.mock('@/utils/recentApplications', () => ({
   rememberRecentApplication: mocked.rememberRecentApplication,
 }))
 
+vi.mock('@/stores/auth.store', () => ({
+  useAuthStore: () => ({
+    user: { email: 'demo@vip.local', folder: 'demo_user' },
+  }),
+}))
+
+vi.mock('@/api/files.api', () => ({
+  filesApi: {
+    listChildren: vi.fn().mockResolvedValue([]),
+    createDirectory: vi.fn().mockResolvedValue(undefined),
+    uploadFile: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+
 function buildApplication(): Application {
   return {
     name: 'demo-app',
@@ -126,7 +140,7 @@ describe('ApplicationLaunchView', () => {
     await flushPromises()
 
     await wrapper.get('input[placeholder="e.g. freesurfer-run-001"]').setValue('run-001')
-    await wrapper.get('input[placeholder="e.g. /vip/results/run-001"]').setValue('/vip/results/run-001')
+    await wrapper.get('input[placeholder="e.g. /vip/Home/user/results"]').setValue('/vip/Home/user/results')
 
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -147,7 +161,7 @@ describe('ApplicationLaunchView', () => {
       applicationName: 'demo-app',
       version: '1.0.0',
       executionName: 'run-001',
-      resultsDirectory: '/vip/results/run-001',
+      resultsDirectory: '/vip/Home/user/results',
       inputs: [],
     })
 

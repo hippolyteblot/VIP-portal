@@ -15,6 +15,7 @@ import type { AppVersion } from '@/types/appversion.types'
 import { rememberRecentApplication } from '@/utils/recentApplications'
 import { useBoutiquesLaunchForm } from '@/composables/useBoutiquesLaunchForm'
 import { useDuplicatedLaunchInputs } from '@/composables/useDuplicatedLaunchInputs'
+import FileInputControl from '@/components/launch/FileInputControl.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -214,12 +215,16 @@ onMounted(async () => {
               placeholder="e.g. freesurfer-run-001"
               :required="true"
             />
-            <AppInput
-              v-model="resultsDirectory"
-              label="Results directory"
-              placeholder="e.g. /vip/results/run-001"
-              :required="true"
-            />
+            <div>
+              <label class="mb-1 block text-sm font-medium text-gray-700">
+                Results directory <span class="text-red-500">*</span>
+              </label>
+              <FileInputControl
+                v-model="resultsDirectory"
+                mode="folder"
+                :disabled="false"
+              />
+            </div>
           </div>
 
           <div v-for="input in inputParams" :key="input.id" class="space-y-1 rounded-lg">
@@ -281,11 +286,10 @@ onMounted(async () => {
               <div class="flex items-start gap-2">
                 <div class="min-w-0 flex-1">
                   <div v-if="input.type === 'File'" class="pt-0.5">
-                    <input
-                      type="file"
-                      class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500"
+                    <FileInputControl
+                      :model-value="String(getInputValueForInstance(input.id, instanceId) ?? '')"
                       :disabled="!isInputAvailable(input)"
-                      @change="onFileChangeForInstance(input.id, instanceId, $event)"
+                      @update:model-value="setInputValueForInstance(input.id, instanceId, $event)"
                     />
                   </div>
 

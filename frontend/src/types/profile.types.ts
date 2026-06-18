@@ -16,6 +16,7 @@ export interface ProfileUser {
   groups: Group[]
   groupsWithRoles?: GroupWithRole[]
   apiKey: string | null
+  folder?: string
 }
 
 export interface ProfileUpdatePayload {
