@@ -88,7 +88,9 @@ export const useAuthStore = defineStore('auth', () => {
         const vipSession = await sessionApi.getSession()
         session.value = vipSession
         await loadCurrentUser()
-      } catch {
+        console.log('[auth.activate] Session OK, user:', user.value?.email)
+      } catch (e) {
+        console.warn('[auth.activate] Failed to get session after activation', e)
       }
     } finally {
       isLoading.value = false

@@ -333,7 +333,7 @@ function toggleGroup(name: string, checked: boolean) {
 
 onMounted(async () => {
   try {
-    await groupsStore.fetchGroups(0, 200)
+    await groupsStore.fetchGroups(0, 50)
   } catch {
     notificationsStore.warning('Unable to load available groups.')
   }
