@@ -19,9 +19,6 @@ import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.server.business.GroupBusiness;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 
 @RestController
 @RequestMapping("/groups")
@@ -37,15 +34,15 @@ public class GroupController {
     @GetMapping
     public PrecisePage<Group> list(@RequestParam(defaultValue = "false") boolean onlyApplications,
             @RequestParam(defaultValue = "false") boolean onlyResources,
-            @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
-            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity)
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "50") int quantity)
             throws VipException {
         return groupBusiness.get(onlyApplications, onlyResources, offset, quantity);
     }
 
     @GetMapping(params = "q")
     public List<Group> search(@RequestParam String q,
-            @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int limit) throws VipException {
+            @RequestParam(defaultValue = "10") int limit) throws VipException {
         return groupBusiness.searchGroups(q, limit);
     }
 
