@@ -32,11 +32,13 @@ public class WorkflowExecutionBusiness extends CommonBusiness {
 
     private Server server;
     private WorkflowEngineInstantiator engine;
+    private EngineBusiness engineBusiness;
 
     @Autowired
-    public WorkflowExecutionBusiness(Server server, WorkflowEngineInstantiator engine) {
+    public WorkflowExecutionBusiness(Server server, WorkflowEngineInstantiator engine, EngineBusiness engineBusiness) {
         this.server = server;
         this.engine = engine;
+        this.engineBusiness = engineBusiness;
     }
 
     public Workflow launch(String engineEndpoint, AppVersion appVersion, User user, String simulationName,
@@ -80,8 +82,13 @@ public class WorkflowExecutionBusiness extends CommonBusiness {
         }
     }
 
-    public WorkflowStatus getStatus(String engineEndpoint, String simulationID) throws VipException {
-        return engine.getStatus(engineEndpoint, simulationID);
+    public WorkflowStatus getStatus(String engineName, String simulationID) throws VipException {
+        String endpoint = engineBusiness.get().stream()
+                .filter(e -> e.getName().equals(engineName))
+                .map(Engine::getEndpoint)
+                .findFirst()
+                .orElse(engineName);
+        return engine.getStatus(endpoint, simulationID);
     }
 
     public void kill(String engineEndpoint, String simulationID) throws VipException {

@@ -4,6 +4,7 @@ import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowsDBDAOException;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.Application;
+import fr.insalyon.creatis.vip.application.models.Engine;
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
@@ -34,16 +35,18 @@ public class ListWorkflowsBusiness extends CommonBusiness {
     private final WorkflowExecutionBusiness workflowExecutionBusiness;
     private final UserBusiness userBusiness;
     private final PageBuilder pageBuilder;
+    private final EngineBusiness engineBusiness;
 
     @Autowired
     public ListWorkflowsBusiness(WorkflowDAO workflowDAO, ApplicationDAO applicationDAO,
                                  WorkflowExecutionBusiness workflowExecutionBusiness, UserBusiness userBusiness,
-                                 PageBuilder pageBuilder) {
+                                 PageBuilder pageBuilder, EngineBusiness engineBusiness) {
         this.workflowDAO = workflowDAO;
         this.applicationDAO = applicationDAO;
         this.workflowExecutionBusiness = workflowExecutionBusiness;
         this.userBusiness = userBusiness;
         this.pageBuilder = pageBuilder;
+        this.engineBusiness = engineBusiness;
     }
 
     public Workflow getRefreshedWorkflow(String workflowId) throws VipException {
@@ -250,11 +253,19 @@ public class ListWorkflowsBusiness extends CommonBusiness {
 
     public List<Workflow> refreshRunningWorkflows(List<Workflow> workflows) throws VipException {
         try {
+            Map<String, Engine> engineMap = engineBusiness.get().stream().collect(Collectors.toMap(
+                    e -> e.getName(),
+                    e -> e));
             for (Workflow workflow : workflows) {
-
                 if (workflow.getStatus() == WorkflowStatus.Running
                         || workflow.getStatus() == WorkflowStatus.Unknown) {
-                    WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(workflow.getEngineName(), workflow.getID());
+                    Engine engine = engineMap.get(workflow.getEngineName());
+                    if (engine == null) {
+                        logger.error("Cant find engine {} for workflow {}. Ignoring status update",
+                                workflow.getEngineName(), workflow.getID());
+                        continue;
+                    }
+                    WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(engine.getEndpoint(), workflow.getID());
                     logger.debug("Simulation {} : old status : {}, new status : {} ",
                             workflow.getID(), workflow.getStatus(), workflowStatus);
 
