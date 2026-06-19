@@ -51,6 +51,8 @@ const expandedGroupMessageId = ref<string | null>(null)
 
 const MIN_QUERY_LENGTH = 2
 
+const recipientMap = new Map<string, string>()
+
 const newMessage = ref<SendMessagePayload & { to: string }>({
   to: '',
   subject: '',
@@ -59,6 +61,7 @@ const newMessage = ref<SendMessagePayload & { to: string }>({
 })
 
 function resetForm() {
+  recipientMap.clear()
   newMessage.value = {
     to: '',
     subject: '',
@@ -76,8 +79,10 @@ async function sendMessage() {
   if (!newMessage.value.to || !newMessage.value.subject) return
   sendingMessage.value = true
   try {
+    const rawRecipients = newMessage.value.to.split(/[;,]/).map((s) => s.trim()).filter(Boolean)
+    const resolved = rawRecipients.map((r) => recipientMap.get(r) || r).join(', ')
     await messagesStore.sendMessage({
-      to: newMessage.value.to,
+      to: resolved,
       subject: newMessage.value.subject,
       body: newMessage.value.body,
       isGroupMessage: newMessage.value.isGroupMessage,
@@ -108,10 +113,12 @@ function extractQuery(value: string): string {
   return (segments[segments.length - 1] || '').trim()
 }
 
-function applySuggestion(email: string) {
+function applySuggestion(user: UserSuggestion) {
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.id
+  recipientMap.set(name, user.id)
   const segments = newMessage.value.to.split(/[;,]/).map((segment) => segment.trim())
   const nextSegments = segments.slice(0, -1).filter((segment) => segment.length > 0)
-  nextSegments.push(email)
+  nextSegments.push(name)
   newMessage.value.to = `${nextSegments.join(', ')}, `
   userSuggestions.value = []
   activeQuery.value = ''
@@ -128,7 +135,7 @@ function applyGroupSuggestion(name: string) {
 
 function formatSuggestionLabel(user: UserSuggestion): string {
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
-  return fullName ? `${fullName} <${user.email}>` : user.email
+  return fullName || user.id
 }
 
 async function onMessageClick(id: string) {
@@ -564,7 +571,7 @@ watch(composeMode, (mode) => {
                 :key="user.id"
                 type="button"
                 class="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-sm text-gray-700 hover:bg-gray-50"
-                @click="applySuggestion(user.email)"
+                @click="applySuggestion(user)"
               >
                 <span>{{ formatSuggestionLabel(user) }}</span>
               </button>
