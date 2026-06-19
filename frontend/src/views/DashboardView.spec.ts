@@ -21,11 +21,12 @@ vi.mock('@/stores/auth.store', () => ({
   useAuthStore: () => mocked.authStore,
 }))
 
-vi.mock('@/stores/messages.store', () => ({
-  useMessagesStore: () => ({
-    sortedMessages: [],
-    isLoading: false,
-    fetchMessages: vi.fn(),
+vi.mock('@/stores/notifications.store', () => ({
+  useNotificationsStore: () => ({
+    dashboardNotifications: [] as any[],
+    isLoadingDashboard: false,
+    fetchDashboardNotifications: vi.fn(),
+    markAsRead: vi.fn(),
   }),
 }))
 
