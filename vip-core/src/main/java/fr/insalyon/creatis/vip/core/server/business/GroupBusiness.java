@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +115,10 @@ public class GroupBusiness extends CommonBusiness {
             if (getUserLevel().equals(UserLevel.Administrator)) {
                 groups = groupDAO.get();
             } else {
-                groups = usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream().toList();
+                groups = Stream.concat(
+                    usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream(),
+                    groupDAO.get().stream().filter(Group::isPublicGroup)
+                ).distinct().toList();
             }
             if (onlyApplications) {
                 groups = groups.stream().filter((g) -> g.getType().equals(GroupType.APPLICATION)).toList();
