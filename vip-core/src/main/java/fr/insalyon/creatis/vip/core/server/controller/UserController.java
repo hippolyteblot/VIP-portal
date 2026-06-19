@@ -126,8 +126,8 @@ public class UserController {
     @PutMapping(value = "{id}/activate")
     public Session activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode,
             HttpServletRequest request, HttpServletResponse response) throws VipException {
-        // `id` is the email — the endpoint is public (permitAll), so we can't use
-        // userBusiness.get() which requires an authenticated user.
+        // the endpoint is public (permitAll), so we can't use
+        // userBusiness.get() that requires an authenticated user.
         authenticationBusiness.activate(id, activationCode.getCode());
 
         // Auto-login after successful activation
