@@ -133,14 +133,14 @@ public class GroupControllerIT extends BaseInternalApiSpringIT {
                 .with(getUserSecurityMock(basicUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()));
 
         // developer (=forbidden)
         mockMvc.perform(delete("/internal/groups/" + group.getName())
                 .with(getUserSecurityMock(developperUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().is4xxClientError())
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.ACCESS_DENIED.getCode()));
 
         // admin (=ok)
         mockMvc.perform(delete("/internal/groups/" + group.getName())
@@ -181,18 +181,18 @@ public class GroupControllerIT extends BaseInternalApiSpringIT {
                 .with(getUserSecurityMock(basicUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data.length()").value(3))
                 .andExpect(jsonPath("$.data[*].name")
-                        .value(containsInAnyOrder(group.getName(), auto.getName())));
+                        .value(containsInAnyOrder(group.getName(), group2.getName(), auto.getName())));
 
         // developer
         mockMvc.perform(get("/internal/groups")
                 .with(getUserSecurityMock(developperUser))
                 .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.length()").value(2))
+                .andExpect(jsonPath("$.data.length()").value(3))
                 .andExpect(jsonPath("$.data[*].name")
-                        .value(containsInAnyOrder(group2.getName(), auto.getName())));
+                        .value(containsInAnyOrder(group.getName(), group2.getName(), auto.getName())));
 
         // admin
         mockMvc.perform(get("/internal/groups")
