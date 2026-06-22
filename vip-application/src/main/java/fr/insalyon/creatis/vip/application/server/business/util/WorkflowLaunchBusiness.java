@@ -73,7 +73,8 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
             if (valuesStr.contains(ApplicationConstants.SEPARATOR_INPUT)) {
                 String[] values = valuesStr.split(ApplicationConstants.SEPARATOR_INPUT);
                 if (values.length != 3) {
-                    throw new VipException("Error in range format.");
+                    logger.error("Invalid interval input for {}, need 3 values but has {} / [{}]", inputName, values.length, values);
+                    throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, inputName, "An number interval needs 3 values");
                 }
                 Double start = Double.parseDouble(values[0]);
                 Double stop = Double.parseDouble(values[1]);
@@ -107,12 +108,13 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
         //    - transform the number intervals (start, end, step) into actual values
         //    - transform the VIP paths into actual/real paths
         //    - managing custom "vip:overriddenInputs" in boutiques
-        // TODO : maybe see if we can store the actual values inside the workflow itself
         List<Map<String, List<String>>> actualInputs = getActualValuesInputs(workflow, boutiquesDescriptor);
 
         List<Resource> resources = resourceBusiness.getAvailableForExecution(getUser(), appVersion);
         if (resources.isEmpty()) {
-            throw new VipException("There are no ressources available for the moment !");
+            logger.error("No resource available to launch app {}/{} for user {}",
+                    appVersion.getApplicationName(), appVersion.getVersion(), getUserEmail());
+            throw new VipException(ApplicationError.WORKFLOW_LAUNCH_IMPOSSIBLE, "No resource available at the moment !");
         }
         Resource resource = resources.getFirst();
         Engine engine = engineBusiness.selectEngine(engineBusiness.getUsableEngines(resource));
@@ -124,7 +126,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
             // this method manage the email sending, and return the exception to make bubble up
             throw sendMailsOnLaunchException(e, engine);
         }
-        logger.info("Launched workflow {}", workflow.getID());
+        logger.info("Launched workflow {}", workflowId);
         workflow.setId(workflowId);
         workflow.setStatus(WorkflowStatus.Running);
         workflow.setStartDate(new Date());
@@ -149,8 +151,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
                 logger.error("Unexpected exception while launching a workflow", e);
                 exceptionToRethrow = new VipException(ApplicationError.LAUNCH_ERROR, e);
             }
-            logger.warn(
-                    "Error occurred during workflow submission. Disabling engine and sending mail to admins");
+            logger.warn("Error occurred during workflow submission. Disabling engine and sending mail to admins");
             mailSubject = "[VIP] Urgent: VIP engine disabled !";
             mailContent = "Engine " + engine.getName() + " has just been disabled.";
             engine.setStatus("disabled");
@@ -250,8 +251,8 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
                 if (actualValuesInputsMap.containsKey(value)) {
                     actualValuesInputsMap.put(key, actualValuesInputsMap.get(value));
                 } else {
-                    logger.error("Overriding an missing parameter {}", value);
-                    throw new VipException("Overriding an missing parameter " + value);
+                    logger.error("Overriding a missing parameter {}", value);
+                    throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, value, "Missing but needed to override another parameter");
                 }
             }
         }
@@ -266,7 +267,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
             Optional<Input> boutiqueInput = boutiquesBusiness.getInput(boutiquesDescriptor, inputName);
             if (boutiqueInput.isEmpty()) {
                 logger.error("Launching with an unknown descriptor input : {}", inputName);
-                throw new VipException("Launching with an unknown descriptor input : " + inputName);
+                throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, inputName, "Missing in application descriptor");
             }
             inputType = boutiqueInput.get().getType();
         }
@@ -274,7 +275,8 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
         if (workflowInput.isInterval()) {
             List<Double> interval = workflowInput.getInterval();
             if (interval.size() != 3) {
-                throw new VipException("A number interval as input must have 3 elements");
+                logger.error("Invalid interval input for {}, need 3 values but has {} / [{}]", inputName, interval.size(), interval);
+                throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, inputName, "An number interval needs 3 values");
             }
             for (double d = interval.get(0); d <= interval.get(1); d += interval.get(2)) {
                 data.add(d + "");
@@ -290,8 +292,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
         return data;
     }
 
-    private String transformParameter(String parameterName, String parameterValue)
-            throws VipException {
+    private String transformParameter(String parameterName, String parameterValue) throws VipException {
 
         parameterValue = parameterValue.trim();
 
@@ -304,20 +305,19 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
         // not an external platform parameter, use legacy format
         String parsedPath = lfcPathsBusiness.parseBaseDir(getUser(), parameterValue);
         if ( ! getUser().isSystemAdministrator()) {
-            checkFolderACL(parsedPath);
+            checkFolderACL(parameterName, parsedPath);
         }
         return (server.useLocalFilesInInputs() ? "file:" : "lfn:") + parsedPath;
     }
 
-    private void checkFolderACL(String path)
+    private void checkFolderACL(String parameterName, String path)
             throws VipException {
         if (path.startsWith(server.getDataManagerUsersHome())) {
 
             path = path.replace(server.getDataManagerUsersHome() + "/", "");
             if (!path.startsWith(getUser().getFolder())) {
-
                 logger.error("User {} tried to access data from another user: {}", getUser(), path);
-                throw new VipException("Access denied to another user's home.");
+                throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, parameterName, "Access denied");
             }
         } else if (path.startsWith(server.getDataManagerGroupsHome())) {
 
@@ -327,8 +327,8 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
             }
 
             if (!DataManagerUtil.getPaths(getUser().getGroups()).contains(path)) {
-                logger.error("User {} tried to access data from a non-autorized group: {}", getUser(), path);
-                throw new VipException("Access denied to group '" + path + "'.");
+                logger.error("User {} tried to access data from a non-authorized group: {}", getUser(), path);
+                throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, parameterName, "Access denied");
             }
         }
     }

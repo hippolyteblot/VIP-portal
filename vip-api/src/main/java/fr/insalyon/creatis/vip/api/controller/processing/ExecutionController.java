@@ -69,7 +69,7 @@ public class ExecutionController extends ApiController {
     @RequestMapping("examples/{exampleId}")
     public Execution getExample(@PathVariable String exampleId) throws VipException {
         logMethodInvocation(logger, "getExample", exampleId);
-        return executionBusiness.getExecution(exampleId, false);
+        return executionBusiness.getExample(exampleId);
     }
 
     @RequestMapping(value = "count", produces = "text/plain;charset=UTF-8")

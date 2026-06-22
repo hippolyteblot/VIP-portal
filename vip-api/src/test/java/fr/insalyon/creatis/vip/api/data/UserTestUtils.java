@@ -30,7 +30,7 @@ public class UserTestUtils {
 
     static public void reset() {
         baseUser1 = new User(CoreUtil.createUUID(), "base1", "User1", "baseuser1@test.tst", null,
-                UserLevel.Beginner, null);
+                UserLevel.Beginner, CountryCode.fr);
         baseUser1.setFolder("user1");
         baseUser2 = new User(CoreUtil.createUUID(),"base2", "User2", "baseuser2@test.tst", null,
                 UserLevel.Advanced, null);
