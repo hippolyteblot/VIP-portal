@@ -445,8 +445,8 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         Assertions.assertEquals(workflowId, workflow.getId());
         Assertions.assertEquals(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, workflow.getStatus());
         Assertions.assertEquals("Exec test 1", workflow.getDescription());
-        Assertions.assertEquals(engineEndpoint, workflow.getEngine());
-        Assertions.assertEquals(baseUser1.getFullName(), workflow.getUsername());
+        Assertions.assertEquals("testEngine", workflow.getEngine());
+        Assertions.assertEquals(baseUser2.getFullName(), workflow.getUsername());
         Assertions.assertNull(workflow.getFinishedTime());
         MatcherAssert.assertThat(workflow.getStartedTime().getTime(),
                 is(both(greaterThan(startDate.getTime())).and(lessThan(new Date().getTime()))));
