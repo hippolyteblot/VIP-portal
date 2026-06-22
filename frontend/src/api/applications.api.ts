@@ -30,7 +30,7 @@ export const applicationsApi = {
 
   getPublic: () =>
     backendClient
-      .get<BackendApplication[]>('/internal/applications', { params: { public: 'true' } })
+      .get<BackendApplication[]>('/internal/applications/public')
       .then((r) => r.data),
 
   getById: (id: string) =>
