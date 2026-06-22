@@ -75,31 +75,25 @@ public class UserBusiness extends CommonBusiness {
         }
     }
 
-    private void mergeExistingFields(User user, User existingUser) {
-        // String fields (no setter: email, firstName, lastName, institution — always sent by frontend)
-        if (user.getNextEmail() == null) user.setNextEmail(existingUser.getNextEmail());
-        if (user.getCode() == null) user.setCode(existingUser.getCode());
-        if (user.getFolder() == null) user.setFolder(existingUser.getFolder());
-        if (user.getSession() == null) user.setSession(existingUser.getSession());
-        if (user.getApiKey() == null) user.setApiKey(existingUser.getApiKey());
+    private void loadMissingFields(User user, User existingUser) {
+        // Fields never sent via JSON (no @JsonView annotation) — always from existing
+        user.setNextEmail(existingUser.getNextEmail());
+        user.setCode(existingUser.getCode());
+        user.setFolder(existingUser.getFolder());
+        user.setSession(existingUser.getSession());
+        user.setApiKey(existingUser.getApiKey());
+        user.setFailedAuthentications(existingUser.getFailedAuthentications());
 
-        // Boolean fields (boxed — null if not sent in JSON)
+        // Fields that may arrive null depending on the caller's @JsonView scope
         if (user.isConfirmed() == null) user.setConfirmed(existingUser.isConfirmed());
         if (user.isAccountLocked() == null) user.setAccountLocked(existingUser.isAccountLocked());
-
-        // Enum fields
         if (user.getLevel() == null) user.setLevel(existingUser.getLevel());
         if (user.getCountryCode() == null) user.setCountryCode(existingUser.getCountryCode());
-
-        // Timestamp fields
         if (user.getRegistration() == null) user.setRegistration(existingUser.getRegistration());
         if (user.getLastLogin() == null) user.setLastLogin(existingUser.getLastLogin());
         if (user.getTermsOfUse() == null) user.setTermsOfUse(existingUser.getTermsOfUse());
         if (user.getLastUpdatePublications() == null)
             user.setLastUpdatePublications(existingUser.getLastUpdatePublications());
-
-        // Primitive int — always preserve the existing value
-        user.setFailedAuthentications(existingUser.getFailedAuthentications());
     }
 
     @VIPExternalSafe
@@ -127,8 +121,9 @@ public class UserBusiness extends CommonBusiness {
             }
         }
 
-        // preserve existing values for all fields not present in the request
-        mergeExistingFields(user, existingUser);
+        // Preserve fields not sent in the JSON payload (hidden by @JsonView or absent).
+        // Non-null values from the request are kept; null fields fall back to the existing record.
+        loadMissingFields(user, existingUser);
         try {
             userDAO.update(user);
 

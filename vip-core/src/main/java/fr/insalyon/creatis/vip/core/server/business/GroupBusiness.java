@@ -116,7 +116,7 @@ public class GroupBusiness extends CommonBusiness {
                 groups = groupDAO.get();
             } else {
                 groups = Stream.concat(
-                    usersGroupsDAO.getUserGroups(getUser().getEmail()).keySet().stream(),
+                    getOrLoadUserGroups(getUser()).stream(),
                     groupDAO.get().stream().filter(Group::isPublicGroup)
                 ).distinct().toList();
             }

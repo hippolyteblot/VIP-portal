@@ -3,6 +3,7 @@ package fr.insalyon.creatis.vip.core.server.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,19 +127,13 @@ public class UserController {
     @PutMapping(value = "{id}/activate")
     public Session activate(@PathVariable String id, @RequestBody @Valid ActivationCode activationCode,
             HttpServletRequest request, HttpServletResponse response) throws VipException {
-        // the endpoint is public (permitAll), so we can't use
-        // userBusiness.get() that requires an authenticated user.
-        authenticationBusiness.activate(id, activationCode.getCode());
-
-        // Auto-login after successful activation
         try {
-            User user = userBusiness.getUserWithSession(id);
+            User user = authenticationBusiness.activate(id, activationCode.getCode());
             Session session = sessionBusiness.getSession(user);
             sessionBusiness.createLoginCookies(request, response, session);
             userBusiness.updateUserLastLogin(user.getEmail());
             return session;
-        } catch (Exception e) {
-            logger.error("Failed to create session after activation for {}", id, e);
+        } catch (UnsupportedEncodingException e) {
             throw new VipException("Failed to create session after activation", e);
         }
     }
