@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 @Transactional
@@ -316,7 +317,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             ps.setString(4, user.getLastName());
             ps.setString(5, user.getInstitution());
             ps.setString(6, user.getCode());
-            ps.setBoolean(7, user.isConfirmed());
+            ps.setBoolean(7, user.isConfirmed() != null && user.isConfirmed());
             ps.setString(8, user.getFolder());
             ps.setString(9, user.getSession());
             ps.setTimestamp(10, user.getRegistration());
@@ -327,7 +328,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             ps.setTimestamp(15, user.getTermsOfUse());
             ps.setTimestamp(16, user.getLastUpdatePublications());
             ps.setInt(17, user.getFailedAuthentications());
-            ps.setBoolean(18, user.isAccountLocked());
+            ps.setBoolean(18, user.isAccountLocked() != null && user.isAccountLocked());
             ps.setString(19, user.getEmail());
 
             ps.executeUpdate();
@@ -886,6 +887,33 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
         } catch (SQLException ex) {
             logger.error("Error getting user with id {}", id, ex);
+            throw new DAOException(ex);
+        }
+    }
+
+    @Override
+    public List<User> getByFullNames(List<String> fullNames) throws DAOException {
+        String query =  "SELECT " + FIELDS
+                +               "FROM VIPUsers WHERE CONCAT(first_name, ' ', last_name) IN ("
+                + fullNames.stream().map(v -> "?").collect(Collectors.joining(", "))
+                + ")";
+
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            int index = 1;
+            for (String fullName : fullNames) {
+                ps.setString(index++, fullName);
+            }
+
+            ResultSet rs = ps.executeQuery();
+            List<User> users = new ArrayList<User>();
+
+            while (rs.next()) {
+                users.add(userFromRs(rs));
+            }
+            return users;
+
+        } catch (SQLException ex) {
+            logger.error("Error getting all administrators with fullnames : {}", fullNames, ex);
             throw new DAOException(ex);
         }
     }

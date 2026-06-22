@@ -34,6 +34,8 @@ public interface UserDAO {
 
     Long countUsers(UserSearchCriteria searchCriteria) throws DAOException;
 
+    List<User> getByFullNames(List<String> fullNames) throws DAOException;
+
     public void remove(String email) throws DAOException;
 
     public void definePassword(String email, String password) throws DAOException;
