@@ -151,7 +151,7 @@ public class SimulationsTab extends Tab {
                             || CoreModule.user.isSystemAdministrator()
                             || CoreModule.user.isGroupAdmin()) {
 
-                        if (user == null || (user.equals(simulation.getUserId()))) {
+                        if (user == null || (user.equals(simulation.getUserFullName()))) {
                             dataList.add(new SimulationRecord(
                                 simulation.getWorkflowName(),
                                 simulation.getApplicationName(),
@@ -159,7 +159,7 @@ public class SimulationsTab extends Tab {
                                 "",
                                 simulation.getStatus(),
                                 simulation.getID(),
-                                simulation.getUserId(),
+                                simulation.getUserFullName(),
                                 simulation.getStartDate()));
                         }
                     }

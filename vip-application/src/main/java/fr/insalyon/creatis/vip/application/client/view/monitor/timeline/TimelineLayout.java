@@ -116,7 +116,7 @@ public class TimelineLayout extends VLayout {
                                         simulation.getApplicationName(),
                                         simulation.getApplicationVersion(),
                                         "",
-                                        simulation.getUserId(),
+                                        simulation.getUserFullName(),
                                         simulation.getStatus(),
                                         simulation.getStartDate()), position);
                             }
@@ -152,7 +152,7 @@ public class TimelineLayout extends VLayout {
                                     simulation.getApplicationName(),
                                     simulation.getApplicationVersion(),
                                     "",
-                                    simulation.getUserId(),
+                                    simulation.getUserFullName(),
                                     simulation.getStatus(),
                                     simulation.getStartDate()));
                         }

@@ -62,7 +62,7 @@ public class GeneralLayout extends AbstractFormLayout {
                 sb.append("</b>");
                 if (CoreModule.user.isSystemAdministrator()) {
                     sb.append(" by <b>");
-                    sb.append(result.getUserId());
+                    sb.append(result.getUserFullName());
                     sb.append("</b> (");
                     sb.append(result.getID());
                     sb.append(")</font>");
