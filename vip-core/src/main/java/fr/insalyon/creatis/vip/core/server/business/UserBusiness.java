@@ -84,16 +84,16 @@ public class UserBusiness extends CommonBusiness {
         user.setApiKey(existingUser.getApiKey());
         user.setFailedAuthentications(existingUser.getFailedAuthentications());
 
-        // Fields that may arrive null depending on the caller's @JsonView scope
-        if (user.isConfirmed() == null) user.setConfirmed(existingUser.isConfirmed());
-        if (user.isAccountLocked() == null) user.setAccountLocked(existingUser.isAccountLocked());
-        if (user.getLevel() == null) user.setLevel(existingUser.getLevel());
-        if (user.getCountryCode() == null) user.setCountryCode(existingUser.getCountryCode());
-        if (user.getRegistration() == null) user.setRegistration(existingUser.getRegistration());
-        if (user.getLastLogin() == null) user.setLastLogin(existingUser.getLastLogin());
-        if (user.getTermsOfUse() == null) user.setTermsOfUse(existingUser.getTermsOfUse());
-        if (user.getLastUpdatePublications() == null)
-            user.setLastUpdatePublications(existingUser.getLastUpdatePublications());
+
+        // New version without check
+        user.setConfirmed(existingUser.isConfirmed());
+        user.setAccountLocked(existingUser.isAccountLocked());
+        user.setLevel(existingUser.getLevel());
+        user.setCountryCode(existingUser.getCountryCode());
+        user.setRegistration(existingUser.getRegistration());
+        user.setLastLogin(existingUser.getLastLogin());
+        user.setTermsOfUse(existingUser.getTermsOfUse());
+        user.setLastUpdatePublications(existingUser.getLastUpdatePublications());
     }
 
     @VIPExternalSafe
@@ -480,25 +480,5 @@ public class UserBusiness extends CommonBusiness {
         }
 
         return pageBuilder.doPrecise(offset, quantity, users);
-    }
-
-    public Optional<User> getByFullname(String fullname) throws VipException {
-        List<User> searchResult = getByFullnames(List.of(fullname));
-        // maybe there could be 2 users with the same name...
-        if (searchResult.size() > 1) {
-            logger.warn("Found more than 1 user with the fullname {} : {}", fullname,
-                    searchResult.stream().map(User::getEmail).toList());
-            // doing as if not found
-            return Optional.empty();
-        }
-        return searchResult.stream().findFirst();
-    }
-
-    public List<User> getByFullnames(List<String> fullnames) throws VipException {
-        try {
-            return userDAO.getByFullNames(fullnames);
-        } catch (DAOException e) {
-            throw new VipException(e);
-        }
     }
 }
