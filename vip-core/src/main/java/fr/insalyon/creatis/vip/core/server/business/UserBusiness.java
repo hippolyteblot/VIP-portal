@@ -76,27 +76,23 @@ public class UserBusiness extends CommonBusiness {
     }
 
     private void loadMissingFields(User user, User existingUser) {
-        // Fields that are never sent via JSON (no @JsonView annotation) always from existing
+        // Fields never sent via JSON (no @JsonView, not in ProfileUpdatePayload)
         user.setNextEmail(existingUser.getNextEmail());
         user.setCode(existingUser.getCode());
         user.setSession(existingUser.getSession());
         user.setApiKey(existingUser.getApiKey());
         user.setFailedAuthentications(existingUser.getFailedAuthentications());
+        user.setRegistration(existingUser.getRegistration());
+        user.setLastLogin(existingUser.getLastLogin());
 
-        // folder is absent from ProfileUpdatePayload but the test sets it explicitly
+        // folder is absent from ProfileUpdatePayload but settable via admin API
         if (user.getFolder() == null) {
             user.setFolder(existingUser.getFolder());
         }
 
-        // @JsonView fields sent by the frontend or null-preserved from existing
-        user.setConfirmed(existingUser.isConfirmed());
-        user.setAccountLocked(existingUser.isAccountLocked());
-        user.setLevel(existingUser.getLevel());
-        user.setCountryCode(existingUser.getCountryCode());
-        user.setRegistration(existingUser.getRegistration());
-        user.setLastLogin(existingUser.getLastLogin());
-        user.setTermsOfUse(existingUser.getTermsOfUse());
-        user.setLastUpdatePublications(existingUser.getLastUpdatePublications());
+        // @JsonView(Admin.class) never sent by non admin callers
+        if (user.isConfirmed() == null) user.setConfirmed(existingUser.isConfirmed());
+        if (user.isAccountLocked() == null) user.setAccountLocked(existingUser.isAccountLocked());
     }
 
     @VIPExternalSafe
