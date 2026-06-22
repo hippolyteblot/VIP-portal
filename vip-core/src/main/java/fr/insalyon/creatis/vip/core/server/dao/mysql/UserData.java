@@ -317,7 +317,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             ps.setString(4, user.getLastName());
             ps.setString(5, user.getInstitution());
             ps.setString(6, user.getCode());
-            ps.setBoolean(7, user.isConfirmed() != null && user.isConfirmed());
+            ps.setBoolean(7, user.isConfirmed());
             ps.setString(8, user.getFolder());
             ps.setString(9, user.getSession());
             ps.setTimestamp(10, user.getRegistration());
@@ -328,7 +328,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             ps.setTimestamp(15, user.getTermsOfUse());
             ps.setTimestamp(16, user.getLastUpdatePublications());
             ps.setInt(17, user.getFailedAuthentications());
-            ps.setBoolean(18, user.isAccountLocked() != null && user.isAccountLocked());
+            ps.setBoolean(18, user.isAccountLocked());
             ps.setString(19, user.getEmail());
 
             ps.executeUpdate();
