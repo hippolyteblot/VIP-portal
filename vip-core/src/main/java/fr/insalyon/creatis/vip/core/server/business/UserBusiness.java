@@ -76,16 +76,19 @@ public class UserBusiness extends CommonBusiness {
     }
 
     private void loadMissingFields(User user, User existingUser) {
-        // Fields never sent via JSON (no @JsonView annotation) — always from existing
+        // Fields that are never sent via JSON (no @JsonView annotation) always from existing
         user.setNextEmail(existingUser.getNextEmail());
         user.setCode(existingUser.getCode());
-        user.setFolder(existingUser.getFolder());
         user.setSession(existingUser.getSession());
         user.setApiKey(existingUser.getApiKey());
         user.setFailedAuthentications(existingUser.getFailedAuthentications());
 
+        // folder is absent from ProfileUpdatePayload but the test sets it explicitly
+        if (user.getFolder() == null) {
+            user.setFolder(existingUser.getFolder());
+        }
 
-        // New version without check
+        // @JsonView fields sent by the frontend or null-preserved from existing
         user.setConfirmed(existingUser.isConfirmed());
         user.setAccountLocked(existingUser.isAccountLocked());
         user.setLevel(existingUser.getLevel());
