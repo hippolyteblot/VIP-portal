@@ -47,6 +47,7 @@ public class InternalSecurityConfig {
                         .requestMatchers(antMatcher(HttpMethod.POST, "/internal/session")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.POST, "/internal/users")).permitAll()
                         .requestMatchers(antMatcher(HttpMethod.PUT, "/internal/users/*/activate")).permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/internal/applications/public")).permitAll()
                         .requestMatchers(antMatcher("/internal/**")).authenticated())
                 // default CORS : no configuration, so block preflight and let the rest
                 .cors(Customizer.withDefaults())
