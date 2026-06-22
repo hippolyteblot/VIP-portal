@@ -3,14 +3,7 @@ package fr.insalyon.creatis.vip.core.server.business;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
@@ -82,24 +75,31 @@ public class UserBusiness extends CommonBusiness {
         }
     }
 
-    public void loadMissingFields(User user) throws VipException {
-        try {
-            User existingUser = userDAO.get(user.getEmail());
+    private void mergeExistingFields(User user, User existingUser) {
+        // String fields (no setter: email, firstName, lastName, institution — always sent by frontend)
+        if (user.getNextEmail() == null) user.setNextEmail(existingUser.getNextEmail());
+        if (user.getCode() == null) user.setCode(existingUser.getCode());
+        if (user.getFolder() == null) user.setFolder(existingUser.getFolder());
+        if (user.getSession() == null) user.setSession(existingUser.getSession());
+        if (user.getApiKey() == null) user.setApiKey(existingUser.getApiKey());
 
-            // admin fields
-            user.setConfirmed(user.isConfirmed() != null ? user.isConfirmed() : existingUser.isConfirmed());
-            user.setAccountLocked(user.isAccountLocked() != null ? user.isAccountLocked() : existingUser.isAccountLocked());
+        // Boolean fields (boxed — null if not sent in JSON)
+        if (user.isConfirmed() == null) user.setConfirmed(existingUser.isConfirmed());
+        if (user.isAccountLocked() == null) user.setAccountLocked(existingUser.isAccountLocked());
 
-            // hidden fields
-            user.setNextEmail(user.getNextEmail() != null ? user.getNextEmail() : existingUser.getNextEmail());
-            user.setCode(user.getCode() != null ? user.getCode() : existingUser.getCode());
-            user.setFolder(user.getFolder() != null ? user.getFolder() : existingUser.getFolder());
-            user.setSession(user.getSession() != null ? user.getSession() : existingUser.getSession());
-            user.setFailedAuthentications(existingUser.getFailedAuthentications());
+        // Enum fields
+        if (user.getLevel() == null) user.setLevel(existingUser.getLevel());
+        if (user.getCountryCode() == null) user.setCountryCode(existingUser.getCountryCode());
 
-        } catch (DAOException e) {
-            throw new VipException(e);
-        }
+        // Timestamp fields
+        if (user.getRegistration() == null) user.setRegistration(existingUser.getRegistration());
+        if (user.getLastLogin() == null) user.setLastLogin(existingUser.getLastLogin());
+        if (user.getTermsOfUse() == null) user.setTermsOfUse(existingUser.getTermsOfUse());
+        if (user.getLastUpdatePublications() == null)
+            user.setLastUpdatePublications(existingUser.getLastUpdatePublications());
+
+        // Primitive int — always preserve the existing value
+        user.setFailedAuthentications(existingUser.getFailedAuthentications());
     }
 
     @VIPExternalSafe
@@ -125,10 +125,10 @@ public class UserBusiness extends CommonBusiness {
             if ( ! groupsToJoin.stream().allMatch(Group::isPublicGroup)) {
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
-            // only administrator can define "null" fields
-            // otherwise missing fields will be filled by the exising object 
-            loadMissingFields(user);
         }
+
+        // preserve existing values for all fields not present in the request
+        mergeExistingFields(user, existingUser);
         try {
             userDAO.update(user);
 
@@ -485,5 +485,25 @@ public class UserBusiness extends CommonBusiness {
         }
 
         return pageBuilder.doPrecise(offset, quantity, users);
+    }
+
+    public Optional<User> getByFullname(String fullname) throws VipException {
+        List<User> searchResult = getByFullnames(List.of(fullname));
+        // maybe there could be 2 users with the same name...
+        if (searchResult.size() > 1) {
+            logger.warn("Found more than 1 user with the fullname {} : {}", fullname,
+                    searchResult.stream().map(User::getEmail).toList());
+            // doing as if not found
+            return Optional.empty();
+        }
+        return searchResult.stream().findFirst();
+    }
+
+    public List<User> getByFullnames(List<String> fullnames) throws VipException {
+        try {
+            return userDAO.getByFullNames(fullnames);
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
     }
 }
