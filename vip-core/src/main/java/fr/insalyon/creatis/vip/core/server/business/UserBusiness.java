@@ -3,14 +3,7 @@ package fr.insalyon.creatis.vip.core.server.business;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
@@ -82,24 +75,24 @@ public class UserBusiness extends CommonBusiness {
         }
     }
 
-    public void loadMissingFields(User user) throws VipException {
-        try {
-            User existingUser = userDAO.get(user.getEmail());
+    private void loadMissingFields(User user, User existingUser) {
+        // Fields never sent via JSON (no @JsonView, not in ProfileUpdatePayload)
+        user.setNextEmail(existingUser.getNextEmail());
+        user.setCode(existingUser.getCode());
+        user.setSession(existingUser.getSession());
+        user.setApiKey(existingUser.getApiKey());
+        user.setFailedAuthentications(existingUser.getFailedAuthentications());
+        user.setRegistration(existingUser.getRegistration());
+        user.setLastLogin(existingUser.getLastLogin());
 
-            // admin fields
-            user.setConfirmed(user.isConfirmed() != null ? user.isConfirmed() : existingUser.isConfirmed());
-            user.setAccountLocked(user.isAccountLocked() != null ? user.isAccountLocked() : existingUser.isAccountLocked());
-
-            // hidden fields
-            user.setNextEmail(user.getNextEmail() != null ? user.getNextEmail() : existingUser.getNextEmail());
-            user.setCode(user.getCode() != null ? user.getCode() : existingUser.getCode());
-            user.setFolder(user.getFolder() != null ? user.getFolder() : existingUser.getFolder());
-            user.setSession(user.getSession() != null ? user.getSession() : existingUser.getSession());
-            user.setFailedAuthentications(existingUser.getFailedAuthentications());
-
-        } catch (DAOException e) {
-            throw new VipException(e);
+        // folder is absent from ProfileUpdatePayload but settable via admin API
+        if (user.getFolder() == null) {
+            user.setFolder(existingUser.getFolder());
         }
+
+        // @JsonView(Admin.class) never sent by non admin callers
+        if (user.isConfirmed() == null) user.setConfirmed(existingUser.isConfirmed());
+        if (user.isAccountLocked() == null) user.setAccountLocked(existingUser.isAccountLocked());
     }
 
     @VIPExternalSafe
@@ -125,10 +118,11 @@ public class UserBusiness extends CommonBusiness {
             if ( ! groupsToJoin.stream().allMatch(Group::isPublicGroup)) {
                 throw new VipException(DefaultError.ACCESS_DENIED);
             }
-            // only administrator can define "null" fields
-            // otherwise missing fields will be filled by the exising object 
-            loadMissingFields(user);
         }
+
+        // Preserve fields not sent in the JSON payload (hidden by @JsonView or absent).
+        // Non-null values from the request are kept; null fields fall back to the existing record.
+        loadMissingFields(user, existingUser);
         try {
             userDAO.update(user);
 
