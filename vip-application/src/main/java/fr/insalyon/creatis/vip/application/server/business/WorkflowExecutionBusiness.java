@@ -39,28 +39,6 @@ public class WorkflowExecutionBusiness extends CommonBusiness {
         this.engine = engine;
     }
 
-    public Workflow launch(String engineEndpoint, AppVersion appVersion, User user, String simulationName,
-                           List<Map<String, List<String>>> parameters, String executorConfig) throws VipException {
-
-        try {
-            String workflowContent = appVersion.getDescriptor();
-            String inputs = (parameters != null) ? getParametersAsJSONInput(parameters) : null;
-            String proxyFileName = server.getServerProxy(server.getVoName());
-            String settingsJSON = new ObjectMapper().writeValueAsString(appVersion.getSettings());
-            String id = engine.launch(engineEndpoint, workflowContent, inputs, settingsJSON, executorConfig, proxyFileName);
-
-            return new Workflow(id, user.getFullName(),
-                    fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, new Date(), null, simulationName,
-                    appVersion.getApplicationName(), appVersion.getVersion(), "",
-                    engineEndpoint, null);
-
-        } catch (JsonProcessingException ex) {
-            logger.error("Error launching simulation {} ({}/{})",
-                    simulationName, appVersion.getApplicationName(), appVersion.getVersion(), ex);
-            throw new VipException(ex);
-        }
-    }
-
     public String launch(String workflowName, Resource resource, Engine engine, AppVersion appVersion,
                            List<Map<String, List<String>>> parameters) throws VipException {
 
