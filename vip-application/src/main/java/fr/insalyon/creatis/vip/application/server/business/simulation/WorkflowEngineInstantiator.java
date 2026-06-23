@@ -2,7 +2,7 @@ package fr.insalyon.creatis.vip.application.server.business.simulation;
 
 import java.nio.file.Path;
 
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 
@@ -18,7 +18,7 @@ public abstract class WorkflowEngineInstantiator {
     public abstract void kill(String addressWS, String workflowID)
             throws VipException;
 
-    public abstract SimulationStatus getStatus(String addressWS, String workflowID)
+    public abstract WorkflowStatus getStatus(String addressWS, String workflowID)
             throws VipException;
 
     protected void loadTrustStore(Server server) {

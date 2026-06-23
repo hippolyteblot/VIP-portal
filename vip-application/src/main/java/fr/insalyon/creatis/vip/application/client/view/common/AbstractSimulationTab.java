@@ -11,7 +11,7 @@ import com.smartgwt.client.widgets.tab.events.TabDeselectedHandler;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 
 /**
  *
@@ -23,13 +23,13 @@ public abstract class AbstractSimulationTab extends Tab {
     protected boolean completed;
     private Timer timer;
 
-    public AbstractSimulationTab(String simulationID, String simulationName, SimulationStatus status) {
+    public AbstractSimulationTab(String simulationID, String simulationName, WorkflowStatus status) {
 
         this.setTitle(Canvas.imgHTML(ApplicationConstants.ICON_APPLICATION_MONITOR) + " " + simulationName);
         this.setID(tabIdFrom(simulationID));
         this.setCanClose(true);
 
-        this.completed = status == SimulationStatus.Running ? false : true;
+        this.completed = status == WorkflowStatus.Running ? false : true;
 
         VLayout vLayout = new VLayout();
         tabSet = new TabSet();

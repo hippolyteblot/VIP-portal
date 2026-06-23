@@ -14,15 +14,13 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tab.Tab;
 import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.rpc.WorkflowService;
-import fr.insalyon.creatis.vip.application.client.view.launch.LaunchTab;
 import fr.insalyon.creatis.vip.application.client.view.common.AbstractSimulationTab;
 import fr.insalyon.creatis.vip.application.client.view.launch.RelaunchService;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationTab;
-import fr.insalyon.creatis.vip.application.models.Simulation;
+import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.core.client.CoreModule;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
@@ -41,7 +39,7 @@ public class SimulationBoxLayout extends HLayout {
     protected String applicationName;
     protected String applicationVersion;
     protected String applicationClass;
-    protected SimulationStatus simulationStatus;
+    protected WorkflowStatus workflowStatus;
     protected Date launchedDate;
     private Img img;
     private Label nameLabel;
@@ -51,15 +49,15 @@ public class SimulationBoxLayout extends HLayout {
     protected HandlerRegistration handler;
 
     public SimulationBoxLayout(String id, String name, String applicationName,
-            String applicationVersion, String applicationClass, String user,
-            SimulationStatus status, Date launchedDate) {
+                               String applicationVersion, String applicationClass, String user,
+                               WorkflowStatus status, Date launchedDate) {
 
         this.simulationID = id;
         this.simulationName = name;
         this.applicationName = applicationName;
         this.applicationVersion = applicationVersion;
         this.applicationClass = applicationClass;
-        this.simulationStatus = status;
+        this.workflowStatus = status;
         this.launchedDate = launchedDate;
 
         this.setMembersMargin(10);
@@ -103,7 +101,7 @@ public class SimulationBoxLayout extends HLayout {
                 Layout.getInstance().addTab(
                     AbstractSimulationTab.tabIdFrom(simulationID),
                     () -> new SimulationTab(
-                        simulationID, simulationName, simulationStatus));
+                        simulationID, simulationName, workflowStatus));
             }
         });
         this.addMember(mainLayout);
@@ -124,7 +122,7 @@ public class SimulationBoxLayout extends HLayout {
 
     private void parseStatus() {
 
-        switch (simulationStatus) {
+        switch (workflowStatus) {
             case Running:
                 timer = new Timer() {
                     @Override
@@ -160,7 +158,7 @@ public class SimulationBoxLayout extends HLayout {
                 actionButton.setPrompt("Clean simulation");
                 img.setSrc(ApplicationConstants.ICON_MONITOR_SIMULATION_COMPLETED);
         }
-        img.setPrompt(simulationStatus.name());
+        img.setPrompt(workflowStatus.name());
     }
 
     private void cancelTimer() {
@@ -171,7 +169,7 @@ public class SimulationBoxLayout extends HLayout {
 
     private void loadData() {
 
-        AsyncCallback<Simulation> callback = new AsyncCallback<Simulation>() {
+        AsyncCallback<Workflow> callback = new AsyncCallback<Workflow>() {
             @Override
             public void onFailure(Throwable caught) {
                 Layout.getInstance().setWarningMessage("Unable to load simulation info:<br />" + caught.getMessage());
@@ -179,11 +177,11 @@ public class SimulationBoxLayout extends HLayout {
             }
 
             @Override
-            public void onSuccess(Simulation result) {
+            public void onSuccess(Workflow result) {
 
-                SimulationStatus status = result.getStatus();
-                if (status != simulationStatus) {
-                    simulationStatus = status;
+                WorkflowStatus status = result.getStatus();
+                if (status != workflowStatus) {
+                    workflowStatus = status;
                     parseStatus();
                 }
             }
@@ -194,7 +192,7 @@ public class SimulationBoxLayout extends HLayout {
     private void performAction() {
 
         String question;
-        switch (simulationStatus) {
+        switch (workflowStatus) {
             case Running:
                 question = "kill";
                 break;
@@ -208,7 +206,7 @@ public class SimulationBoxLayout extends HLayout {
             @Override
             public void execute(Boolean value) {
                 if (value) {
-                    switch (simulationStatus) {
+                    switch (workflowStatus) {
                         case Running:
                             killSimulation();
                             break;
@@ -326,10 +324,10 @@ public class SimulationBoxLayout extends HLayout {
         }
     }
 
-    public void updateStatus(SimulationStatus status) {
+    public void updateStatus(WorkflowStatus status) {
 
-        if (status != simulationStatus) {
-            simulationStatus = status;
+        if (status != workflowStatus) {
+            workflowStatus = status;
             parseStatus();
         }
     }

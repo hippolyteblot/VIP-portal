@@ -13,7 +13,7 @@ import fr.insalyon.creatis.vip.application.client.rpc.WorkflowService;
 import fr.insalyon.creatis.vip.application.client.view.common.AbstractSimulationTab;
 import fr.insalyon.creatis.vip.application.client.view.launch.RelaunchService;
 import fr.insalyon.creatis.vip.application.client.view.monitor.ChangeSimulationUserLayout;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationTab;
 import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationsTab;
 import fr.insalyon.creatis.vip.core.client.CoreModule;
@@ -38,7 +38,7 @@ public class SimulationsContextMenu extends Menu {
     private String simulationUser;
 
     public SimulationsContextMenu(
-            ModalWindow modal, final String simulationID, final String title, final SimulationStatus status,
+            ModalWindow modal, final String simulationID, final String title, final WorkflowStatus status,
             String applicationName, String applicationVersion, String applicationClass, String simulationUser) {
 
         this.modal = modal;

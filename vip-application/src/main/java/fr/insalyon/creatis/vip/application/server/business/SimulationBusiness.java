@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import fr.insalyon.creatis.vip.application.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,10 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.insalyon.creatis.vip.application.client.view.monitor.job.JobStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.job.SimulationFileType;
 import fr.insalyon.creatis.vip.application.client.view.monitor.job.TaskStatus;
-import fr.insalyon.creatis.vip.application.models.Job;
-import fr.insalyon.creatis.vip.application.models.Node;
-import fr.insalyon.creatis.vip.application.models.Simulation;
-import fr.insalyon.creatis.vip.application.models.Task;
 import fr.insalyon.creatis.vip.application.server.dao.ExecutionNodeDAO;
 import fr.insalyon.creatis.vip.application.server.dao.SimulationDAO;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -360,13 +357,13 @@ public class SimulationBusiness extends CommonBusiness {
         }
     }
 
-    public int[] getNumberOfActiveTasks(List<Simulation> simulations)
+    public int[] getNumberOfActiveTasks(List<Workflow> workflows)
             throws VipException {
 
         try {
             int[] tasks = new int[2];
-            for (Simulation simulation : simulations) {
-                int[] t = getSimulationDAO(simulation.getID()).getNumberOfActiveTasks();
+            for (Workflow workflow : workflows) {
+                int[] t = getSimulationDAO(workflow.getID()).getNumberOfActiveTasks();
                 tasks[0] += t[0];
                 tasks[1] += t[1];
             }

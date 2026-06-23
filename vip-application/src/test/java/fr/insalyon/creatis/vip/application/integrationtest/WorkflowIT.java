@@ -2,16 +2,16 @@ package fr.insalyon.creatis.vip.application.integrationtest;
 
 import java.util.GregorianCalendar;
 
+import fr.insalyon.creatis.vip.application.models.Workflow;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.job.JobStatus;
 import fr.insalyon.creatis.vip.application.client.view.monitor.job.TaskStatus;
 import fr.insalyon.creatis.vip.application.models.Job;
-import fr.insalyon.creatis.vip.application.models.Simulation;
 import fr.insalyon.creatis.vip.application.models.Task;
 import fr.insalyon.creatis.vip.application.server.business.SimulationBusiness;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -20,21 +20,22 @@ import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 
 //@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 // testing framework must recreate a MessageBusiness after each test method
-public class SimulationIT extends BaseSpringIT {
+public class WorkflowIT extends BaseSpringIT {
 
     //FIXME : initialize better the class
 
     private SimulationBusiness simulationBusiness;
 
-    private Simulation simulation;
+    private Workflow workflow;
     private Job job;
 
     @BeforeEach
     public void setUp() throws DAOException, VipException {
 
-        simulation = new Simulation("pipelineTest1", "3", null, "execId1",
-                "fullName", new GregorianCalendar(2016, 9, 2).getTime(),
-                 null, "Exec test 1", SimulationStatus.Running.toString(), "test engine", null);
+        workflow = new Workflow("execId1", "Exec test 1", "pipelineTest1", "3",
+                (String) null, WorkflowStatus.Running.toString(),
+                new GregorianCalendar(2016, 9, 2).getTime(), null,
+                "test engine", null);
 
 
         job = new Job(1, "command", JobStatus.Completed);
@@ -55,8 +56,8 @@ public class SimulationIT extends BaseSpringIT {
 
     @Test
     public void testSimulationGetProperties() {
-        Assertions.assertEquals("execId1", simulation.getID(), "Incorrect simulation id");
-        Assertions.assertEquals(SimulationStatus.Running, simulation.getStatus(), "Incorrect simulation status");
+        Assertions.assertEquals("execId1", workflow.getID(), "Incorrect simulation id");
+        Assertions.assertEquals(WorkflowStatus.Running, workflow.getStatus(), "Incorrect simulation status");
     }
 
     @Test

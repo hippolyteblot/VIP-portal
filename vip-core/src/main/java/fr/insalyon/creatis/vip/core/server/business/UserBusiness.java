@@ -480,4 +480,24 @@ public class UserBusiness extends CommonBusiness {
 
         return pageBuilder.doPrecise(offset, quantity, users);
     }
+
+    public Optional<User> getByFullname(String fullname) throws VipException {
+        List<User> searchResult = getByFullnames(List.of(fullname));
+        // maybe there could be 2 users with the same name...
+        if (searchResult.size() > 1) {
+            logger.warn("Found more than 1 user with the fullname {} : {}", fullname,
+                    searchResult.stream().map(User::getEmail).toList());
+            // doing as if not found
+            return Optional.empty();
+        }
+        return searchResult.stream().findFirst();
+    }
+
+    public List<User> getByFullnames(List<String> fullnames) throws VipException {
+        try {
+            return userDAO.getByFullNames(fullnames);
+        } catch (DAOException e) {
+            throw new VipException(e);
+        }
+    }
 }

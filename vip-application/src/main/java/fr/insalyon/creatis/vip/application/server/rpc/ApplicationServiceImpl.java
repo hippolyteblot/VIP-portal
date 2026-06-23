@@ -18,7 +18,7 @@ import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.ApplicationStatus;
 import fr.insalyon.creatis.vip.application.models.Engine;
 import fr.insalyon.creatis.vip.application.models.Resource;
-import fr.insalyon.creatis.vip.application.models.Simulation;
+import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.models.Tag;
 import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
 import fr.insalyon.creatis.vip.application.server.business.ApplicationBusiness;
@@ -237,12 +237,12 @@ public class ApplicationServiceImpl extends AbstractRemoteServiceServlet impleme
 
     @Override
     public ApplicationStatus getApplicationStatus() throws VipException {
-        List<Simulation> runningSimulations = workflowBusiness.getRunningSimulations();
+        List<Workflow> runningWorkflows = workflowBusiness.getRunningSimulations();
 
         ApplicationStatus status = new ApplicationStatus();
-        status.setRunningWorkflows(runningSimulations.size());
+        status.setRunningWorkflows(runningWorkflows.size());
 
-        int[] tasks = simulationBusiness.getNumberOfActiveTasks(runningSimulations);
+        int[] tasks = simulationBusiness.getNumberOfActiveTasks(runningWorkflows);
         status.setRunningTasks(tasks[0]);
         status.setWaitingTasks(tasks[1]);
 

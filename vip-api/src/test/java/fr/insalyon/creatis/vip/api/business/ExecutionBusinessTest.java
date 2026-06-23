@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.function.Supplier;
 
+import fr.insalyon.creatis.vip.application.models.Workflow;
+import fr.insalyon.creatis.vip.application.server.business.ListWorkflowsBusiness;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import fr.insalyon.creatis.vip.api.exception.ApiError;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
-import fr.insalyon.creatis.vip.application.models.Simulation;
-import fr.insalyon.creatis.vip.application.server.business.WorkflowBusiness;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.User;
@@ -28,17 +28,17 @@ public class ExecutionBusinessTest {
     @Test
     public void checkIfAdminCanAccessAnyExecution() throws Exception {
         Supplier<User> userSupplier = () -> prepareTestUser(0, true);
-        WorkflowBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, new Simulation());
-        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, mockedWb, null, null, null, null);
+        ListWorkflowsBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, new Workflow());
+        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, null, null, mockedWb, null, null, null);
         sut.checkIfUserCanAccessExecution(EXEC_ID);
     }
 
     @Test
     public void checkIfBasicUserCannotAccessAnyExecution() throws Exception {
         Supplier<User> userSupplier = () -> prepareTestUser(0, false);
-        Simulation simulation = prepareRunningSimulation(EXEC_ID, 1); // choose a different user
-        WorkflowBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, simulation);
-        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, mockedWb, null, null, null, null);
+        Workflow workflow = prepareRunningSimulation(EXEC_ID, 1); // choose a different user
+        ListWorkflowsBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, workflow);
+        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, null, null, mockedWb, null, null, null);
         VipException vipException = assertThrows(VipException.class,
             () -> sut.checkIfUserCanAccessExecution(EXEC_ID)
         );
@@ -48,18 +48,18 @@ public class ExecutionBusinessTest {
     @Test
     public void checkIfBasicUserCanAccessItsExecution() throws Exception {
         Supplier<User> userSupplier = () -> prepareTestUser(0, false);
-        Simulation simulation = prepareRunningSimulation(EXEC_ID, 0); // the creator of the execution is the same user
-        WorkflowBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, simulation);
-        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, mockedWb, null, null, null, null);
+        Workflow workflow = prepareRunningSimulation(EXEC_ID, 0); // the creator of the execution is the same user
+        ListWorkflowsBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, workflow);
+        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, null, null, mockedWb, null, null, null);
         sut.checkIfUserCanAccessExecution(EXEC_ID);
     }
 
     @Test
     public void checkErrorWhenAccessingACleanedExecution() throws Exception {
         Supplier<User> userSupplier = () -> prepareTestUser(0, false);
-        Simulation simulation = prepareSimulation(EXEC_ID, SimulationStatus.Cleaned, 0); // the creator of the execution is the same user
-        WorkflowBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, simulation);
-        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, mockedWb, null, null, null, null);
+        Workflow workflow = prepareSimulation(EXEC_ID, WorkflowStatus.Cleaned, 0); // the creator of the execution is the same user
+        ListWorkflowsBusiness mockedWb = prepareMockedWorkflowBusiness(EXEC_ID, workflow);
+        ExecutionBusiness sut = new ExecutionBusiness(userSupplier, null, null, null, mockedWb, null, null, null);
         VipException ex = Assertions.assertThrows(VipException.class, () -> sut.getExecution(EXEC_ID, false));
         Assertions.assertEquals(ApiError.INVALID_EXECUTION_ID.getCode(), ex.getVipErrorCode());
     }
@@ -72,32 +72,31 @@ public class ExecutionBusinessTest {
                 isAdmin ? UserLevel.Administrator : UserLevel.Beginner, null);
     }
 
-    private Simulation prepareRunningSimulation(String exedId, int userIndex) {
-        return prepareSimulation(exedId, SimulationStatus.Running, userIndex);
+    private Workflow prepareRunningSimulation(String exedId, int userIndex) {
+        return prepareSimulation(exedId, WorkflowStatus.Running, userIndex);
     }
 
-    private Simulation prepareSimulation(String exedId, SimulationStatus status, int userIndex) {
-       User creator = prepareTestUser(userIndex, false);
+    private Workflow prepareSimulation(String exedId, WorkflowStatus status, int userIndex) {
+        User creator = prepareTestUser(userIndex, false);
         
-            return new Simulation(
-                "simuName",
-                "1.0",
-                null,
+        return new Workflow(
                 exedId,
-                creator.getFullName(),
+                "simuName",
+                "appName",
+                "1.0",
+                creator,
+                status.toString(),
                 new java.util.Date(),
                 null,
-                "description",
-                status.toString(),
                 "engine",
                 null
             );
                 
-        }
+    }
 
-    private WorkflowBusiness prepareMockedWorkflowBusiness(String execId, Simulation simu) throws Exception {
-        WorkflowBusiness mockedWb = Mockito.mock(WorkflowBusiness.class);
-        Mockito.when(mockedWb.getSimulation(execId)).thenReturn(simu);
+    private ListWorkflowsBusiness prepareMockedWorkflowBusiness(String execId, Workflow simu) throws Exception {
+        ListWorkflowsBusiness mockedWb = Mockito.mock(ListWorkflowsBusiness.class);
+        Mockito.when(mockedWb.getNotRefreshedWorkflow(execId)).thenReturn(simu);
         return mockedWb;
     }
 

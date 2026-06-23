@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.server.business.util.ProxyUtil;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.business.Server;
@@ -150,7 +150,7 @@ public class RestServiceEngine extends WorkflowEngineInstantiator {
         }
     }
 
-    public SimulationStatus getStatus(String addressWS, String workflowID) throws VipException {
+    public WorkflowStatus getStatus(String addressWS, String workflowID) throws VipException {
         loadTrustStore(server);
 
         try {
@@ -164,11 +164,11 @@ public class RestServiceEngine extends WorkflowEngineInstantiator {
 
             MoteurStatus moteurStatus = MoteurStatus.valueOf(workflowStatus != null ? workflowStatus.toUpperCase() : null);
             return switch (moteurStatus) {
-                case RUNNING -> SimulationStatus.Running;
-                case COMPLETE -> SimulationStatus.Completed;
-                case FAILED -> SimulationStatus.Failed;
-                case TERMINATED -> SimulationStatus.Killed;
-                default -> SimulationStatus.Unknown;
+                case RUNNING -> WorkflowStatus.Running;
+                case COMPLETE -> WorkflowStatus.Completed;
+                case FAILED -> WorkflowStatus.Failed;
+                case TERMINATED -> WorkflowStatus.Killed;
+                default -> WorkflowStatus.Unknown;
             };
         } catch (HttpServerErrorException | HttpClientErrorException e) {
             logger.error("Server error while fetching workflow status: {}", e.getResponseBodyAsString(), e);

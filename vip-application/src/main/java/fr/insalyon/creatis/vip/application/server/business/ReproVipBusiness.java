@@ -17,31 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import fr.insalyon.creatis.vip.application.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,10 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import fr.insalyon.creatis.vip.application.models.AppVersion;
-import fr.insalyon.creatis.vip.application.models.PublicExecution;
-import fr.insalyon.creatis.vip.application.models.Simulation;
-import fr.insalyon.creatis.vip.application.models.WorkflowData;
 import fr.insalyon.creatis.vip.application.server.business.simulation.parser.InputFileParser;
 import fr.insalyon.creatis.vip.application.server.business.util.ReproVipInputsParser;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -73,17 +45,17 @@ public class ReproVipBusiness {
     private final AppVersionBusiness appVersionBusiness;
     private final Server server;
     private final SimulationBusiness simulationBusiness;
-    private final WorkflowBusiness workflowBusiness;
+    private final ListWorkflowsBusiness listWorkflowsBusiness;
     private final ExternalPlatformBusiness externalPlatformBusiness;
 
     @Autowired
     public ReproVipBusiness(AppVersionBusiness appVersionBusiness, Server server, SimulationBusiness simulationBusiness,
-            WorkflowBusiness workflowBusiness, ExternalPlatformBusiness externalPlatformBusiness,
+                            ListWorkflowsBusiness listWorkflowsBusiness, ExternalPlatformBusiness externalPlatformBusiness,
             PublicExecutionBusiness publicExecutionBusiness) {
         this.appVersionBusiness = appVersionBusiness;
         this.server = server;
         this.simulationBusiness = simulationBusiness;
-        this.workflowBusiness = workflowBusiness;
+        this.listWorkflowsBusiness = listWorkflowsBusiness;
         this.externalPlatformBusiness = externalPlatformBusiness;
         this.publicExecutionBusiness = publicExecutionBusiness;
     }
@@ -103,7 +75,7 @@ public class ReproVipBusiness {
                 return false;
             }
             // verifying the application has a boutiques file
-            Simulation simulation = workflowBusiness.getSimulation(workflow);
+            Workflow simulation = listWorkflowsBusiness.getNotRefreshedWorkflow(workflow);
 
             if ( ! isBoutiquesDescriptorAvailable(simulation.getApplicationName(), simulation.getApplicationVersion())) {
                 logger.warn("Boutiques descriptor not found for " + simulation.getApplicationName() + ":" + simulation.getApplicationVersion());

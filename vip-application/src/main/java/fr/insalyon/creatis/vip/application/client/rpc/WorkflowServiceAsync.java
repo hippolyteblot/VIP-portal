@@ -6,10 +6,7 @@ import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import fr.insalyon.creatis.vip.application.models.Activity;
-import fr.insalyon.creatis.vip.application.models.InOutData;
-import fr.insalyon.creatis.vip.application.models.Simulation;
-import fr.insalyon.creatis.vip.application.models.SimulationInput;
+import fr.insalyon.creatis.vip.application.models.*;
 import fr.insalyon.creatis.vip.core.models.Pair;
 
 /**
@@ -18,9 +15,9 @@ import fr.insalyon.creatis.vip.core.models.Pair;
  */
 public interface WorkflowServiceAsync {
 
-    public void getSimulations(AsyncCallback<List<Simulation>> asyncCallback);
+    public void getSimulations(AsyncCallback<List<Workflow>> asyncCallback);
     
-    public void getSimulations(Date lastDate, AsyncCallback<List<Simulation>> asyncCallback);
+    public void getSimulations(Date lastDate, AsyncCallback<List<Workflow>> asyncCallback);
 
     public void getApplicationDescriptorString(String applicationName, String applicationVersion, AsyncCallback<String> asyncCallback);
 
@@ -62,9 +59,9 @@ public interface WorkflowServiceAsync {
     
     public void relaunchSimulation(String simulationID, AsyncCallback<Map<String, String>> asyncCallback);
 
-    public void getSimulations(String user, String application, String status, Date startDate, Date endDate, AsyncCallback<List<Simulation>> asyncCallback);
+    public void getSimulations(String user, String application, String status, Date startDate, Date endDate, AsyncCallback<List<Workflow>> asyncCallback);
     
-    public void getSimulation(String simulationID, AsyncCallback<Simulation> asyncCallback);
+    public void getSimulation(String simulationID, AsyncCallback<Workflow> asyncCallback);
 
     public void getFile(String baseDir, String fileName, AsyncCallback<String> asyncCallback);
 
@@ -76,7 +73,7 @@ public interface WorkflowServiceAsync {
 
     public void getFileURL(String baseDir, String fileName, AsyncCallback<String> asyncCallback);
 
-    public void getPerformanceStats(List<Simulation> simulationList, int type, AsyncCallback<List<String>> asyncCallback);
+    public void getPerformanceStats(List<Workflow> workflowList, int type, AsyncCallback<List<String>> asyncCallback);
 
     public void getOutputData(String simulationID, AsyncCallback<List<InOutData>> asyncCallback);
 

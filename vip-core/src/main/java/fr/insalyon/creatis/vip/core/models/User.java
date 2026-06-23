@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -272,6 +273,13 @@ public class User implements IsSerializable {
 
     public Set<Group> getGroups() {
         return groups;
+    }
+
+    public Set<Group> getAdminGroups() {
+        return groupsMap.entrySet().stream()
+                .filter(e -> e.getValue() == GROUP_ROLE.Admin)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
     }
 
     @JsonIgnore // this field can't be jsonified (need a string as key of map)

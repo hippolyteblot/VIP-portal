@@ -1,5 +1,6 @@
 package fr.insalyon.creatis.vip.datamanager.server;
 
+import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import java.io.File;
 import java.net.URI;
@@ -16,6 +17,13 @@ public class DataManagerUtil {
         for(String s : groups)
             paths.add(s.replaceAll(" ", "_"));
         return paths;
+    }
+
+    public static List<String> getPaths(Set<Group> groups){
+        ArrayList<String> paths = new ArrayList<>();
+        return groups.stream()
+                .map(g -> g.getName().replace(" ", "_"))
+                .toList();
     }
 
     /*

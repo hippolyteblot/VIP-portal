@@ -2,7 +2,7 @@ package fr.insalyon.creatis.vip.gatelab.client.view.monitor;
 
 import fr.insalyon.creatis.vip.application.client.view.common.AbstractSimulationTab;
 import fr.insalyon.creatis.vip.application.client.view.monitor.MonitorParserInterface;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
 import fr.insalyon.creatis.vip.gatelab.client.GateLabConstants;
 import java.util.Date;
@@ -22,7 +22,7 @@ public class GateLabMonitorParser implements MonitorParserInterface {
     public Layout.TabFactoryAndId getTab(
         final String simulationId,
         final String simulatioName,
-        final SimulationStatus status,
+        final WorkflowStatus status,
         final Date launchedDate) {
 
         return new Layout.TabFactoryAndId(

@@ -1,9 +1,6 @@
 package fr.insalyon.creatis.vip.application.server.business;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -177,6 +174,7 @@ public class ApplicationBusiness extends CommonBusiness {
         List<Application> result = new ArrayList<>();
         Set<String> appNames = new HashSet<>();
 
+        // TODO : improve that, make that more efficient
         for (Group group : userGroups) {
             for (Application app : getApplications(group)) {
                 if (appNames.add(app.getName())) {
@@ -189,7 +187,7 @@ public class ApplicationBusiness extends CommonBusiness {
 
     public List<Application> getApplications(Group group) throws VipException {
         try {
-            return mapGroups(applicationDAO.getApplicationsByGroup(group));
+            return mapGroups(applicationDAO.getApplicationsByGroups(Set.of(group)));
         } catch (DAOException ex) {
             throw new VipException(ex);
         }

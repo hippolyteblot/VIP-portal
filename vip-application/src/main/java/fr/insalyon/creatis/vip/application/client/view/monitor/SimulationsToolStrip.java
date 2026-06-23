@@ -202,9 +202,9 @@ public class SimulationsToolStrip extends ToolStrip {
 
         for (ListGridRecord record : records) {
             SimulationRecord data = (SimulationRecord) record;
-            SimulationStatus status = SimulationStatus.valueOf(data.getStatus());
+            WorkflowStatus status = WorkflowStatus.valueOf(data.getStatus());
 
-            if (status == SimulationStatus.Running) {
+            if (status == WorkflowStatus.Running) {
                 simulationIDs.add(data.getSimulationId());
             }
         }
@@ -243,9 +243,9 @@ public class SimulationsToolStrip extends ToolStrip {
             date = records[0].getAttribute("date");
             simulationName = records[0].getAttribute("simulationName");
             SimulationRecord data = (SimulationRecord) records[0];
-            SimulationStatus status = SimulationStatus.valueOf(data.getStatus());
+            WorkflowStatus status = WorkflowStatus.valueOf(data.getStatus());
 
-            if (status == SimulationStatus.Running) {
+            if (status == WorkflowStatus.Running) {
                 simulationIDs.add(data.getSimulationId());
             }
 
@@ -284,10 +284,10 @@ public class SimulationsToolStrip extends ToolStrip {
 
         for (ListGridRecord record : records) {
             SimulationRecord data = (SimulationRecord) record;
-            SimulationStatus status = SimulationStatus.valueOf(data.getStatus());
+            WorkflowStatus status = WorkflowStatus.valueOf(data.getStatus());
 
-            if (status == SimulationStatus.Completed
-                    || status == SimulationStatus.Killed || status == SimulationStatus.Failed) {
+            if (status == WorkflowStatus.Completed
+                    || status == WorkflowStatus.Killed || status == WorkflowStatus.Failed) {
 
                 simulationIDs.add(data.getSimulationId());
             }
@@ -321,9 +321,9 @@ public class SimulationsToolStrip extends ToolStrip {
 
         for (ListGridRecord record : records) {
             SimulationRecord data = (SimulationRecord) record;
-            SimulationStatus status = SimulationStatus.valueOf(data.getStatus());
+            WorkflowStatus status = WorkflowStatus.valueOf(data.getStatus());
 
-            if (status == SimulationStatus.Cleaned) {
+            if (status == WorkflowStatus.Cleaned) {
                 simulationIDs.add(data.getSimulationId());
             }
         }
@@ -352,9 +352,9 @@ public class SimulationsToolStrip extends ToolStrip {
 
         for (ListGridRecord record : records) {
             SimulationRecord data = (SimulationRecord) record;
-            SimulationStatus status = SimulationStatus.valueOf(data.getStatus());
+            WorkflowStatus status = WorkflowStatus.valueOf(data.getStatus());
 
-            if (status == SimulationStatus.Killed || status == SimulationStatus.Failed) {
+            if (status == WorkflowStatus.Killed || status == WorkflowStatus.Failed) {
                 simulationIDs.add(data.getSimulationId());
             }
         }
@@ -387,9 +387,9 @@ public class SimulationsToolStrip extends ToolStrip {
         } else {
             for (ListGridRecord record : records) {
                 SimulationRecord data = (SimulationRecord) record;
-                SimulationStatus status = SimulationStatus.valueOf(data.getStatus());
+                WorkflowStatus status = WorkflowStatus.valueOf(data.getStatus());
 
-                if (status != SimulationStatus.Completed) {
+                if (status != WorkflowStatus.Completed) {
                     Layout.getInstance().setWarningMessage("You must select only completed executions!");
                     return;
                 } else {

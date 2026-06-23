@@ -1,9 +1,14 @@
 package fr.insalyon.creatis.vip.application.server.business;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
+import fr.insalyon.creatis.vip.application.models.Engine;
+import fr.insalyon.creatis.vip.application.models.Resource;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow;
-import fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus;
-import fr.insalyon.creatis.vip.application.client.view.monitor.SimulationStatus;
+import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.server.business.simulation.WorkflowEngineInstantiator;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -22,13 +26,12 @@ import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 
 @Service
-public class WorkflowExecutionBusiness {
+public class WorkflowExecutionBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Server server;
     private WorkflowEngineInstantiator engine;
-
 
     @Autowired
     public WorkflowExecutionBusiness(Server server, WorkflowEngineInstantiator engine) {
@@ -36,29 +39,26 @@ public class WorkflowExecutionBusiness {
         this.engine = engine;
     }
 
-    public Workflow launch(String engineEndpoint, AppVersion appVersion, User user, String simulationName,
-                           List<Map<String, List<String>>> parameters, String executorConfig) throws VipException {
+    public String launch(String workflowName, Resource resource, Engine engine, AppVersion appVersion,
+                           List<Map<String, List<String>>> parameters) throws VipException {
 
         try {
             String workflowContent = appVersion.getDescriptor();
             String inputs = (parameters != null) ? getParametersAsJSONInput(parameters) : null;
             String proxyFileName = server.getServerProxy(server.getVoName());
-            String settingsJSON = new ObjectMapper().writeValueAsString(appVersion.getSettings());
-            String id = engine.launch(engineEndpoint, workflowContent, inputs, settingsJSON, executorConfig, proxyFileName);
-
-            return new Workflow(id, user.getFullName(),
-                    WorkflowStatus.Running, new Date(), null, simulationName,
-                    appVersion.getApplicationName(), appVersion.getVersion(), "",
-                    engineEndpoint, null);
+            Map<String,String> settings = new HashMap<>(appVersion.getSettings());
+            settings.put(ApplicationConstants.DEFAULT_EXECUTOR_GASW, resource.getType().toString());
+            String settingsJSON = new ObjectMapper().writeValueAsString(settings);
+            return this.engine.launch(engine.getEndpoint(), workflowContent, inputs, settingsJSON, resource.getConfiguration(), proxyFileName);
 
         } catch (JsonProcessingException ex) {
             logger.error("Error launching simulation {} ({}/{})",
-                    simulationName, appVersion.getApplicationName(), appVersion.getVersion(), ex);
+                    workflowName, appVersion.getApplicationName(), appVersion.getVersion(), ex);
             throw new VipException(ex);
         }
     }
 
-    public SimulationStatus getStatus(String engineEndpoint, String simulationID) throws VipException {
+    public WorkflowStatus getStatus(String engineEndpoint, String simulationID) throws VipException {
         return engine.getStatus(engineEndpoint, simulationID);
     }
 
