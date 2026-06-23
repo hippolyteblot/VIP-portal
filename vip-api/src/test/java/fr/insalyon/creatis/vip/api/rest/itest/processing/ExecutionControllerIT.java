@@ -4,6 +4,7 @@ import static fr.insalyon.creatis.vip.api.data.ExecutionTestUtils.jsonCorrespond
 import static fr.insalyon.creatis.vip.api.data.ExecutionTestUtils.WORKFLOW_1;
 import static fr.insalyon.creatis.vip.api.data.ExecutionTestUtils.WORKFLOW_2;
 import static fr.insalyon.creatis.vip.api.data.UserTestUtils.baseUser1;
+import static fr.insalyon.creatis.vip.api.data.UserTestUtils.baseUser2;
 import static org.hamcrest.Matchers.both;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -82,18 +84,23 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
     @BeforeEach
     public void setUp() throws Exception {
         super.setUp();
+        UserTestUtils.reset();
 
+        createUser(baseUser1);
         w1 = new Workflow(WORKFLOW_1.getID(), baseUser1.getFullName(), fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed, new Date(), new Date(), "description", "application", "applicationVersion", "applicationClass", "engine", null);
         w2 = new Workflow(WORKFLOW_2.getID(), baseUser1.getFullName(), fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed, new Date(), new Date(), "description", "application", "applicationVersion", "applicationClass", "engine", null);
+
+    }
+
+    @AfterEach
+    public void cleanUp() {
         UserTestUtils.reset();
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void shouldListExecutions() throws Exception {
-        when(workflowDAO.get(eq(WORKFLOW_1.getID()))).thenReturn(w1, (Workflow) null);
-        when(workflowDAO.get(eq(WORKFLOW_2.getID()))).thenReturn(w2, (Workflow) null);
-        when(workflowDAO.getWithUserOrApplication(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null))
+        when(workflowDAO.get(baseUser1.getFullName(), null))
                 .thenReturn(Arrays.asList(w1, w2), (List<Workflow>) null);
 
         // perform a getWorkflows()
@@ -114,7 +121,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldCountExecutions() throws Exception {
-        when(workflowDAO.getWithUserOrApplication(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null))
+        when(workflowDAO.get(baseUser1.getFullName(), null))
                 .thenReturn(Arrays.asList(w1, w2), (List<Workflow>) null);
 
         // perform a getWorkflows()
@@ -163,7 +170,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.errorCode").value(DefaultError.GENERIC_ERROR_WITH_MESSAGE.getCode()));
+                .andExpect(jsonPath("$.errorCode").value(DefaultError.NOT_FOUND.getCode()));
     }
 
     @Test
@@ -243,7 +250,8 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
 
     @Test
     public void shouldReturn500() throws Exception {
-        when(workflowDAO.getWithUserOrApplication(Collections.singletonList(baseUser1.getFullName()), new ArrayList<>(), null, null, null, null, null)).thenThrow(new RuntimeException("test exception"));
+        when(workflowDAO.get(baseUser1.getFullName(), null))
+            .thenThrow(new RuntimeException("test exception"));
 
         // perform a getWorkflows() with an undetermined error
         mockMvc.perform(
@@ -332,7 +340,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
     @Test
     @SuppressWarnings("unchecked")
     public void shouldGetExecution2Results() throws Exception {
-        String resultPath = "/root/user/user1/path/to/result.res";
+        String resultPath = String.format("/root/user/%s/path/to/result.res", baseUser1.getFolder());
 
         when(workflowDAO.get(eq(WORKFLOW_2.getID()))).thenReturn(w2, (Workflow) null);
         Output output = new Output(new OutputID("workflowID", resultPath, "processor"), DataType.URI, "port");
@@ -378,7 +386,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         configureBoutiquesTestApp(appName, groupName, versionName);
 
         createGroup("testResources", GroupType.RESOURCE);
-        baseUser1 = createUserInGroups(baseUser1.getEmail(), "", groupName, "testResources");
+        baseUser2 = createUserInGroups(baseUser2.getEmail(), "", groupName, "testResources");
 
         ArgumentCaptor<String> inputsCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> workflowContentCaptor = ArgumentCaptor.forClass(String.class);
@@ -389,7 +397,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         Mockito.when(webServiceEngine.launch(eq(engineEndpoint), workflowContentCaptor.capture(), inputsCaptor.capture(), eq("{\"default.executor\":\"LOCAL\"}"), eq(""), eq("/path/to/proxy"))).thenReturn(workflowId, (String) null);
         Mockito.when(webServiceEngine.getStatus(engineEndpoint, workflowId)).thenReturn(WorkflowStatus.Running, (WorkflowStatus) null);
 
-        Workflow w = new Workflow(workflowId, baseUser1.getFullName(), fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, startDate, null, "Exec test 1", appName, versionName, "", engineEndpoint, null);
+        Workflow w = new Workflow(workflowId, baseUser2.getFullName(), fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, startDate, null, "Exec test 1", appName, versionName, "", "testEngine", null);
         when(workflowDAO.get(workflowId)).thenReturn(w, (Workflow) null);
 
         Execution expectedExecution = new Execution(workflowId, "Exec test 1", appName + "/" + versionName, 0, ExecutionStatus.RUNNING, null, null, startDate.getTime(), null, null);
@@ -399,7 +407,6 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
             put("status", "COMPLETED");
             put("inputs", new ArrayList<>());
             put("outputs", new ArrayList<>());
-
         }});
 
         setUpResourceAndEngine(appName, versionName, engineEndpoint);
@@ -407,7 +414,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         mockMvc.perform(
                         post("/rest/executions").contentType("application/json")
                                 .content(getResourceAsString("jsonObjects/execution1.json"))
-                                .with(baseUser1()))
+                                .with(baseUser2()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -421,10 +428,10 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         // verify inputs / same as gwendia without optional one
         String inputs = inputsCaptor.getValue();
         Map<String, List<String>> expectedParams = new HashMap<>();
-        expectedParams.put("testFileInput", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser1.getFolder() + "/path/to/input.in"));
+        expectedParams.put("testFileInput", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser2.getFolder() + "/path/to/input.in"));
         expectedParams.put("testTextInput", List.of("best test text value"));
         expectedParams.put("testFlagInput", List.of("false"));
-        expectedParams.put("results-directory", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser1.getFolder()));
+        expectedParams.put("results-directory", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser2.getFolder()));
         List<Map<String, List<String>>> paramsList = new ArrayList<>();
         paramsList.add(expectedParams);
         String expectedInputs = workflowExecutionBusiness.getParametersAsJSONInput(paramsList);
@@ -438,8 +445,8 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         Assertions.assertEquals(workflowId, workflow.getId());
         Assertions.assertEquals(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, workflow.getStatus());
         Assertions.assertEquals("Exec test 1", workflow.getDescription());
-        Assertions.assertEquals(engineEndpoint, workflow.getEngine());
-        Assertions.assertEquals(baseUser1.getFullName(), workflow.getUsername());
+        Assertions.assertEquals("testEngine", workflow.getEngine());
+        Assertions.assertEquals(baseUser2.getFullName(), workflow.getUsername());
         Assertions.assertNull(workflow.getFinishedTime());
         MatcherAssert.assertThat(workflow.getStartedTime().getTime(),
                 is(both(greaterThan(startDate.getTime())).and(lessThan(new Date().getTime()))));

@@ -118,15 +118,11 @@ public class ExecutionBusiness {
     }
 
     public Execution getExample(String executionId) throws VipException {
-        return getExecution(executionId, false, true);
+        Workflow workflow = listWorkflowsBusiness.getExample(executionId);
+        return getExecutionFromWorkflow(workflow, false);
     }
 
     public Execution getExecution(String executionId, boolean summarize) throws VipException {
-        return getExecution(executionId, summarize, false);
-    }
-
-    public Execution getExecution(String executionId, boolean summarize, boolean onlyExample)
-            throws VipException {
         // Get simulation object
         Workflow s = listWorkflowsBusiness.getRefreshedWorkflow(executionId); // check running execution for update
 
@@ -135,11 +131,6 @@ public class ExecutionBusiness {
         if (s == null || s.getStatus() == WorkflowStatus.Cleaned) {
             logger.error("Error accessing invalid execution {}. (is cleaned : {})", executionId, s != null);
             throw new VipException(ApiError.INVALID_EXECUTION_ID, executionId);
-        }
-
-        if (onlyExample && !isSimulationAnExample(s)) {
-            logger.error("Error trying to get an non-example execution as example : {}", executionId);
-            throw new VipException(ApiError.INVALID_EXAMPLE_ID, executionId);
         }
 
         return getExecutionFromWorkflow(s, summarize);
@@ -261,13 +252,7 @@ public class ExecutionBusiness {
     }
 
     public List<Execution> listExamples() throws VipException {
-        List<Workflow> workflows = listWorkflowsBusiness.searchWithAdminRights(
-                null, // User must be null to take examples from other users
-                null, // application
-                fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed.name(), // status
-                null, // startDate
-                null, // endDate
-                ApplicationConstants.WORKKFLOW_EXAMPLE_TAG);
+        List<Workflow> workflows = listWorkflowsBusiness.getAllExamples();
         List<Execution> executions = new ArrayList<>();
         for (Workflow workflow : workflows) {
             executions.add(getExecutionFromWorkflow(workflow, true));
@@ -494,7 +479,7 @@ public class ExecutionBusiness {
             return;
         }
         Workflow s = listWorkflowsBusiness.getNotRefreshedWorkflow(executionId);
-        if (s.getUserId().equals(user.getFullName())) {
+        if (s.getUserFullName().equals(user.getFullName())) {
             return;
         }
         logger.error("Permission denied for {} on exec {}", user, executionId);

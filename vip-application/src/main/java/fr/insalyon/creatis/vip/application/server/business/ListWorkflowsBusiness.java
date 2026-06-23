@@ -2,6 +2,7 @@ package fr.insalyon.creatis.vip.application.server.business;
 
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowsDBDAOException;
+import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.Engine;
@@ -49,10 +50,12 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         this.engineBusiness = engineBusiness;
     }
 
+    @VIPExternalSafe
     public Workflow getRefreshedWorkflow(String workflowId) throws VipException {
         return getWorkflow(workflowId, true);
     }
 
+    @VIPExternalSafe
     public Workflow getNotRefreshedWorkflow(String workflowId) throws VipException {
         return getWorkflow(workflowId, false);
     }
@@ -64,7 +67,7 @@ public class ListWorkflowsBusiness extends CommonBusiness {
             fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow = workflowDAO.get(workflowId);
             if (dbWorkflow == null) {
                 logger.error("Cannot find execution with id {}", workflowId);
-                throw new VipException("Cannot find execution with id " + workflowId);
+                throw new VipException(DefaultError.NOT_FOUND, Workflow.class.getSimpleName(), workflowId);
             }
             workflow = parseDbWorkflow(dbWorkflow);
 
@@ -83,6 +86,29 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         }
 
         return workflow;
+    }
+
+    public Workflow getExample(String workflowId) throws VipException {
+        try {
+            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow = workflowDAO.get(workflowId);
+            if (dbWorkflow == null) {
+                logger.error("Cannot find example with id {}", workflowId);
+                throw new VipException(DefaultError.NOT_FOUND, Workflow.class.getSimpleName(), workflowId);
+            }
+            if ( ! ApplicationConstants.WORKKFLOW_EXAMPLE_TAG.equals(dbWorkflow.getTags())) {
+                logger.error("Invalid example id {} : not tag with example", workflowId);
+                throw new VipException(DefaultError.NOT_FOUND, "Example", workflowId);
+            }
+            if ( !fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed
+                    .equals(dbWorkflow.getStatus())) {
+                logger.error("Invalid example status for {} : should be completed but is {}", workflowId, dbWorkflow.getStatus());
+                throw new VipException(DefaultError.NOT_FOUND, "Example", workflowId);
+            }
+            return parseDbWorkflow(dbWorkflow);
+        } catch (WorkflowsDBDAOException ex) {
+            logger.error("Error getting simulation {}", workflowId, ex);
+            throw new VipException(ex);
+        }
     }
 
     @VIPExternalSafe
@@ -146,6 +172,19 @@ public class ListWorkflowsBusiness extends CommonBusiness {
             String userName, String applicationName,
             String status, Date startDate, Date endDate, String tag) throws VipException {
         return searchWithAdminRights(true, userName, applicationName, status, startDate, endDate, tag);
+    }
+
+    // examples are public, no auth required
+    @VIPExternalSafe
+    public List<Workflow> getAllExamples() throws VipException {
+        try {
+            return parseDbWorkflows(workflowDAO.get(null, null,
+                    fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Completed,
+                    null, null, null, ApplicationConstants.WORKKFLOW_EXAMPLE_TAG));
+        } catch (WorkflowsDBDAOException e) {
+            logger.error("Error searching example workflows for user {}", getUserEmail(), e);
+            throw new VipException(e);
+        }
     }
 
     @VIPExternalSafe

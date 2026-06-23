@@ -57,7 +57,7 @@ public class Workflow implements IsSerializable {
         this.applicationVersion = applicationVersion;
         this.userId = user.getId();
         this.userFullName = user.getFullName();
-        this.status = WorkflowStatus.valueOf(status);
+        this.status = status == null ? null : WorkflowStatus.valueOf(status);
         this.startDate = startDate;
         this.endDate = endDate;
         this.engineName = engineName;
@@ -111,6 +111,10 @@ public class Workflow implements IsSerializable {
 
     public String getUserId() {
         return userId;
+    }
+
+    public String getUserFullName() {
+        return userFullName;
     }
 
     public String getID() {

@@ -177,10 +177,14 @@ public abstract class BaseSpringIT {
                 "test lastName " + nameSuffix, testEmail, "test institution",
                 CountryCode.fr, null);
         newUser.setPassword(password);
+        return createUser(newUser);
+    }
+
+    protected User createUser(User user) throws GRIDAClientException, VipException {
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
 
-        authenticationBusiness.signup(newUser, "", (Group) null);
-        return newUser;
+        authenticationBusiness.signup(user, "", (Group) null);
+        return user;
     }
 
     protected User createUserInGroup(String userEmail, String groupName) throws VipException, GRIDAClientException {
