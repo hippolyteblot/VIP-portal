@@ -1,5 +1,6 @@
 package fr.insalyon.creatis.vip.application.server.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.server.business.ApplicationBusiness;
+import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
@@ -28,16 +30,23 @@ import jakarta.validation.constraints.PositiveOrZero;
 public class ApplicationController {
 
     private final ApplicationBusiness applicationBusiness;
+    private final AppVersionBusiness appVersionBusiness;
 
     @Autowired
-    public ApplicationController(ApplicationBusiness applicationBusiness) {
+    public ApplicationController(ApplicationBusiness applicationBusiness, AppVersionBusiness appVersionBusiness) {
         this.applicationBusiness = applicationBusiness;
+        this.appVersionBusiness = appVersionBusiness;
     }
 
     @GetMapping
     public PrecisePage<Application> list(@RequestParam(defaultValue = "0") @PositiveOrZero int offset,
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity, @RequestParam Optional<String> group) throws VipException {
         return applicationBusiness.get(offset, quantity, group.orElse(null));
+    }
+
+    @GetMapping("/public")
+    public List<Application> getPublic() throws VipException {
+        return appVersionBusiness.getPublicApplications();
     }
 
     @GetMapping(value = "{id}")

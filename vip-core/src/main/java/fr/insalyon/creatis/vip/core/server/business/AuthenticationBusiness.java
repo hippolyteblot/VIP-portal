@@ -17,7 +17,6 @@ import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.grida.client.GRIDAClientException;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants.GROUP_ROLE;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.Group;
@@ -237,14 +236,11 @@ public class AuthenticationBusiness extends CommonBusiness {
             }
             if (userDAO.activate(email, code)) {
 
-                User user = userDAO.get(email);
                 userDAO.resetNFailedAuthentications(email);
+                User user = userBusiness.getUserWithSession(email);
 
                 gridaClient.createFolder(server.getDataManagerUsersHome(),
                         user.getFolder());
-
-                gridaClient.createFolder(server.getDataManagerUsersHome(),
-                        user.getFolder() + "_" + CoreConstants.FOLDER_TRASH);
 
                 return user;
 
