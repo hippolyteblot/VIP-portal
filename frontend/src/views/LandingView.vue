@@ -14,6 +14,8 @@ import {
 
 import { getGroupBadgeColor } from '@/utils/groupColor'
 import AppBadge from '@/components/ui/AppBadge.vue'
+import { applicationsApi } from '@/api/applications.api'
+import type { BackendApplication } from '@/api/applications.api'
 
 const stats = [
   { value: '30+', label: 'Applications' },
@@ -22,51 +24,16 @@ const stats = [
   { value: '15+', label: 'Years of experience' },
 ]
 
-// For now we fake apps (need a popular apps public route)
-const topApplications = [
-  {
-    name: 'FreeSurfer',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Neuroimaging',
-    version: '7.3.2',
-  },
-  {
-    name: 'CQuest',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Spectroscopy',
-    version: '7.3.2',
-  },
-  {
-    name: 'LCModel',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Spectroscopy',
-    version: '7.3.2',
-  },
-  {
-    name: 'BraTS',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Neuroimaging',
-    version: '7.3.2',
-  },
-  {
-    name: 'Gate',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Simulation',
-    version: '7.3.2',
-  },
-  {
-    name: 'FreeSurfer',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    executions: 18420,
-    category: 'Neuroimaging',
-    version: '7.3.2',
-  },
-]
+const topApplications = ref<BackendApplication[]>([])
+
+async function loadPublicApplications() {
+  try {
+    topApplications.value = await applicationsApi.getPublic()
+  } catch (error) {
+    console.error('Failed to load public applications:', error)
+    topApplications.value = []
+  }
+}
 
 // Same for publications and team members, we should have public routes for that
 const publications = [
@@ -105,14 +72,7 @@ const publications = [
 ]
 
 // But for the team, its probably something that we can hardcode...
-const permanentTeam = [
-  {
-    name: 'Sorina Pop',
-    role: 'Project Manager',
-    org: 'CREATIS',
-    url: 'https://www.creatis.insa-lyon.fr/site7/fr/users/camarasu',
-    photo: '/team/sorina_pop.jpg',
-  },
+const team = [
   {
     name: 'Axel Bonnet',
     role: 'Main Developer',
@@ -120,9 +80,13 @@ const permanentTeam = [
     url: 'https://www.egi.eu/people/axel-bonnet/',
     photo: '/team/axel_bonnet.jpg',
   },
-]
-
-const fixedTermTeam = [
+  {
+    name: 'Sorina Pop',
+    role: 'Project Manager',
+    org: 'CREATIS',
+    url: 'https://www.creatis.insa-lyon.fr/site7/fr/users/camarasu',
+    photo: '/team/sorina_pop.jpg',
+  },
   {
     name: 'Guillaume Vinet',
     role: 'Research Engineer',
@@ -136,6 +100,13 @@ const fixedTermTeam = [
     org: 'CREATIS',
     url: null,
     photo: '/team/mayssa_rouissi.png',
+  },
+  {
+    name: 'Bertrand Patet',
+    role: '',
+    org: 'CREATIS',
+    url: null,
+    photo: '/team/photo_bertrand.png',
   },
   {
     name: 'Hippolyte Blot',
@@ -225,6 +196,7 @@ function updateNavbarState() {
 }
 
 onMounted(() => {
+  loadPublicApplications()
   updateNavbarState()
   window.addEventListener('scroll', updateNavbarState, { passive: true })
   window.addEventListener('resize', updateNavbarState)
@@ -418,18 +390,15 @@ onUnmounted(() => {
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <h3 class="truncate text-base font-bold text-gray-900">{{ app.name }}</h3>
-                  <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                    {{ app.version }}
-                  </span>
                 </div>
-                <AppBadge :variant="getGroupBadgeColor(app.category)" class="mt-1">
-                  {{ app.category }}
+                <AppBadge :variant="getGroupBadgeColor(app.groups?.[0]?.name ?? 'Uncategorized')" class="mt-1">
+                  {{ app.groups?.[0]?.name ?? 'Uncategorized' }}
                 </AppBadge>
               </div>
             </div>
 
             <p class="mt-4 line-clamp-2 text-sm text-gray-500 leading-relaxed">
-              {{ app.description }}
+              {{ app.citation }}
             </p>
           </div>
         </div>
@@ -520,40 +489,7 @@ onUnmounted(() => {
 
         <div class="mt-12 grid gap-6 sm:grid-cols-2">
           <div
-            v-for="member in permanentTeam"
-            :key="member.name"
-            class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
-          >
-            <div class="flex items-center gap-4">
-              <img
-                :src="member.photo"
-                :alt="member.name"
-                class="h-16 w-16 rounded-full object-cover ring-2 ring-gray-100 ring-offset-2 transition group-hover:ring-primary-200"
-                loading="lazy"
-              />
-              <div>
-                <h3 class="font-bold text-gray-900">{{ member.name }}</h3>
-                <p class="text-sm text-gray-500">{{ member.role }}</p>
-                <span class="mt-1 inline-block rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-600">
-                  {{ member.org }}
-                </span>
-              </div>
-            </div>
-            <a
-              v-if="member.url"
-              :href="member.url"
-              target="_blank"
-              rel="noopener"
-              class="mt-4 inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700"
-            >
-              More info <ExternalLink class="h-3 w-3" />
-            </a>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div
-            v-for="member in fixedTermTeam"
+            v-for="member in team"
             :key="member.name"
             class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
           >

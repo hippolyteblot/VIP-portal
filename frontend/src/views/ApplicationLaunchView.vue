@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppButton from '@/components/ui/AppButton.vue'
@@ -9,16 +9,20 @@ import AppBadge from '@/components/ui/AppBadge.vue'
 import { useApplicationsStore } from '@/stores/applications.store'
 import { useAppVersionsStore } from '@/stores/appversions.stores'
 import { useNotificationsStore } from '@/stores/notifications.store'
+import { useWorkflowsStore } from '@/stores/workflows.store'
 import type { Application } from '@/types/application.types'
 import type { AppVersion } from '@/types/appversion.types'
 import { rememberRecentApplication } from '@/utils/recentApplications'
 import { useBoutiquesLaunchForm } from '@/composables/useBoutiquesLaunchForm'
 import { useDuplicatedLaunchInputs } from '@/composables/useDuplicatedLaunchInputs'
+import FileInputControl from '@/components/launch/FileInputControl.vue'
 
 const route = useRoute()
+const router = useRouter()
 const applicationsStore = useApplicationsStore()
 const appversionsStore = useAppVersionsStore()
 const notificationsStore = useNotificationsStore()
+const workflowsStore = useWorkflowsStore()
 
 const application = ref<Application | null>(null)
 const selectedVersion = ref<AppVersion | null>(null)
@@ -108,15 +112,15 @@ async function loadVersion(versionName: string) {
   }
 }
 
-function onLaunchSubmit() {
+async function onLaunchSubmit() {
   if (!application.value || !selectedVersion.value) return
   if (!validateForm()) return
 
   const payload = buildSubmissionPayload()
-  if (payload) {
-    lastSubmissionPayload.value = payload
-    window.localStorage.setItem('vip.lastLaunchPayload', JSON.stringify(payload))
-  }
+  if (!payload) return
+
+  lastSubmissionPayload.value = payload
+  window.localStorage.setItem('vip.lastLaunchPayload', JSON.stringify(payload))
 
   rememberRecentApplication({
     name: application.value.name,
@@ -124,7 +128,35 @@ function onLaunchSubmit() {
     version: selectedVersion.value.version,
   })
 
-  notificationsStore.success('Application launched', `Your application "${application.value.fullName || application.value.name}" has been launched successfully.`)
+  const inputs: Record<string, { type: string; values: string[] }> = {}
+  for (const input of payload.inputs) {
+    const inputMeta = inputParams.value.find((p) => p.id === input.id)
+    const type = inputMeta?.type === 'Boolean' ? 'Flag' : inputMeta?.type ?? 'String'
+    const values = input.values
+      .filter((v) => v.value != null && v.value !== '')
+      .map((v) => {
+        if (v.value instanceof File) return v.value.name
+        return String(v.value)
+      })
+    if (values.length > 0) {
+      inputs[input.id] = { type, values }
+    }
+  }
+
+  if (payload.resultsDirectory) {
+    inputs['results-directory'] = { type: 'File', values: [payload.resultsDirectory] }
+  }
+
+  const workflow = await workflowsStore.launchWorkflow({
+    applicationName: payload.applicationName,
+    applicationVersion: payload.version,
+    workflowName: payload.executionName,
+    inputs,
+  })
+
+  if (workflow) {
+    router.push({ name: 'workflow-detail', params: { id: workflow.id } })
+  }
 }
 
 onMounted(async () => {
@@ -183,12 +215,16 @@ onMounted(async () => {
               placeholder="e.g. freesurfer-run-001"
               :required="true"
             />
-            <AppInput
-              v-model="resultsDirectory"
-              label="Results directory"
-              placeholder="e.g. /vip/results/run-001"
-              :required="true"
-            />
+            <div>
+              <label class="mb-1 block text-sm font-medium text-gray-700">
+                Results directory <span class="text-red-500">*</span>
+              </label>
+              <FileInputControl
+                v-model="resultsDirectory"
+                mode="folder"
+                :disabled="false"
+              />
+            </div>
           </div>
 
           <div v-for="input in inputParams" :key="input.id" class="space-y-1 rounded-lg">
@@ -250,11 +286,10 @@ onMounted(async () => {
               <div class="flex items-start gap-2">
                 <div class="min-w-0 flex-1">
                   <div v-if="input.type === 'File'" class="pt-0.5">
-                    <input
-                      type="file"
-                      class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:bg-gray-50 disabled:text-gray-500"
+                    <FileInputControl
+                      :model-value="String(getInputValueForInstance(input.id, instanceId) ?? '')"
                       :disabled="!isInputAvailable(input)"
-                      @change="onFileChangeForInstance(input.id, instanceId, $event)"
+                      @update:model-value="setInputValueForInstance(input.id, instanceId, $event)"
                     />
                   </div>
 

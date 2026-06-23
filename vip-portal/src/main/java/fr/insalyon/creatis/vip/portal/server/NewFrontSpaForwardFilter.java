@@ -1,6 +1,7 @@
 package fr.insalyon.creatis.vip.portal.server;
 
 import java.io.IOException;
+import java.util.Set;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -15,6 +16,13 @@ import jakarta.servlet.http.HttpServletResponse;
  * For SPA routes under /new_front, avoid 404 for other routes than /new_front
  */
 public class NewFrontSpaForwardFilter implements Filter {
+
+    private static final Set<String> STATIC_EXTENSIONS = Set.of(
+        "js", "css", "png", "jpg", "jpeg", "gif", "svg", "ico",
+        "woff", "woff2", "ttf", "eot",
+        "map", "json", "txt", "pdf", "xml",
+        "webp", "avif", "mp4", "webm"
+    );
 
     @Override
     public void init(final FilterConfig filterConfig) {
@@ -62,11 +70,17 @@ public class NewFrontSpaForwardFilter implements Filter {
             return false;
         }
 
-        if ("/new_front".equals(path) || "/new_front/".equals(path) || "/new_front/index.html".equals(path)) {
+        String subpath = path.substring("/new_front".length());
+        if (subpath.isEmpty() || subpath.equals("/") || subpath.equals("/index.html")) {
             return false;
         }
 
-        final String normalized = path.substring("/new_front/".length());
-        return !normalized.isEmpty() && !normalized.contains(".");
+        String lastSegment = subpath.substring(subpath.lastIndexOf('/') + 1);
+        int dot = lastSegment.lastIndexOf('.');
+        if (dot > 0 && dot < lastSegment.length() - 1) {
+            String ext = lastSegment.substring(dot + 1).toLowerCase();
+            return !STATIC_EXTENSIONS.contains(ext);
+        }
+        return true;
     }
 }

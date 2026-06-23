@@ -59,9 +59,6 @@ describe('router', () => {
 
     const homeRoute = routes.find((route) => route.name === 'home')
     expect(homeRoute?.path).toBe('/')
-
-    const landingRoute = routes.find((route) => route.name === 'landing')
-    expect(landingRoute?.path).toBe('/landing')
   })
 
   it('initializes auth before evaluating access rules', async () => {
@@ -119,20 +116,6 @@ describe('router', () => {
     })
 
     expect(result).toBeUndefined()
-  })
-
-  it('redirects landing to dashboard when authenticated', async () => {
-    expect(mocked.guard).toBeTypeOf('function')
-
-    mocked.authStore.initialized = true
-    mocked.authStore.isAuthenticated = true
-
-    const result = await mocked.guard?.({
-      name: 'landing',
-      meta: {},
-    })
-
-    expect(result).toEqual({ name: 'dashboard' })
   })
 
   it('redirects root to dashboard only when authenticated', async () => {

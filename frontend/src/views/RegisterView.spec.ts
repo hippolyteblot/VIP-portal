@@ -77,6 +77,6 @@ describe('RegisterView', () => {
       institution: 'VIP Lab',
       comments: 'Research context',
     })
-    expect(mocked.push).toHaveBeenCalledWith('/login')
+    expect(mocked.push).toHaveBeenCalledWith({ name: 'activate', params: { id: 'john@example.com' } })
   })
 })

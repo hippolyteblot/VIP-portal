@@ -21,6 +21,21 @@ vi.mock('@/stores/auth.store', () => ({
   useAuthStore: () => mocked.authStore,
 }))
 
+vi.mock('@/stores/notifications.store', () => ({
+  useNotificationsStore: () => ({
+    dashboardNotifications: [] as any[],
+    isLoadingDashboard: false,
+    fetchDashboardNotifications: vi.fn(),
+    markAsRead: vi.fn(),
+  }),
+}))
+
+vi.mock('@/composables/useFormatters', () => ({
+  useFormatters: () => ({
+    formatRelativeTime: vi.fn(() => 'just now'),
+  }),
+}))
+
 vi.mock('@/utils/recentApplications', () => ({
   getRecentApplications: mocked.getRecentApplications,
 }))

@@ -16,11 +16,14 @@ const mocked = vi.hoisted(() => {
     fetchAppVersion: vi.fn(),
     notificationSuccess: vi.fn(),
     rememberRecentApplication: vi.fn(),
+    routerPush: vi.fn(),
+    launchWorkflow: vi.fn(),
   }
 })
 
 vi.mock('vue-router', () => ({
   useRoute: () => mocked.route,
+  useRouter: () => ({ push: mocked.routerPush }),
   RouterLink: {
     name: 'RouterLink',
     props: ['to'],
@@ -46,8 +49,28 @@ vi.mock('@/stores/notifications.store', () => ({
   }),
 }))
 
+vi.mock('@/stores/workflows.store', () => ({
+  useWorkflowsStore: () => ({
+    launchWorkflow: mocked.launchWorkflow,
+  }),
+}))
+
 vi.mock('@/utils/recentApplications', () => ({
   rememberRecentApplication: mocked.rememberRecentApplication,
+}))
+
+vi.mock('@/stores/auth.store', () => ({
+  useAuthStore: () => ({
+    user: { email: 'demo@vip.local', folder: 'demo_user' },
+  }),
+}))
+
+vi.mock('@/api/files.api', () => ({
+  filesApi: {
+    listChildren: vi.fn().mockResolvedValue([]),
+    createDirectory: vi.fn().mockResolvedValue(undefined),
+    uploadFile: vi.fn().mockResolvedValue(undefined),
+  },
 }))
 
 function buildApplication(): Application {
@@ -111,14 +134,16 @@ describe('ApplicationLaunchView', () => {
 
   it('submits launch and stores payload when form is valid', async () => {
     const setItemSpy = vi.spyOn(window.localStorage.__proto__, 'setItem')
+    mocked.launchWorkflow.mockResolvedValue({ id: 'wf-123' })
 
     const wrapper = mount(ApplicationLaunchView)
     await flushPromises()
 
     await wrapper.get('input[placeholder="e.g. freesurfer-run-001"]').setValue('run-001')
-    await wrapper.get('input[placeholder="e.g. /vip/results/run-001"]').setValue('/vip/results/run-001')
+    await wrapper.get('input[placeholder="e.g. /vip/Home/user/results"]').setValue('/vip/Home/user/results')
 
     await wrapper.get('form').trigger('submit')
+    await flushPromises()
 
     expect(setItemSpy).toHaveBeenCalledTimes(1)
     const firstSetItemCall = setItemSpy.mock.calls[0]
@@ -136,7 +161,7 @@ describe('ApplicationLaunchView', () => {
       applicationName: 'demo-app',
       version: '1.0.0',
       executionName: 'run-001',
-      resultsDirectory: '/vip/results/run-001',
+      resultsDirectory: '/vip/Home/user/results',
       inputs: [],
     })
 
@@ -146,9 +171,9 @@ describe('ApplicationLaunchView', () => {
       version: '1.0.0',
     })
 
-    expect(mocked.notificationSuccess).toHaveBeenCalledWith(
-      'Application launched',
-      'Your application "Demo Application" has been launched successfully.',
-    )
+    expect(mocked.routerPush).toHaveBeenCalledWith({
+      name: 'workflow-detail',
+      params: { id: 'wf-123' },
+    })
   })
 })

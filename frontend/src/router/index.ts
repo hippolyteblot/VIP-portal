@@ -15,6 +15,12 @@ const router = createRouter({
       component: () => import('@/views/RegisterView.vue'),
     },
     {
+      path: '/activate/:id?',
+      name: 'activate',
+      component: () => import('@/views/ActivateView.vue'),
+      meta: { title: 'Activate Account' },
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/DashboardView.vue'),
@@ -25,6 +31,18 @@ const router = createRouter({
       name: 'files',
       component: () => import('@/views/FilesView.vue'),
       meta: { requiresAuth: true, title: 'Files' },
+    },
+    {
+      path: '/publications',
+      name: 'publications',
+      component: () => import('@/views/PublicationsView.vue'),
+      meta: { requiresAuth: true, title: 'Publications' },
+    },
+    {
+      path: '/messages',
+      name: 'messages',
+      component: () => import('@/views/MessagesView.vue'),
+      meta: { requiresAuth: true, title: 'Messages' },
     },
     {
       path: '/applications',
@@ -51,6 +69,24 @@ const router = createRouter({
       meta: { requiresAuth: true, title: 'Create Application' },
     },
     {
+      path: '/executions',
+      name: 'executions',
+      component: () => import('@/views/WorkflowsView.vue'),
+      meta: { requiresAuth: true, title: 'Executions' },
+    },
+    {
+      path: '/workflows/:id',
+      name: 'workflow-detail',
+      component: () => import('@/views/WorkflowDetailView.vue'),
+      meta: { requiresAuth: true, title: 'Workflow Execution' },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true, title: 'My account' },
+    },
+    {
       path: '/',
       name: 'home',
       component: () => import('@/views/LandingView.vue'),
@@ -70,10 +106,6 @@ router.beforeEach(async (to) => {
     return auth.isAuthenticated ? { name: 'dashboard' } : undefined
   }
 
-  if (to.name === 'landing') {
-    return auth.isAuthenticated ? { name: 'dashboard' } : undefined
-  }
-
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' }
   }
@@ -81,7 +113,7 @@ router.beforeEach(async (to) => {
   if (
     !to.meta.requiresAuth &&
     auth.isAuthenticated &&
-    ['login', 'register'].includes(to.name as string)
+    ['login', 'register', 'activate'].includes(to.name as string)
   ) {
     return { name: 'dashboard' }
   }

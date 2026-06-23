@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import axios from 'axios'
 import {
   ArrowDown,
   ArrowUp,
@@ -13,9 +14,15 @@ import {
   LoaderCircle,
 } from 'lucide-vue-next'
 import { filesApi, type BackendData } from '@/api/files.api'
+import { useNotificationsStore } from '@/stores/notifications.store'
 
+interface ApiErrorPayload {
+  errorCode?: number
+  errorMessage?: string
+}
 
 const ROOT_PATH = '/vip'
+const FILE_TOO_LARGE_ERROR_CODE = 1003
 
 const currentPath = ref(ROOT_PATH)
 const entries = ref<BackendData[]>([])
@@ -27,6 +34,7 @@ const isDeleteModalOpen = ref(false)
 const pendingDeleteEntry = ref<BackendData | null>(null)
 const isCreateDirectoryModalOpen = ref(false)
 const newDirectoryName = ref('')
+const notificationsStore = useNotificationsStore()
 
 const breadcrumbs = computed(() => {
   const segments = currentPath.value.split('/').filter(Boolean)
@@ -51,7 +59,7 @@ const sortedEntries = computed(() => {
     if (a.type !== b.type) {
       return a.type === 'folder' ? -1 : 1
     }
-    return a.name.localeCompare(b.name)
+    return (a.name || '').localeCompare(b.name || '')
   })
 })
 
@@ -92,7 +100,8 @@ async function loadDirectory(path = currentPath.value): Promise<void> {
     currentPath.value = path
     entries.value = data
   } catch {
-    errorMessage.value = `Impossible de charger le dossier ${path}.`
+    errorMessage.value = `Unable to load folder ${path}.`
+    notificationsStore.error(`Unable to load folder ${path}.`)
   } finally {
     isLoading.value = false
   }
@@ -128,12 +137,31 @@ async function onUploadChange(event: Event): Promise<void> {
   const id = `upload:${file.name}`
   activeActionId.value = id
   errorMessage.value = null
+  const uploadToastId = notificationsStore.addToast({
+    type: 'info',
+    title: 'Upload in progress',
+    message: `Uploading ${file.name}...`,
+    duration: 60000,
+  })
 
   try {
     await filesApi.uploadFile(currentPath.value, file)
     await loadDirectory(currentPath.value)
-  } catch {
-    errorMessage.value = `Impossible de telecharger le fichier ${file.name}.`
+    notificationsStore.updateToast(uploadToastId, {
+      type: 'success',
+      title: 'Upload completed',
+      message: `${file.name} uploaded successfully.`,
+      duration: 5000,
+    })
+  } catch (error: unknown) {
+    const uploadErrorMessage = getUploadErrorMessage(error, file.name)
+    errorMessage.value = uploadErrorMessage
+    notificationsStore.updateToast(uploadToastId, {
+      type: 'error',
+      title: 'Upload failed',
+      message: uploadErrorMessage,
+      duration: 7000,
+    })
   } finally {
     input.value = ''
     activeActionId.value = null
@@ -155,7 +183,11 @@ function closeCreateDirectoryModal(): void {
 async function confirmCreateDirectory(): Promise<void> {
   const name = newDirectoryName.value.trim()
   if (name.length === 0) {
-    errorMessage.value = 'Le nom du dossier est obligatoire.'
+    errorMessage.value = 'Le nom du dossier est requis.'
+    return
+  }
+  if (name.includes(' ')) {
+    errorMessage.value = "Le nom du dossier ne peut pas contenir d'espaces."
     return
   }
 
@@ -163,12 +195,25 @@ async function confirmCreateDirectory(): Promise<void> {
   errorMessage.value = null
 
   try {
+    const createDirectoryToastId = notificationsStore.addToast({
+      type: 'info',
+      title: 'Creating folder',
+      message: `Creating ${name}...`,
+      duration: 60000,
+    })
     await filesApi.createDirectory(currentPath.value, name)
     await loadDirectory(currentPath.value)
+    notificationsStore.updateToast(createDirectoryToastId, {
+      type: 'success',
+      title: 'Folder created',
+      message: `${name} created successfully.`,
+      duration: 5000,
+    })
     isCreateDirectoryModalOpen.value = false
     newDirectoryName.value = ''
   } catch {
-    errorMessage.value = `Impossible de creer le dossier ${name}.`
+    errorMessage.value = `Unable to create folder ${name}.`
+    notificationsStore.error(`Unable to create folder ${name}.`)
   } finally {
     activeActionId.value = null
   }
@@ -183,6 +228,12 @@ async function downloadEntry(entry: BackendData): Promise<void> {
 
   const path = entryPath(entry.name)
   let objectUrl: string | null = null
+  const downloadToastId = notificationsStore.addToast({
+    type: 'info',
+    title: 'Download in progress',
+    message: `Preparing ${entry.name}...`,
+    duration: 60000,
+  })
 
   try {
     const blob = await filesApi.downloadFile(path)
@@ -194,8 +245,20 @@ async function downloadEntry(entry: BackendData): Promise<void> {
     document.body.appendChild(link)
     link.click()
     link.remove()
+    notificationsStore.updateToast(downloadToastId, {
+      type: 'success',
+      title: 'Download ready',
+      message: `${entry.name} download started.`,
+      duration: 5000,
+    })
   } catch {
-    errorMessage.value = `Impossible de telecharger le fichier ${entry.name}.`
+    errorMessage.value = `Unable to download file ${entry.name}.`
+    notificationsStore.updateToast(downloadToastId, {
+      type: 'error',
+      title: 'Download failed',
+      message: `Unable to download file ${entry.name}.`,
+      duration: 7000,
+    })
   } finally {
     if (objectUrl !== null) {
       window.URL.revokeObjectURL(objectUrl)
@@ -204,25 +267,30 @@ async function downloadEntry(entry: BackendData): Promise<void> {
   }
 }
 
-async function deleteEntry(entry: BackendData): Promise<void> {
-  if (entry.type !== 'file') return
-
+async function deleteEntry(entry: BackendData): Promise<boolean> {
   const id = `delete:${entry.name}`
   activeActionId.value = id
   errorMessage.value = null
 
   try {
-    await filesApi.deleteFile(entryPath(entry.name))
+    if (entry.type === 'folder') {
+      await filesApi.deleteDirectory(entryPath(entry.name))
+    } else {
+      await filesApi.deleteFile(entryPath(entry.name))
+    }
     await loadDirectory(currentPath.value)
+    return true
   } catch {
-    errorMessage.value = `Impossible de supprimer le fichier ${entry.name}.`
+    const targetLabel = entry.type === 'folder' ? 'folder' : 'file'
+    errorMessage.value = `Unable to delete ${targetLabel} ${entry.name}.`
+    notificationsStore.error(`Unable to delete ${targetLabel} ${entry.name}.`)
+    return false
   } finally {
     activeActionId.value = null
   }
 }
 
 function requestDelete(entry: BackendData): void {
-  if (entry.type !== 'file') return
   if (isLoading.value || activeActionId.value !== null) return
   pendingDeleteEntry.value = entry
   isDeleteModalOpen.value = true
@@ -237,9 +305,38 @@ function closeDeleteModal(): void {
 async function confirmDelete(): Promise<void> {
   const entry = pendingDeleteEntry.value
   if (!entry) return
-  await deleteEntry(entry)
+  const deleted = await deleteEntry(entry)
   isDeleteModalOpen.value = false
   pendingDeleteEntry.value = null
+  if (deleted) {
+    notificationsStore.info('Deletion request has been taken into account.')
+  }
+}
+
+function getUploadErrorMessage(error: unknown, fileName: string): string {
+  const apiError = extractApiError(error)
+  if (apiError.errorCode === FILE_TOO_LARGE_ERROR_CODE) {
+    return apiError.errorMessage || 'File is too large for upload.'
+  }
+  return `Unable to upload file ${fileName}.`
+}
+
+function extractApiError(error: unknown): ApiErrorPayload {
+  if (!axios.isAxiosError(error)) {
+    return {}
+  }
+  const data = error.response?.data
+  if (!data || typeof data !== 'object') {
+    return {}
+  }
+  return {
+    errorCode: typeof (data as ApiErrorPayload).errorCode === 'number'
+      ? (data as ApiErrorPayload).errorCode
+      : undefined,
+    errorMessage: typeof (data as ApiErrorPayload).errorMessage === 'string'
+      ? (data as ApiErrorPayload).errorMessage
+      : undefined,
+  }
 }
 
 onMounted(() => {

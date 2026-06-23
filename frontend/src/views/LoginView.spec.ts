@@ -48,7 +48,7 @@ describe('LoginView', () => {
   })
 
   it('logs in and redirects to dashboard on success', async () => {
-    mocked.login.mockResolvedValue(undefined)
+    mocked.login.mockResolvedValue({ confirmed: true })
 
     const wrapper = mount(LoginView)
 
@@ -57,7 +57,7 @@ describe('LoginView', () => {
     await wrapper.get('form').trigger('submit')
 
     expect(mocked.login).toHaveBeenCalledWith({ username: 'user@example.com', password: 'secret' })
-    expect(mocked.notifySuccess).toHaveBeenCalledWith('You have been logged in successfully.')
+    expect(mocked.notifySuccess).toHaveBeenCalledWith('Vous êtes maintenant connecté.')
     expect(mocked.push).toHaveBeenCalledWith('/dashboard')
   })
 

@@ -1,7 +1,7 @@
 export interface Group {
   name: string
   publicGroup: boolean
-  type: GroupType
+  type: string
   auto: boolean
 }
 
