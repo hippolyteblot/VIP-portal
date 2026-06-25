@@ -84,6 +84,7 @@ public class Task implements IsSerializable {
         SING_INVALID_IMAGE_NAME(51, "Invalid singularity/apptainer image name"),
         SING_IMAGE_NOT_FOUND(52, "Error: Singularity/apptainer image not found"),
         INVALID_CONTAINER_RUNTIME(53, "Invalid container runtime (only docker/singularity)"),
+        MISSING_CONTAINER_ENCRYPTION_KEY(54, "Missing container encryption key"),
         TOKEN_REFRESH_TOO_LONG(60, "Error: Timeout while refreshing an OIDC token."),
         TOKEN_REFRESH_ERROR(61, "Error while refreshing an OIDC token");
 
