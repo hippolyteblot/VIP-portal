@@ -4,7 +4,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
@@ -132,16 +131,8 @@ public class PublicationBusiness extends CommonBusiness {
             return sdf.parse(dateStr.trim());
         } catch (Exception e) {
             try {
-                Calendar cal = Calendar.getInstance();
-                cal.set(Calendar.YEAR, Integer.parseInt(dateStr.trim()));
-                cal.set(Calendar.MONTH, 0);
-                cal.set(Calendar.DAY_OF_MONTH, 1);
-                cal.set(Calendar.HOUR_OF_DAY, 0);
-                cal.set(Calendar.MINUTE, 0);
-                cal.set(Calendar.SECOND, 0);
-                cal.set(Calendar.MILLISECOND, 0);
-                return cal.getTime();
-            } catch (NumberFormatException e2) {
+                return new SimpleDateFormat("yyyy").parse(dateStr.trim());
+            } catch (Exception e2) {
                 return new Date(0);
             }
         }
