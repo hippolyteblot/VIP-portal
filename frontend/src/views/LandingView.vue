@@ -16,6 +16,8 @@ import { getGroupBadgeColor } from '@/utils/groupColor'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import { applicationsApi } from '@/api/applications.api'
 import type { BackendApplication } from '@/api/applications.api'
+import { publicationsApi } from '@/api/publications.api'
+import type { Publication } from '@/types/publication.types'
 
 const stats = [
   { value: '30+', label: 'Applications' },
@@ -25,6 +27,7 @@ const stats = [
 ]
 
 const topApplications = ref<BackendApplication[]>([])
+const topPublications = ref<Publication[]>([])
 
 async function loadPublicApplications() {
   try {
@@ -35,41 +38,14 @@ async function loadPublicApplications() {
   }
 }
 
-// Same for publications and team members, we should have public routes for that
-const publications = [
-  {
-    title: '	The practical impact of numerical variability on structural MRI measures of Parkinsons disease',
-    authors: 'Chatelain, Yohan and Soko-lowski, Andrzej and Sharp, Madeleine and Poline, Jean-Baptiste and Glatard, Tristan',
-    journal: 'bioRxiv',
-    year: 2026,
-    doi: '',
-    tags: ['Neuroimaging', 'Reproducibility'],
-  },
-  {
-    title: 'Estimation of reference curves for brain atrophy and analysis of robustness to machine effects',
-    authors: '	Elodie Piot, Félix Renard, Arnaud Attyé, Alexandre Krainik',
-    journal: 'Scientific Reports',
-    year: 2025,
-    doi: '',
-    tags: ['Simulation', 'Medical Physics'],
-  },
-  {
-    title: 'Development and testing of a phantom for CT-based examination of head and neck tumours',
-    authors: 'Maike Rosendahl',
-    journal: 'Master Thesis',
-    year: 2024,
-    doi: '',
-    tags: ['Federated', 'EUCAIM'],
-  },
-  {
-    title: 'Development and characterization of modular mouse phantoms for end-to-end testing and training in radiobiology experiments',
-    authors: 'Marie Wegner, Thorsten Frenzel, Dieter Krause and Elisabetta Gargioni',
-    journal: 'Physics in Medicine and Biology	',
-    year: 2023,
-    doi: '',
-    tags: ['Reproducibility', 'Grid'],
-  },
-]
+async function loadPublicPublications() {
+  try {
+    topPublications.value = await publicationsApi.getPublic()
+  } catch (error) {
+    console.error('Failed to load public publications:', error)
+    topPublications.value = []
+  }
+}
 
 // But for the team, its probably something that we can hardcode...
 const team = [
@@ -197,6 +173,7 @@ function updateNavbarState() {
 
 onMounted(() => {
   loadPublicApplications()
+  loadPublicPublications()
   updateNavbarState()
   window.addEventListener('scroll', updateNavbarState, { passive: true })
   window.addEventListener('resize', updateNavbarState)
@@ -429,9 +406,9 @@ onUnmounted(() => {
 
         <div class="mt-10 grid gap-5 sm:grid-cols-2">
           <a
-            v-for="pub in publications"
-            :key="pub.doi"
-            :href="`https://doi.org/${pub.doi}`"
+            v-for="pub in topPublications"
+            :key="pub.id"
+            :href="pub.doi ? `https://doi.org/${pub.doi}` : undefined"
             target="_blank"
             rel="noopener"
             class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
@@ -449,20 +426,13 @@ onUnmounted(() => {
             <p class="mt-2 text-xs text-gray-400">{{ pub.authors }}</p>
 
             <div class="mt-4 flex flex-wrap items-center gap-2">
-              <span class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
+              <span v-if="pub.typeName" class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
                 <BookOpen class="h-3 w-3" />
-                {{ pub.journal }}
+                {{ pub.typeName }}
               </span>
-              <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">
+              <span v-if="pub.date" class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">
                 <Calendar class="h-3 w-3" />
-                {{ pub.year }}
-              </span>
-              <span
-                v-for="tag in pub.tags"
-                :key="tag"
-                class="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500"
-              >
-                {{ tag }}
+                {{ pub.date }}
               </span>
             </div>
           </a>
