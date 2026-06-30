@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 import fr.insalyon.creatis.vip.core.server.dao.DAOException;
 import fr.insalyon.creatis.vip.datamanager.models.UserApiKey;
 import fr.insalyon.creatis.vip.datamanager.server.dao.ApiKeysDAO;
@@ -18,13 +19,22 @@ import fr.insalyon.creatis.vip.datamanager.server.dao.ApiKeysDAO;
 public class ApiKeyBusiness {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private ApiKeysDAO apiKeysDAO;
+    private final ApiKeysDAO apiKeysDAO;
+    private final UserBusiness userBusiness;
 
     @Autowired
-    public ApiKeyBusiness(ApiKeysDAO apiKeysDAO) {
+    public ApiKeyBusiness(ApiKeysDAO apiKeysDAO, UserBusiness userBusiness) {
         this.apiKeysDAO = apiKeysDAO;
+        this.userBusiness = userBusiness;
     }
 
+    public String getVipApiKey() throws VipException {
+        return userBusiness.getUserApikey(userBusiness.getCurrentUser().getEmail());
+    }
+
+    public String generateNewVipApiKey() throws VipException {
+        return userBusiness.generateNewUserApikey(userBusiness.getCurrentUser().getEmail());
+    }
 
     public List<UserApiKey> apiKeysFor(String userEmail) throws VipException {
 
