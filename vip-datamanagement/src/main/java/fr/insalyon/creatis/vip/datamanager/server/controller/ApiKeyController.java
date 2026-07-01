@@ -3,9 +3,12 @@ package fr.insalyon.creatis.vip.datamanager.server.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -31,5 +34,12 @@ public class ApiKeyController {
             return apiKeyBusiness.generateNewVipApiKey();
         }
         return apiKeyBusiness.getVipApiKey();
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApiKey() throws VipException {
+        logger.info("Deleting API key for current user");
+        apiKeyBusiness.deleteVipApiKey();
     }
 }

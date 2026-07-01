@@ -36,6 +36,10 @@ public class ApiKeyBusiness {
         return userBusiness.generateNewUserApikey(userBusiness.getCurrentUser().getEmail());
     }
 
+    public void deleteVipApiKey() throws VipException {
+        userBusiness.deleteUserApikey(userBusiness.getCurrentUser().getEmail());
+    }
+
     public List<UserApiKey> apiKeysFor(String userEmail) throws VipException {
 
         try {
