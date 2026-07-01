@@ -27,5 +27,4 @@ export interface UserSuggestion {
   lastUpdatePublications?: number
   groups?: Group[]
   groupsWithRoles?: GroupWithRole[]
-  apiKey?: string
 }

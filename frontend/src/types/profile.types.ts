@@ -15,7 +15,6 @@ export interface ProfileUser {
   welcomeDismissed: string | null
   groups: Group[]
   groupsWithRoles?: GroupWithRole[]
-  apiKey: string | null
   folder?: string
 }
 

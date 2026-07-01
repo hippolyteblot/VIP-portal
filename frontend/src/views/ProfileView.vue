@@ -6,6 +6,7 @@ import { Copy, KeyRound, Shield, Trash2, UserRound, Users } from 'lucide-vue-nex
 import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppInput from '@/components/ui/AppInput.vue'
+import { apikeyApi } from '@/api/apikey.api'
 import { sessionApi } from '@/api/session.api'
 import { usersApi } from '@/api/users.api'
 import { useAuthStore } from '@/stores/auth.store'
@@ -27,6 +28,8 @@ const isRegeneratingApiKey = ref(false)
 const isDeletingApiKey = ref(false)
 
 const profile = ref<ProfileUser | null>(null)
+const apiKey = ref<string | null>(null)
+const isLoadingApiKey = ref(false)
 const selectedGroupNames = ref<string[]>([])
 
 const profileForm = reactive({
@@ -55,14 +58,13 @@ const canSubmitProfile = computed(() => hasLoadedProfile.value)
 const canDeleteAccount = computed(() => hasLoadedProfile.value)
 
 const apiKeyPreview = computed(() => {
-  const value = profile.value?.apiKey ?? ''
-  if (!value) {
+  if (!apiKey.value) {
     return 'No API key generated yet'
   }
-  if (value.length <= 14) {
-    return value
+  if (apiKey.value.length <= 14) {
+    return apiKey.value
   }
-  return `${value.slice(0, 8)}...${value.slice(-6)}`
+  return `${apiKey.value.slice(0, 8)}...${apiKey.value.slice(-6)}`
 })
 
 function hydrateProfileForm(user: ProfileUser) {
@@ -129,7 +131,6 @@ function normalizeProfile(input: unknown): ProfileUser | null {
     lastUpdatePublications: typeof raw.lastUpdatePublications === 'string' ? raw.lastUpdatePublications : null,
     welcomeDismissed: typeof raw.welcomeDismissed === 'string' ? raw.welcomeDismissed : null,
     groups: Array.isArray(raw.groups) ? (raw.groups as Group[]) : [],
-    apiKey: typeof raw.apiKey === 'string' ? raw.apiKey : null,
   }
 }
 
@@ -271,27 +272,50 @@ async function submitPasswordChange() {
 }
 
 function copyApiKey() {
-  const key = profile.value?.apiKey
-  if (!key) {
+  if (!apiKey.value) {
     notificationsStore.warning('No API key available to copy.')
     return
   }
 
-  navigator.clipboard.writeText(key)
+  navigator.clipboard.writeText(apiKey.value)
     .then(() => notificationsStore.success('API key copied to clipboard.'))
     .catch(() => notificationsStore.error('Unable to copy API key.'))
 }
 
-function regenerateApiKey() {
-  isRegeneratingApiKey.value = true
-  notificationsStore.info('API key regeneration endpoint is not exposed in the current internal REST API yet.')
-  isRegeneratingApiKey.value = false
+async function fetchApiKey() {
+  isLoadingApiKey.value = true
+  try {
+    apiKey.value = await apikeyApi.get()
+  } catch {
+    apiKey.value = null
+  } finally {
+    isLoadingApiKey.value = false
+  }
 }
 
-function deleteApiKey() {
+async function regenerateApiKey() {
+  isRegeneratingApiKey.value = true
+  try {
+    apiKey.value = await apikeyApi.generateNew()
+    notificationsStore.success('New API key generated.')
+  } catch {
+    notificationsStore.error('Unable to regenerate API key.')
+  } finally {
+    isRegeneratingApiKey.value = false
+  }
+}
+
+async function deleteApiKey() {
   isDeletingApiKey.value = true
-  notificationsStore.info('API key deletion endpoint is not exposed in the current internal REST API yet.')
-  isDeletingApiKey.value = false
+  try {
+    await apikeyApi.delete()
+    apiKey.value = null
+    notificationsStore.success('API key deleted.')
+  } catch {
+    notificationsStore.error('Unable to delete API key.')
+  } finally {
+    isDeletingApiKey.value = false
+  }
 }
 
 async function deleteAccount() {
@@ -339,6 +363,7 @@ onMounted(async () => {
   }
 
   await fetchCurrentProfile()
+  await fetchApiKey()
 })
 </script>
 
