@@ -28,18 +28,6 @@ public class ApiKeyBusiness {
         this.userBusiness = userBusiness;
     }
 
-    public String getVipApiKey() throws VipException {
-        return userBusiness.getUserApikey(userBusiness.getCurrentUser().getEmail());
-    }
-
-    public String generateNewVipApiKey() throws VipException {
-        return userBusiness.generateNewUserApikey(userBusiness.getCurrentUser().getEmail());
-    }
-
-    public void deleteVipApiKey() throws VipException {
-        userBusiness.deleteUserApikey(userBusiness.getCurrentUser().getEmail());
-    }
-
     public List<UserApiKey> apiKeysFor(String userEmail) throws VipException {
 
         try {
@@ -80,5 +68,17 @@ public class ApiKeyBusiness {
         } catch (DAOException e) {
             throw new VipException(e);
         }
+    }
+
+    public String getVipApiKey() throws VipException {
+        return userBusiness.getUserApikey(userBusiness.getCurrentUser().getEmail());
+    }
+
+    public String generateNewVipApiKey() throws VipException {
+        return userBusiness.generateNewUserApikey(userBusiness.getCurrentUser().getEmail());
+    }
+
+    public void deleteVipApiKey() throws VipException {
+        userBusiness.deleteUserApikey(userBusiness.getCurrentUser().getEmail());
     }
 }
