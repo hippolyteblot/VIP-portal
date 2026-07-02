@@ -47,49 +47,52 @@ async function loadPublicPublications() {
   }
 }
 
-// But for the team, its probably something that we can hardcode...
+import { getFrontendBase } from '@/utils/path'
+
+const frontendBase = getFrontendBase()
+
 const team = [
   {
     name: 'Axel Bonnet',
     role: 'Main Developer',
     org: 'CREATIS',
     url: 'https://www.egi.eu/people/axel-bonnet/',
-    photo: '/team/axel_bonnet.jpg',
+    photo: `${frontendBase}team/axel_bonnet.jpg`,
   },
   {
     name: 'Sorina Pop',
     role: 'Project Manager',
     org: 'CREATIS',
     url: 'https://www.creatis.insa-lyon.fr/site7/fr/users/camarasu',
-    photo: '/team/sorina_pop.jpg',
+    photo: `${frontendBase}team/sorina_pop.jpg`,
   },
   {
     name: 'Guillaume Vinet',
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/guillaume_vinet.png',
+    photo: `${frontendBase}team/guillaume_vinet.png`,
   },
   {
     name: 'Mayssa Rouissi',
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/mayssa_rouissi.png',
+    photo: `${frontendBase}team/mayssa_rouissi.png`,
   },
   {
     name: 'Bertrand Patet',
     role: '',
     org: 'CREATIS',
     url: null,
-    photo: '/team/photo_bertrand.png',
+    photo: `${frontendBase}team/photo_bertrand.png`,
   },
   {
     name: 'Hippolyte Blot',
     role: 'Apprentice',
     org: 'CREATIS',
     url: null,
-    photo: '/team/hippolyte_blot.jpg',
+    photo: `${frontendBase}team/hippolyte_blot.jpg`,
   },
 ]
 
@@ -99,56 +102,56 @@ const formerContributors = [
     role: 'VIP Founder',
     org: 'Concordia University',
     url: 'https://users.encs.concordia.ca/~tglatard/',
-    photo: '/team/tristan_glatard.jpg',
+    photo: `${frontendBase}team/tristan_glatard.jpg`,
   },
   {
     name: 'Rafael Ferreira da Silva',
     role: 'Senior Research Scientist',
     org: 'Oak Ridge National Laboratory',
     url: 'https://rafaelsilva.com/',
-    photo: '/team/rafael_silva.jpg',
+    photo: `${frontendBase}team/rafael_silva.jpg`,
   },
   {
     name: 'Gaël Vila',
     role: 'Post-Doctoral Researcher',
     org: 'ReproVIP',
     url: 'https://www.creatis.insa-lyon.fr/reprovip/',
-    photo: '/team/gael_vila.jpg',
+    photo: `${frontendBase}team/gael_vila.jpg`,
   },
   {
     name: 'Alexandre Cornier',
     role: 'Research Engineer',
     org: 'EGI-ACE & ReproVIP',
     url: 'https://www.egi.eu/project/egi-ace/',
-    photo: '/team/alex_cornier.jpg',
+    photo: `${frontendBase}team/alex_cornier.jpg`,
   },
   {
     name: 'Sandesh Patil',
     role: 'Research Engineer',
     org: 'FLI-IAM',
     url: 'https://www.francelifeimaging.fr/',
-    photo: '/team/sandesh_patil.jpg',
+    photo: `${frontendBase}team/sandesh_patil.jpg`,
   },
   {
     name: 'Ethaniel Billon',
     role: 'Engineer',
     org: 'PEPR Chronicardio',
     url: 'https://pepr-santenum.fr/2023/11/08/chronicardio/',
-    photo: '/team/ethaniel_billon.jpg',
+    photo: `${frontendBase}team/ethaniel_billon.jpg`,
   },
   {
     name: 'Nicolas Georges',
     role: 'Research Engineer',
     org: 'EUCAIM',
     url: 'https://www.eibir.org/projects/eucaim/',
-    photo: '/team/nicolas_georges.png',
+    photo: `${frontendBase}team/nicolas_georges.png`,
   },
   {
     name: 'Gwenaël Ambrosino-Ielpo',
     role: 'Research Engineer',
     org: 'FLI-IAM',
     url: 'https://www.francelifeimaging.fr/',
-    photo: '/team/gwenael_ambrosino.jpg',
+    photo: `${frontendBase}team/gwenael_ambrosino.jpg`,
   },
 ]
 
@@ -199,7 +202,7 @@ onUnmounted(() => {
     >
       <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div class="flex items-center gap-3">
-          <img src="/team/vip-logo-without-text.png" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
+          <img :src="`${frontendBase}team/vip-logo-without-text.png`" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
           <span class="text-lg font-bold text-white">VIP Portal</span>
         </div>
         <nav class="hidden items-center gap-8 text-sm font-medium text-primary-200 md:flex">
@@ -561,7 +564,7 @@ onUnmounted(() => {
       <div class="mx-auto max-w-7xl px-6 py-12">
         <div class="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div class="flex items-center gap-3">
-            <img src="/team/vip-logo-without-text.png" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
+            <img :src="`${frontendBase}team/vip-logo-without-text.png`" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
             <div>
               <p class="font-semibold">VIP Portal</p>
               <p class="text-xs text-primary-300">Virtual Imaging Platform</p>

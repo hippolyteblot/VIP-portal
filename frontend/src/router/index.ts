@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { getFrontendBase } from '@/utils/path'
 import { useAuthStore } from '@/stores/auth.store'
 
+const routerBase = import.meta.env.PROD ? (getFrontendBase() || import.meta.env.BASE_URL || '/') : import.meta.env.BASE_URL
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(routerBase),
   routes: [
     {
       path: '/login',

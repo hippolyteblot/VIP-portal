@@ -7,6 +7,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import AppCard from '@/components/ui/AppCard.vue'
 import AppInput from '@/components/ui/AppInput.vue'
 import { apikeyApi } from '@/api/apikey.api'
+import { getFrontendBase } from '@/utils/path'
 import { sessionApi } from '@/api/session.api'
 import { usersApi } from '@/api/users.api'
 import { useAuthStore } from '@/stores/auth.store'
@@ -333,7 +334,7 @@ async function deleteAccount() {
     await usersApi.remove(profile.value.id)
     notificationsStore.success('Your account has been deleted.')
     await authStore.logout()
-    window.location.assign('/login')
+    window.location.assign(`${getFrontendBase()}login`)
   } catch (error: unknown) {
     let message = 'Unable to delete account.'
     if (axios.isAxiosError(error) && typeof error.response?.data?.message === 'string') {

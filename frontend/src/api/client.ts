@@ -1,6 +1,7 @@
 import axios from 'axios'
+import { getBackendBase, getFrontendBase } from '@/utils/path'
 
-const BASE_URL = ''
+const BASE_URL = import.meta.env.PROD ? getBackendBase() : ''
 
 function readCookie(name: string): string | null {
   const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
@@ -50,9 +51,8 @@ function isSessionProbeRequest(url?: string, method?: string): boolean {
 }
 
 function redirectToLogin(): void {
-  const base = import.meta.env.BASE_URL || '/'
-  const normalizedBase = base.endsWith('/') ? base : `${base}/`
-  const loginPath = `${normalizedBase}login`
+  const base = getFrontendBase()
+  const loginPath = `${base}login`
 
   if (window.location.pathname !== loginPath) {
     window.location.assign(loginPath)
