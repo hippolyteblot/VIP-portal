@@ -67,6 +67,13 @@ const team = [
     photo: `${frontendBase}team/sorina_pop.jpg`,
   },
   {
+    name: 'Bertrand Pautet',
+    role: 'Research Engineer',
+    org: 'CREATIS',
+    url: null,
+    photo: '/team/bertrand_pautet.jpg',
+  },
+  {
     name: 'Guillaume Vinet',
     role: 'Research Engineer',
     org: 'CREATIS',
