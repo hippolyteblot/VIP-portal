@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
-import fr.insalyon.creatis.vip.datamanager.server.business.ApiKeyBusiness;
+import fr.insalyon.creatis.vip.core.server.business.UserBusiness;
 
 @RestController
 @RequestMapping("/apikey")
@@ -20,26 +20,26 @@ public class ApiKeyController {
 
     private static final Logger logger = LoggerFactory.getLogger(ApiKeyController.class);
 
-    private final ApiKeyBusiness apiKeyBusiness;
+    private final UserBusiness userBusiness;
 
     @Autowired
-    public ApiKeyController(ApiKeyBusiness apiKeyBusiness) {
-        this.apiKeyBusiness = apiKeyBusiness;
+    public ApiKeyController(UserBusiness userBusiness) {
+        this.userBusiness = userBusiness;
     }
 
     @GetMapping
     public String getApiKey(@RequestParam(value = "new", defaultValue = "false") boolean generateNew) throws VipException {
         if (generateNew) {
-            logger.info("Generating new API key for current user");
-            return apiKeyBusiness.generateNewVipApiKey();
+            logger.info("Generating new API key for user {}", userBusiness.getUserEmail());
+            return userBusiness.generateNewUserApikey(userBusiness.getUserEmail());
         }
-        return apiKeyBusiness.getVipApiKey();
+        return userBusiness.getUserApikey(userBusiness.getUserEmail());
     }
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteApiKey() throws VipException {
-        logger.info("Deleting API key for current user");
-        apiKeyBusiness.deleteVipApiKey();
+        logger.info("Deleting API key for user {}", userBusiness.getUserEmail());
+        userBusiness.deleteUserApikey(userBusiness.getUserEmail());
     }
 }

@@ -69,16 +69,4 @@ public class ApiKeyBusiness {
             throw new VipException(e);
         }
     }
-
-    public String getVipApiKey() throws VipException {
-        return userBusiness.getUserApikey(userBusiness.getCurrentUser().getEmail());
-    }
-
-    public String generateNewVipApiKey() throws VipException {
-        return userBusiness.generateNewUserApikey(userBusiness.getCurrentUser().getEmail());
-    }
-
-    public void deleteVipApiKey() throws VipException {
-        userBusiness.deleteUserApikey(userBusiness.getCurrentUser().getEmail());
-    }
 }
