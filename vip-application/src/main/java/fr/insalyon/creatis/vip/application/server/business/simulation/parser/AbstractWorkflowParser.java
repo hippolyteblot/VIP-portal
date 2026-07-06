@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fr.insalyon.creatis.vip.application.models.Descriptor;
 import fr.insalyon.creatis.vip.application.models.Source;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 public abstract class AbstractWorkflowParser extends DefaultHandler {
 
@@ -41,25 +42,14 @@ public abstract class AbstractWorkflowParser extends DefaultHandler {
         return parse(new StringReader(workflowString));
     }
 
-   private Descriptor parse(Reader workflowReader) throws IOException, SAXException, ParserConfigurationException {
-        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-        parserFactory.setNamespaceAware(true);
+    private Descriptor parse(Reader workflowReader) throws IOException, SAXException, ParserConfigurationException {
 
-        try {
-            // Disable external general entities to prevent local file disclosure 
-            parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-            // Disable external parameter entities to prevent attacks via external DTD files
-            parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-            // Prevent the parser from loading external DTDs (Document Type Definitions)
-            parserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        } catch (SAXNotRecognizedException | SAXNotSupportedException e) {
-            logger.warn("The SAX parser does not support some XXE security features", e);
-        }
-
+        SAXParserFactory parserFactory = CoreUtil.getSecureSAXParserFactory();
+        
         reader = parserFactory.newSAXParser().getXMLReader();
         reader.setContentHandler(this);
         reader.parse(new InputSource(workflowReader));
 
-        return new Descriptor(sources, description);
+        return new Descriptor(sources,description);
     }
 }

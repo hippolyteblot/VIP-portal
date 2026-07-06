@@ -4,6 +4,14 @@ import java.security.SecureRandom;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import java.text.Normalizer;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+
+
 import fr.insalyon.creatis.vip.core.client.VipException;
 
 public class CoreUtil {
@@ -56,4 +64,25 @@ public class CoreUtil {
         }
         return sb.toString();
     }
+
+    
+            
+    public static SAXParserFactory getSecureSAXParserFactory() {
+            SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+            
+            parserFactory.setNamespaceAware(true);
+            
+            try {
+                parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+                
+                parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+                parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+                parserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                
+            } catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+                System.err.println("The SAX parser does not support some XXE security features: " + e.getMessage());
+            }
+            
+            return parserFactory;
+        }
 }
