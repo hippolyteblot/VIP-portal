@@ -6,7 +6,9 @@ import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.Application;
 import fr.insalyon.creatis.vip.application.models.Engine;
+import fr.insalyon.creatis.vip.application.models.InOutData;
 import fr.insalyon.creatis.vip.application.models.Workflow;
+import fr.insalyon.creatis.vip.application.models.WorkflowInput;
 import fr.insalyon.creatis.vip.application.server.dao.ApplicationDAO;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
@@ -37,17 +39,20 @@ public class ListWorkflowsBusiness extends CommonBusiness {
     private final UserBusiness userBusiness;
     private final PageBuilder pageBuilder;
     private final EngineBusiness engineBusiness;
+    private final WorkflowBusiness workflowBusiness;
 
     @Autowired
     public ListWorkflowsBusiness(WorkflowDAO workflowDAO, ApplicationDAO applicationDAO,
                                  WorkflowExecutionBusiness workflowExecutionBusiness, UserBusiness userBusiness,
-                                 PageBuilder pageBuilder, EngineBusiness engineBusiness) {
+                                 PageBuilder pageBuilder, EngineBusiness engineBusiness,
+                                 WorkflowBusiness workflowBusiness) {
         this.workflowDAO = workflowDAO;
         this.applicationDAO = applicationDAO;
         this.workflowExecutionBusiness = workflowExecutionBusiness;
         this.userBusiness = userBusiness;
         this.pageBuilder = pageBuilder;
         this.engineBusiness = engineBusiness;
+        this.workflowBusiness = workflowBusiness;
     }
 
     @VIPExternalSafe
@@ -263,8 +268,9 @@ public class ListWorkflowsBusiness extends CommonBusiness {
         } else {
             workflowUser = Optional.ofNullable(usersByFullname.get(dbWorkflow.getUsername()));
         }
+        Workflow workflow;
         if (workflowUser.isEmpty()) {
-            return new Workflow(
+            workflow = new Workflow(
                     dbWorkflow.getId(),
                     dbWorkflow.getDescription(),
                     dbWorkflow.getApplication(),
@@ -276,7 +282,7 @@ public class ListWorkflowsBusiness extends CommonBusiness {
                     dbWorkflow.getEngine(),
                     dbWorkflow.getTags());
         } else {
-            return new Workflow(
+            workflow = new Workflow(
                     dbWorkflow.getId(),
                     dbWorkflow.getDescription(),
                     dbWorkflow.getApplication(),
@@ -288,6 +294,31 @@ public class ListWorkflowsBusiness extends CommonBusiness {
                     dbWorkflow.getEngine(),
                     dbWorkflow.getTags());
         }
+        try {
+            String folder = getUser().getFolder();
+            List<InOutData> inputData = workflowBusiness.getInputData(workflow.getID(), folder);
+            if (inputData != null && !inputData.isEmpty()) {
+                workflow.setInputs(inputData.stream()
+                    .collect(Collectors.groupingBy(
+                        InOutData::getProcessor,
+                        Collectors.collectingAndThen(
+                            Collectors.mapping(InOutData::getPath, Collectors.toList()),
+                            WorkflowInput::ofList
+                        )
+                    )));
+            }
+            List<InOutData> outputData = workflowBusiness.getOutputData(workflow.getID(), folder);
+            if (outputData != null && !outputData.isEmpty()) {
+                workflow.setOutputs(outputData.stream()
+                    .collect(Collectors.groupingBy(
+                        InOutData::getProcessor,
+                        Collectors.mapping(InOutData::getPath, Collectors.toList())
+                    )));
+            }
+        } catch (Exception e) {
+            logger.warn("Could not populate inputs/outputs for workflow {}", workflow.getID(), e);
+        }
+        return workflow;
     }
 
     public List<Workflow> refreshRunningWorkflows(List<Workflow> workflows) throws VipException {
