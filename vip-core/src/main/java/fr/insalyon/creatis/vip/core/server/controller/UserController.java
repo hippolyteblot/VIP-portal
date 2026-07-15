@@ -170,7 +170,7 @@ public class UserController {
         }
         User currentUser = userBusiness.getCurrentUser();
         if (currentUser.getLevel() != UserLevel.Administrator) {
-            logger.warn("User {} attempted to access API key for user {}", currentUser.getEmail(), userId);
+            logger.error("User {} attempted to access API key for user {}", currentUser.getEmail(), userId);
             throw new VipException(DefaultError.ACCESS_DENIED);
         }
         return userId;
