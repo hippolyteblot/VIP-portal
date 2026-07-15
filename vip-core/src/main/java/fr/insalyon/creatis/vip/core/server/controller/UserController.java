@@ -144,7 +144,7 @@ public class UserController {
     @GetMapping(value = "{userId}/apikey")
     public String getApiKey(@PathVariable String userId) throws VipException {
         String email = resolveEmail(userId);
-        logger.info("Getting API key for user: {}", email);
+        logger.debug("Getting API key for user: {}", email);
         return userBusiness.getUserApikey(email);
     }
 
@@ -170,6 +170,7 @@ public class UserController {
         }
         User currentUser = userBusiness.getCurrentUser();
         if (currentUser.getLevel() != UserLevel.Administrator) {
+            logger.warn("User {} attempted to access API key for user {}", currentUser.getEmail(), userId);
             throw new VipException(DefaultError.ACCESS_DENIED);
         }
         return userId;

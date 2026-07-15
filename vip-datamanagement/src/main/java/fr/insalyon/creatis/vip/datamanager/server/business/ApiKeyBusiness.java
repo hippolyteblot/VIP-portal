@@ -20,12 +20,10 @@ public class ApiKeyBusiness {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ApiKeysDAO apiKeysDAO;
-    private final UserBusiness userBusiness;
 
     @Autowired
-    public ApiKeyBusiness(ApiKeysDAO apiKeysDAO, UserBusiness userBusiness) {
+    public ApiKeyBusiness(ApiKeysDAO apiKeysDAO) {
         this.apiKeysDAO = apiKeysDAO;
-        this.userBusiness = userBusiness;
     }
 
     public List<UserApiKey> apiKeysFor(String userEmail) throws VipException {
