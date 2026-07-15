@@ -13,6 +13,7 @@ import {
 } from 'lucide-vue-next'
 
 import { getGroupBadgeColor } from '@/utils/groupColor'
+import { getFrontendBase } from '@/utils/path'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import { applicationsApi } from '@/api/applications.api'
 import type { BackendApplication } from '@/api/applications.api'
@@ -46,8 +47,6 @@ async function loadPublicPublications() {
     topPublications.value = []
   }
 }
-
-import { getFrontendBase } from '@/utils/path'
 
 const frontendBase = getFrontendBase()
 

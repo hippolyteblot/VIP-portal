@@ -22,8 +22,6 @@ export interface Workflow {
   userFullName?: string
   startDate: string
   endDate?: string
-  engineName?: string
-  tags?: string
 }
 
 export interface WorkflowLaunchPayload {
