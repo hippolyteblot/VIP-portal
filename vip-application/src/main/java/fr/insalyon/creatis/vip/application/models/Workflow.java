@@ -40,7 +40,7 @@ public class Workflow implements IsSerializable {
     private Date endDate;
 
     @JsonIgnore
-    private String engineName;
+    private String engineEndpoint;
     @JsonIgnore
     private String tags;
 
@@ -49,7 +49,7 @@ public class Workflow implements IsSerializable {
 
     public Workflow(String id, String workflowName, String applicationName, String applicationVersion,
                     User user, String status, Date startDate, Date endDate,
-                    String engineName, String tags) {
+                    String engineEndpoint, String tags) {
 
         this.id = id;
         this.workflowName = workflowName;
@@ -60,13 +60,13 @@ public class Workflow implements IsSerializable {
         this.status = status == null ? null : WorkflowStatus.valueOf(status);
         this.startDate = startDate;
         this.endDate = endDate;
-        this.engineName = engineName;
+        this.engineEndpoint = engineEndpoint;
         this.tags = tags;
     }
 
     public Workflow(String id, String workflowName, String applicationName, String applicationVersion,
                     String userFullName, String status, Date startDate, Date endDate,
-                    String engineName, String tags) {
+                    String engineEndpoint, String tags) {
 
         this.id = id;
         this.workflowName = workflowName;
@@ -77,7 +77,7 @@ public class Workflow implements IsSerializable {
         this.status = WorkflowStatus.valueOf(status);
         this.startDate = startDate;
         this.endDate = endDate;
-        this.engineName = engineName;
+        this.engineEndpoint = engineEndpoint;
         this.tags = tags;
     }
 
@@ -129,12 +129,12 @@ public class Workflow implements IsSerializable {
         this.status = status;
     }
 
-    public String getEngineName() {
-        return engineName;
+    public String getEngineEndpoint() {
+        return engineEndpoint;
     }
 
-    public void setEngineName(String engineName) {
-        this.engineName = engineName;
+    public void setEngineEndpoint(String engineEndpoint) {
+        this.engineEndpoint = engineEndpoint;
     }
 
     public String getWorkflowName() {
