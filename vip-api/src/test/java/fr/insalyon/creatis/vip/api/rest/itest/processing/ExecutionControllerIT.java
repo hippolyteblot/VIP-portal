@@ -397,7 +397,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         Mockito.when(webServiceEngine.launch(eq(engineEndpoint), workflowContentCaptor.capture(), inputsCaptor.capture(), eq("{\"default.executor\":\"LOCAL\"}"), eq(""), eq("/path/to/proxy"))).thenReturn(workflowId, (String) null);
         Mockito.when(webServiceEngine.getStatus(engineEndpoint, workflowId)).thenReturn(WorkflowStatus.Running, (WorkflowStatus) null);
 
-        Workflow w = new Workflow(workflowId, baseUser2.getFullName(), fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, startDate, null, "Exec test 1", appName, versionName, "", "testEngine", null);
+        Workflow w = new Workflow(workflowId, baseUser2.getFullName(), fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, startDate, null, "Exec test 1", appName, versionName, "", engineEndpoint, null);
         when(workflowDAO.get(workflowId)).thenReturn(w, (Workflow) null);
 
         Execution expectedExecution = new Execution(workflowId, "Exec test 1", appName + "/" + versionName, 0, ExecutionStatus.RUNNING, null, null, startDate.getTime(), null, null);
@@ -445,7 +445,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         Assertions.assertEquals(workflowId, workflow.getId());
         Assertions.assertEquals(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.Running, workflow.getStatus());
         Assertions.assertEquals("Exec test 1", workflow.getDescription());
-        Assertions.assertEquals("testEngine", workflow.getEngine());
+        Assertions.assertEquals(engineEndpoint, workflow.getEngine());
         Assertions.assertEquals(baseUser2.getFullName(), workflow.getUsername());
         Assertions.assertNull(workflow.getFinishedTime());
         MatcherAssert.assertThat(workflow.getStartedTime().getTime(),

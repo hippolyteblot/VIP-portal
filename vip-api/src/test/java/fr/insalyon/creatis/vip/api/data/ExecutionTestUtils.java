@@ -120,7 +120,7 @@ public class ExecutionTestUtils {
                 simu.getStatus().toString(),
                 simu.getStartDate(),
                 simu.getEndDate(),
-                simu.getEngineName(),
+                simu.getEngineEndpoint(),
                 null
         );
         return newWorkflow;

@@ -292,19 +292,10 @@ public class ListWorkflowsBusiness extends CommonBusiness {
 
     public List<Workflow> refreshRunningWorkflows(List<Workflow> workflows) throws VipException {
         try {
-            Map<String, Engine> engineMap = engineBusiness.get().stream().collect(Collectors.toMap(
-                    e -> e.getName(),
-                    e -> e));
             for (Workflow workflow : workflows) {
                 if (workflow.getStatus() == WorkflowStatus.Running
                         || workflow.getStatus() == WorkflowStatus.Unknown) {
-                    Engine engine = engineMap.get(workflow.getEngineName());
-                    if (engine == null) {
-                        logger.error("Cant find engine {} for workflow {}. Ignoring status update",
-                                workflow.getEngineName(), workflow.getID());
-                        continue;
-                    }
-                    WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(engine.getEndpoint(), workflow.getID());
+                    WorkflowStatus workflowStatus = workflowExecutionBusiness.getStatus(workflow.getEngineEndpoint(), workflow.getID());
                     logger.debug("Simulation {} : old status : {}, new status : {} ",
                             workflow.getID(), workflow.getStatus(), workflowStatus);
 

@@ -185,7 +185,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
                         workflow.getApplicationName(),
                         workflow.getApplicationVersion(),
                         null,
-                        engine.getName(),
+                        engine.getEndpoint(),
                         null
                 );
         try {
