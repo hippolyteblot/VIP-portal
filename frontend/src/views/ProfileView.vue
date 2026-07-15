@@ -30,6 +30,7 @@ const isDeletingApiKey = ref(false)
 
 const profile = ref<ProfileUser | null>(null)
 const apiKey = ref<string | null>(null)
+const isLoadingApiKey = ref(false)
 const selectedGroupNames = ref<string[]>([])
 
 const profileForm = reactive({
@@ -282,12 +283,15 @@ function copyApiKey() {
     .catch(() => notificationsStore.error('Unable to copy API key.'))
 }
 
-async function fetchApiKeyWithNotification() {
+async function fetchApiKey() {
+  isLoadingApiKey.value = true
   try {
     apiKey.value = await apikeyApi.get()
   } catch {
     apiKey.value = null
     notificationsStore.warning('Unable to load API key.')
+  } finally {
+    isLoadingApiKey.value = false
   }
 }
 
