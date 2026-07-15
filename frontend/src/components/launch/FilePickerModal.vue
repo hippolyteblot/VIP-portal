@@ -39,7 +39,10 @@ const breadcrumbs = computed(() => {
 const canGoUp = computed(() => currentPath.value !== ROOT_PATH)
 
 const sortedEntries = computed(() => {
-  return [...entries.value].sort((a, b) => {
+  const list = props.mode === 'folder'
+    ? entries.value.filter(e => e.type === 'folder')
+    : entries.value
+  return [...list].sort((a, b) => {
     if (a.type !== b.type) return a.type === 'folder' ? -1 : 1
     return (a.name || '').localeCompare(b.name || '')
   })
@@ -256,9 +259,12 @@ onMounted(() => {
         {{ errorMessage }}
       </div>
 
-      <!-- Hint for folder mode -->
+      <!-- Hints -->
       <p v-if="mode === 'folder'" class="mx-5 mt-3 text-xs text-gray-500">
-        Click a folder to select it. Double-click to navigate.
+        Only folders are shown. Click a folder to select it. Double-click to navigate.
+      </p>
+      <p v-else class="mx-5 mt-3 text-xs text-gray-500">
+        Click a file to select it. Double-click a folder to navigate.
       </p>
 
       <!-- File listing -->

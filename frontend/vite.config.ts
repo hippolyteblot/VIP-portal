@@ -1,6 +1,6 @@
 import { fileURLToPath, URL } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
@@ -9,9 +9,9 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
 
-  //const backendUrl = 'http://192.168.122.177:8080'
-  const backendUrl = 'http://192.168.122.15:8080'
-  const base = mode === 'production' ? '/new_front/' : '/'
+  const env = loadEnv(mode, process.cwd(), '')
+  const backendUrl = env.VITE_BACKEND_URL || 'http://localhost:8080'
+  const base = mode === 'production' ? (env.VITE_APP_BASE_PATH || './') : '/'
 
   return {
     base,

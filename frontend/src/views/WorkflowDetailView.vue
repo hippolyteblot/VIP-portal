@@ -252,10 +252,6 @@ onUnmounted(() => {
             <span class="text-gray-500">Ended</span>
             <span class="ml-2 font-medium text-gray-900">{{ formatRelativeTime(wf.endDate) }}</span>
           </div>
-          <div>
-            <span class="text-gray-500">Engine</span>
-            <span class="ml-2 font-medium text-gray-900">{{ wf.engineName || '—' }}</span>
-          </div>
         </div>
       </div>
 
@@ -291,14 +287,6 @@ onUnmounted(() => {
                 <span v-else class="text-gray-400">—</span>
               </dd>
             </div>
-            <div class="flex justify-between">
-              <dt class="text-gray-500">Engine</dt>
-              <dd class="text-gray-900">{{ wf.engineName || '—' }}</dd>
-            </div>
-            <div class="flex justify-between">
-              <dt class="text-gray-500">Tags</dt>
-              <dd class="text-gray-900">{{ wf.tags || '—' }}</dd>
-            </div>
           </dl>
         </AppCard>
 
@@ -310,7 +298,7 @@ onUnmounted(() => {
           <dl v-else class="space-y-3 text-sm">
             <div v-for="(val, key) in wf.outputs" :key="key" class="flex justify-between">
               <dt class="text-gray-500">{{ key }}</dt>
-              <dd class="max-w-[60%] truncate font-mono text-gray-900" :title="val">{{ val }}</dd>
+              <dd class="break-all font-mono text-gray-900">{{ val }}</dd>
             </div>
           </dl>
         </AppCard>
@@ -321,7 +309,7 @@ onUnmounted(() => {
         <div v-if="!wf.inputs || Object.keys(wf.inputs).length === 0" class="text-sm text-gray-500">
           No inputs.
         </div>
-        <div v-else class="overflow-x-auto">
+        <div v-else class="overflow-hidden rounded-lg border border-gray-200">
           <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50">
               <tr>

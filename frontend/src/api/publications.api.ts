@@ -2,6 +2,9 @@ import { backendClient } from './client'
 import type { Publication, PublicationInput } from '@/types/publication.types'
 
 export const publicationsApi = {
+  getPublic: () =>
+    backendClient.get<Publication[]>('/internal/publications/public').then((r) => r.data),
+
   getAll: () =>
     backendClient.get<Publication[]>('/internal/publications').then((r) => r.data),
 

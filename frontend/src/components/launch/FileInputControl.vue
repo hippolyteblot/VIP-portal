@@ -51,15 +51,21 @@ async function onUploadChange(event: Event) {
   const file = input.files?.[0]
   if (!file) return
 
+  if (file.name.includes(' ')) {
+    notifications.error('Filename cannot contain spaces.')
+    input.value = ''
+    return
+  }
+
   const timestamp = Date.now()
   const userHome = `/vip/Home/`
 
   isUploading.value = true
   try {
     await ensureDirectory(userHome, 'direct-uploads')
-    await filesApi.createDirectory(`${userHome}/direct-uploads`, `${timestamp}`)
-    await filesApi.uploadFile(`${userHome}/direct-uploads/${timestamp}`, file)
-    const uploadedPath = `${userHome}/direct-uploads/${timestamp}/${file.name}`
+    await filesApi.createDirectory(`${userHome}direct-uploads`, `${timestamp}`)
+    await filesApi.uploadFile(`${userHome}direct-uploads/${timestamp}`, file)
+    const uploadedPath = `${userHome}direct-uploads/${timestamp}/${file.name}`
     emit('update:modelValue', uploadedPath)
     notifications.success(`File uploaded to ${uploadedPath}`)
   } catch {

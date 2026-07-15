@@ -13,9 +13,12 @@ import {
 } from 'lucide-vue-next'
 
 import { getGroupBadgeColor } from '@/utils/groupColor'
+import { getFrontendBase } from '@/utils/path'
 import AppBadge from '@/components/ui/AppBadge.vue'
 import { applicationsApi } from '@/api/applications.api'
 import type { BackendApplication } from '@/api/applications.api'
+import { publicationsApi } from '@/api/publications.api'
+import type { Publication } from '@/types/publication.types'
 
 const stats = [
   { value: '30+', label: 'Applications' },
@@ -25,6 +28,7 @@ const stats = [
 ]
 
 const topApplications = ref<BackendApplication[]>([])
+const topPublications = ref<Publication[]>([])
 
 async function loadPublicApplications() {
   try {
@@ -35,57 +39,31 @@ async function loadPublicApplications() {
   }
 }
 
-// Same for publications and team members, we should have public routes for that
-const publications = [
-  {
-    title: '	The practical impact of numerical variability on structural MRI measures of Parkinsons disease',
-    authors: 'Chatelain, Yohan and Soko-lowski, Andrzej and Sharp, Madeleine and Poline, Jean-Baptiste and Glatard, Tristan',
-    journal: 'bioRxiv',
-    year: 2026,
-    doi: '',
-    tags: ['Neuroimaging', 'Reproducibility'],
-  },
-  {
-    title: 'Estimation of reference curves for brain atrophy and analysis of robustness to machine effects',
-    authors: '	Elodie Piot, Félix Renard, Arnaud Attyé, Alexandre Krainik',
-    journal: 'Scientific Reports',
-    year: 2025,
-    doi: '',
-    tags: ['Simulation', 'Medical Physics'],
-  },
-  {
-    title: 'Development and testing of a phantom for CT-based examination of head and neck tumours',
-    authors: 'Maike Rosendahl',
-    journal: 'Master Thesis',
-    year: 2024,
-    doi: '',
-    tags: ['Federated', 'EUCAIM'],
-  },
-  {
-    title: 'Development and characterization of modular mouse phantoms for end-to-end testing and training in radiobiology experiments',
-    authors: 'Marie Wegner, Thorsten Frenzel, Dieter Krause and Elisabetta Gargioni',
-    journal: 'Physics in Medicine and Biology	',
-    year: 2023,
-    doi: '',
-    tags: ['Reproducibility', 'Grid'],
-  },
-]
+async function loadPublicPublications() {
+  try {
+    topPublications.value = await publicationsApi.getPublic()
+  } catch (error) {
+    console.error('Failed to load public publications:', error)
+    topPublications.value = []
+  }
+}
 
-// But for the team, its probably something that we can hardcode...
+const frontendBase = getFrontendBase()
+
 const team = [
   {
     name: 'Axel Bonnet',
     role: 'Main Developer',
     org: 'CREATIS',
     url: 'https://www.egi.eu/people/axel-bonnet/',
-    photo: '/team/axel_bonnet.jpg',
+    photo: `${frontendBase}team/axel_bonnet.jpg`,
   },
   {
     name: 'Sorina Pop',
     role: 'Project Manager',
     org: 'CREATIS',
     url: 'https://www.creatis.insa-lyon.fr/site7/fr/users/camarasu',
-    photo: '/team/sorina_pop.jpg',
+    photo: `${frontendBase}team/sorina_pop.jpg`,
   },
   {
     name: 'Bertrand Pautet',
@@ -99,28 +77,28 @@ const team = [
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/guillaume_vinet.jpg',
+    photo: `${frontendBase}team/guillaume_vinet.png`,
   },
   {
     name: 'Mayssa Rouissi',
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/mayssa_rouissi.jpg',
+    photo: `${frontendBase}team/mayssa_rouissi.png`,
   },
   {
     name: 'Bertrand Patet',
     role: '',
     org: 'CREATIS',
     url: null,
-    photo: '/team/photo_bertrand.png',
+    photo: `${frontendBase}team/photo_bertrand.png`,
   },
   {
     name: 'Hippolyte Blot',
     role: 'Apprentice',
     org: 'CREATIS',
     url: null,
-    photo: '/team/hippolyte_blot.jpg',
+    photo: `${frontendBase}team/hippolyte_blot.jpg`,
   },
 ]
 
@@ -130,56 +108,56 @@ const formerContributors = [
     role: 'VIP Founder',
     org: 'Concordia University',
     url: 'https://users.encs.concordia.ca/~tglatard/',
-    photo: '/team/tristan_glatard.jpg',
+    photo: `${frontendBase}team/tristan_glatard.jpg`,
   },
   {
     name: 'Rafael Ferreira da Silva',
     role: 'Senior Research Scientist',
     org: 'Oak Ridge National Laboratory',
     url: 'https://rafaelsilva.com/',
-    photo: '/team/rafael_silva.jpg',
+    photo: `${frontendBase}team/rafael_silva.jpg`,
   },
   {
     name: 'Gaël Vila',
     role: 'Post-Doctoral Researcher',
     org: 'ReproVIP',
     url: 'https://www.creatis.insa-lyon.fr/reprovip/',
-    photo: '/team/gael_vila.jpg',
+    photo: `${frontendBase}team/gael_vila.jpg`,
   },
   {
     name: 'Alexandre Cornier',
     role: 'Research Engineer',
     org: 'EGI-ACE & ReproVIP',
     url: 'https://www.egi.eu/project/egi-ace/',
-    photo: '/team/alex_cornier.jpg',
+    photo: `${frontendBase}team/alex_cornier.jpg`,
   },
   {
     name: 'Sandesh Patil',
     role: 'Research Engineer',
     org: 'FLI-IAM',
     url: 'https://www.francelifeimaging.fr/',
-    photo: '/team/sandesh_patil.jpg',
+    photo: `${frontendBase}team/sandesh_patil.jpg`,
   },
   {
     name: 'Ethaniel Billon',
     role: 'Engineer',
     org: 'PEPR Chronicardio',
     url: 'https://pepr-santenum.fr/2023/11/08/chronicardio/',
-    photo: '/team/ethaniel_billon.jpg',
+    photo: `${frontendBase}team/ethaniel_billon.jpg`,
   },
   {
     name: 'Nicolas Georges',
     role: 'Research Engineer',
     org: 'EUCAIM',
     url: 'https://www.eibir.org/projects/eucaim/',
-    photo: '/team/nicolas_georges.png',
+    photo: `${frontendBase}team/nicolas_georges.png`,
   },
   {
     name: 'Gwenaël Ambrosino-Ielpo',
     role: 'Research Engineer',
     org: 'FLI-IAM',
     url: 'https://www.francelifeimaging.fr/',
-    photo: '/team/gwenael_ambrosino.jpg',
+    photo: `${frontendBase}team/gwenael_ambrosino.jpg`,
   },
 ]
 
@@ -204,6 +182,7 @@ function updateNavbarState() {
 
 onMounted(() => {
   loadPublicApplications()
+  loadPublicPublications()
   updateNavbarState()
   window.addEventListener('scroll', updateNavbarState, { passive: true })
   window.addEventListener('resize', updateNavbarState)
@@ -229,7 +208,7 @@ onUnmounted(() => {
     >
       <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div class="flex items-center gap-3">
-          <img src="/team/vip-logo-without-text.png" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
+          <img :src="`${frontendBase}team/vip-logo-without-text.png`" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
           <span class="text-lg font-bold text-white">VIP Portal</span>
         </div>
         <nav class="hidden items-center gap-8 text-sm font-medium text-primary-200 md:flex">
@@ -436,9 +415,9 @@ onUnmounted(() => {
 
         <div class="mt-10 grid gap-5 sm:grid-cols-2">
           <a
-            v-for="pub in publications"
-            :key="pub.doi"
-            :href="`https://doi.org/${pub.doi}`"
+            v-for="pub in topPublications"
+            :key="pub.id"
+            :href="pub.doi ? `https://doi.org/${pub.doi}` : undefined"
             target="_blank"
             rel="noopener"
             class="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
@@ -456,20 +435,13 @@ onUnmounted(() => {
             <p class="mt-2 text-xs text-gray-400">{{ pub.authors }}</p>
 
             <div class="mt-4 flex flex-wrap items-center gap-2">
-              <span class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
+              <span v-if="pub.typeName" class="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700">
                 <BookOpen class="h-3 w-3" />
-                {{ pub.journal }}
+                {{ pub.typeName }}
               </span>
-              <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">
+              <span v-if="pub.date" class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">
                 <Calendar class="h-3 w-3" />
-                {{ pub.year }}
-              </span>
-              <span
-                v-for="tag in pub.tags"
-                :key="tag"
-                class="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500"
-              >
-                {{ tag }}
+                {{ pub.date }}
               </span>
             </div>
           </a>
@@ -598,7 +570,7 @@ onUnmounted(() => {
       <div class="mx-auto max-w-7xl px-6 py-12">
         <div class="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <div class="flex items-center gap-3">
-            <img src="/team/vip-logo-without-text.png" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
+            <img :src="`${frontendBase}team/vip-logo-without-text.png`" alt="VIP Logo" class="h-8 w-auto rounded-sm" />
             <div>
               <p class="font-semibold">VIP Portal</p>
               <p class="text-xs text-primary-300">Virtual Imaging Platform</p>
