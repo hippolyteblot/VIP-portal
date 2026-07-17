@@ -122,6 +122,14 @@ public class ListWorkflowsBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
+    public PrecisePage<Workflow> searchCurrentUserWorkflowsPaginated(
+            int offset, int quantity,
+            String applicationName, String status, Date startDate, Date endDate) throws VipException {
+        List<Workflow> results = searchOwnWorkflows(applicationName, status, startDate, endDate, null);
+        return pageBuilder.doPrecise(offset, quantity, results);
+    }
+
+    @VIPExternalSafe
     public List<Workflow> getAllWorkflows(Date lastDate) throws VipException {
         if ( ! getUser().isSystemAdministrator() ) {
             logger.error("unauthorized access to all workflows by {}", getUser().getEmail());

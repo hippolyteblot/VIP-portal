@@ -11,7 +11,10 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @RestController()
 @RequestMapping("/workflows")
@@ -26,13 +29,22 @@ public class WorkflowController {
         this.listWorkflowsBusiness = listWorkflowsBusiness;
     }
 
-    // TODO : add filters : status, user, application, start date, end date
     @GetMapping
     public PrecisePage<Workflow> list(
             @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
             @RequestParam(defaultValue = "10") @Positive @Max(value = 50) int quantity,
-            @RequestParam(defaultValue = "true") boolean refreshed) throws VipException {
-        PrecisePage<Workflow> workflows = listWorkflowsBusiness.getCurrentUserWorkflowsPaginated(offset, quantity, null);
+            @RequestParam(defaultValue = "true") boolean refreshed,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate) throws VipException {
+        PrecisePage<Workflow> workflows;
+        if (search != null || status != null || startDate != null || endDate != null) {
+            workflows = listWorkflowsBusiness.searchCurrentUserWorkflowsPaginated(
+                    offset, quantity, search, status, startDate, endDate);
+        } else {
+            workflows = listWorkflowsBusiness.getCurrentUserWorkflowsPaginated(offset, quantity, null);
+        }
         if (refreshed) {
             listWorkflowsBusiness.refreshRunningWorkflows(workflows.data);
         }
