@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-import static fr.insalyon.creatis.vip.core.client.CoreModule.user;
+// import static fr.insalyon.creatis.vip.core.client.CoreModule.user;
 
 @Service
 @Transactional
@@ -165,7 +165,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
         }
         mailContent += "\n\nException:" + e.getMessage() + "\nStacktrace: " + e.getStackTrace();
         try {
-            emailBusiness.sendEmailToAdmins(mailSubject, mailContent, true, user.getEmail());
+            emailBusiness.sendEmailToAdmins(mailSubject, mailContent, true, getUser().getEmail());
         } catch (VipException ex) {
             logger.error("Error sending the email informing of an execution launch error. Ignoring as there is already an exception going on", ex);
             // ignoring as there is already an exception going on
