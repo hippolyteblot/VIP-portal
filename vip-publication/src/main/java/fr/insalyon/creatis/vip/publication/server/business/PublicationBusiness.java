@@ -129,10 +129,10 @@ public class PublicationBusiness extends CommonBusiness {
         sdf.setLenient(false);
         try {
             return sdf.parse(dateStr.trim());
-        } catch (Exception e) {
+        } catch (java.text.ParseException e) {
             try {
                 return new SimpleDateFormat("yyyy").parse(dateStr.trim());
-            } catch (Exception e2) {
+            } catch (java.text.ParseException e2) {
                 return new Date(0);
             }
         }

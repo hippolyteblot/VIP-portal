@@ -196,12 +196,13 @@ public class AppVersionBusiness extends CommonBusiness {
     private Map<String, Long> getApplicationsPopularity() throws VipException {
         try {
             Calendar cal = Calendar.getInstance();
-            cal.add(Calendar.MONTH, -1);
-            Date oneMonthAgo = cal.getTime();
+            cal.add(Calendar.YEAR, -1);
+            Date oneYearAgo = cal.getTime();
 
             List<fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow> workflows =
-                    workflowDAO.get(null, null, null, null, oneMonthAgo, new Date(), null);
+                    workflowDAO.get(null, null, null, null, oneYearAgo, new Date(), null);
 
+            // group by application name and count distinct users to produce a popularity score for each application
             return workflows.stream()
                     .collect(Collectors.groupingBy(
                             fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow::getApplication,
