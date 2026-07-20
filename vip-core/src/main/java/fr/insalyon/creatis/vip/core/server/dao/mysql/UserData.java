@@ -893,6 +893,9 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public List<User> getByFullNames(List<String> fullNames) throws DAOException {
+        if (fullNames == null || fullNames.isEmpty()) {
+            return Collections.emptyList();
+        }
         String query =  "SELECT " + FIELDS
                 +               "FROM VIPUsers WHERE CONCAT(first_name, ' ', last_name) IN ("
                 + fullNames.stream().map(v -> "?").collect(Collectors.joining(", "))
