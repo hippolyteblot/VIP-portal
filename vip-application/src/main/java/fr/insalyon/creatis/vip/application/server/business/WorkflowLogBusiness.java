@@ -6,7 +6,6 @@ import fr.insalyon.creatis.vip.application.models.Task;
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
-import fr.insalyon.creatis.vip.core.server.business.util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +13,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class WorkflowLogBusiness extends CommonBusiness {
+
+    public enum JobLogType {
+        APP_STDOUT("out", ".sh.app.out"),
+        APP_STDERR("err", ".sh.app.err"),
+        STDOUT("out", ".sh.out"),
+        STDERR("err", ".sh.err"),
+        SCRIPT("sh", ".sh");
+
+        private final String folder;
+        private final String extension;
+
+        JobLogType(String folder, String extension) {
+            this.folder = folder;
+            this.extension = extension;
+        }
+
+        public String getFolder() { return folder; }
+        public String getExtension() { return extension; }
+    }
 
     private final ListWorkflowsBusiness listWorkflowsBusiness;
     private final SimulationBusiness simulationBusiness;
@@ -51,11 +69,15 @@ public class WorkflowLogBusiness extends CommonBusiness {
         throw new VipException("Job with invocationId " + invocationId + " not found for workflow " + wid);
     }
 
-    public String readTaskStdout(Task task, String wid) throws VipException {
-        return simulationBusiness.readFile(wid, "out", task.getFileName(), ".sh.app.out");
+    public String readExecutionStdout(String wid) throws VipException {
+        return simulationBusiness.readFile(wid, "", "workflow", ".out");
     }
 
-    public String readTaskStderr(Task task, String wid) throws VipException {
-        return simulationBusiness.readFile(wid, "err", task.getFileName(), ".sh.app.err");
+    public String readExecutionStderr(String wid) throws VipException {
+        return simulationBusiness.readFile(wid, "", "workflow", ".err");
+    }
+
+    public String readTaskLog(Task task, String wid, JobLogType type) throws VipException {
+        return simulationBusiness.readFile(wid, type.getFolder(), task.getFileName(), type.getExtension());
     }
 }
