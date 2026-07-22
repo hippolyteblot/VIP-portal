@@ -20,14 +20,7 @@ export interface ProfileUser {
 
 export interface ProfileUpdatePayload {
   id: string
-  firstName: string
-  lastName: string
-  email: string
   institution: string
   countryCode: string
-  maxRunningSimulations: number
-  level: string
-  termsOfUse: string | null
-  lastUpdatePublications: string | null
   groups: Group[]
 }
