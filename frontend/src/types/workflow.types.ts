@@ -31,6 +31,29 @@ export interface WorkflowLaunchPayload {
   inputs: Record<string, { type: string; values: string[] }>
 }
 
+export interface Task {
+  id: string
+  invocationID: number
+  creationDate: string
+  status: string
+  exitCode: number
+  siteName: string
+  nodeName: string
+  command: string
+  fileName: string
+  jobID: number
+}
+
+export type JobLogType = 'app-stdout' | 'app-stderr' | 'stdout' | 'stderr' | 'script'
+
+export const JOB_LOG_TYPES: { value: JobLogType; label: string }[] = [
+  { value: 'app-stdout', label: 'Application Output' },
+  { value: 'app-stderr', label: 'Application Error' },
+  { value: 'stdout', label: 'Output' },
+  { value: 'stderr', label: 'Error' },
+  { value: 'script', label: 'Script' },
+]
+
 export interface WorkflowListParams {
   offset?: number
   quantity?: number

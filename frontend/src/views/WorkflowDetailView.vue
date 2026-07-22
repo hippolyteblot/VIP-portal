@@ -17,6 +17,7 @@ import AppButton from '@/components/ui/AppButton.vue'
 import { useWorkflowsStore } from '@/stores/workflows.store'
 import { useNotificationsStore } from '@/stores/notifications.store'
 import { useFormatters } from '@/composables/useFormatters'
+import WorkflowLogs from '@/components/workflow/WorkflowLogs.vue'
 import type { WorkflowStatus } from '@/types/workflow.types'
 
 const POLL_INTERVAL_MS = 5000
@@ -334,6 +335,8 @@ onUnmounted(() => {
           </table>
         </div>
       </AppCard>
+
+      <WorkflowLogs :wid="wid" :is-running="isPolling" />
     </template>
   </div>
 </template>
