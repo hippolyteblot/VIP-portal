@@ -368,12 +368,8 @@ public class ExecutionBusiness {
                 continue;
             }
 
-            // then ok if input has a default value (and we set it)
+            // then ok if input has a default value
             if (pp.getDefaultValue() != null) {
-                mapsWithoutKey.forEach(
-                        inputMap -> inputMap.put(
-                                pp.getName(),
-                                WorkflowInput.ofList(List.of(pp.getDefaultValue().toString()))));
                 continue;
             }
 
