@@ -165,10 +165,10 @@ public class UserController {
     }
 
     private String resolveEmail(String userId) throws VipException {
-        if ("me".equals(userId)) {
-            return userBusiness.getCurrentUser().getEmail();
-        }
         User currentUser = userBusiness.getCurrentUser();
+        if ("me".equals(userId)) {
+            return currentUser.getEmail();
+        }
         if (currentUser.getLevel() != UserLevel.Administrator) {
             logger.error("User {} attempted to access API key for user {}", currentUser.getEmail(), userId);
             throw new VipException(DefaultError.ACCESS_DENIED);
