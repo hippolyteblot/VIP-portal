@@ -50,6 +50,13 @@ function isSessionProbeRequest(url?: string, method?: string): boolean {
   return (method || '').toUpperCase() === 'GET' && (url || '').includes('/internal/session')
 }
 
+function isPublicGetRequest(url?: string, method?: string): boolean {
+  return (method || '').toUpperCase() === 'GET' && (
+    (url || '').includes('/internal/applications/public') ||
+    (url || '').includes('/internal/publications/public')
+  )
+}
+
 function redirectToLogin(): void {
   const base = getFrontendBase()
   const loginPath = `${base}login`
@@ -92,7 +99,7 @@ backendClient.interceptors.response.use(
     const method = error?.config?.method as string | undefined
 
     // If session is no longer valid (expired/missing cookies), force user back to login.
-    if (status === 401 && !isLoginRequest(url, method) && !isSessionProbeRequest(url, method)) {
+    if (status === 401 && !isLoginRequest(url, method) && !isSessionProbeRequest(url, method) && !isPublicGetRequest(url, method)) {
       redirectToLogin()
     }
 
