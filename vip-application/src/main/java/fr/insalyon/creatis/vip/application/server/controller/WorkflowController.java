@@ -39,7 +39,7 @@ public class WorkflowController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) throws VipException {
-        PrecisePage<Workflow> workflows = listWorkflowsBusiness.getCurrentUserWorkflowsPaginated(
+        PrecisePage<Workflow> workflows = listWorkflowsBusiness.searchOwnWorkflowsPaginated(
                 offset, quantity, search, status, startDate, endDate);
         if (refreshed) {
             listWorkflowsBusiness.refreshRunningWorkflows(workflows.data);

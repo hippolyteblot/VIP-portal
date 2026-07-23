@@ -122,27 +122,11 @@ public class ListWorkflowsBusiness extends CommonBusiness {
     }
 
     @VIPExternalSafe
-    public PrecisePage<Workflow> getCurrentUserWorkflowsPaginated(
+    public PrecisePage<Workflow> searchOwnWorkflowsPaginated(
             int offset, int quantity, String search, String status,
             Date startDate, Date endDate) throws VipException {
-        try {
-            fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus =
-                    (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
-            List<Workflow> allWorkflows = parseDbWorkflows(
-                    workflowDAO.get(getUser().getFullName(), null, wStatus, null, startDate, endDate, null));
-            if (search != null && !search.isEmpty()) {
-                String lowerSearch = search.toLowerCase();
-                allWorkflows = allWorkflows.stream()
-                        .filter(w -> w.getID().toLowerCase().contains(lowerSearch)
-                                || (w.getWorkflowName() != null && w.getWorkflowName().toLowerCase().contains(lowerSearch))
-                                || (w.getApplicationName() != null && w.getApplicationName().toLowerCase().contains(lowerSearch)))
-                        .collect(java.util.stream.Collectors.toList());
-            }
-            return pageBuilder.doPrecise(offset, quantity, allWorkflows);
-        } catch (WorkflowsDBDAOException ex) {
-            logger.error("Error searching workflows for user {}", getUserEmail(), ex);
-            throw new VipException(ex);
-        }
+        return pageBuilder.doPrecise(offset, quantity,
+                searchOwnWorkflows(null, search, status, startDate, endDate, null));
     }
 
     @VIPExternalSafe
@@ -170,12 +154,24 @@ public class ListWorkflowsBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public List<Workflow> searchOwnWorkflows(
-            String applicationName, String status, Date startDate, Date endDate, String tag) throws VipException {
-        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus = (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
+            String applicationName, String search, String status,
+            Date startDate, Date endDate, String tag) throws VipException {
+        fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus wStatus =
+                (status != null) ? fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.WorkflowStatus.valueOf(status) : null;
 
-        // no need to verify applicationName, if not relevant filter will give nothing
         try {
-            return parseDbWorkflows(workflowDAO.get(getUser().getFullName(), applicationName, wStatus, null, startDate, endDate, tag));
+            List<Workflow> workflows = parseDbWorkflows(
+                    workflowDAO.get(getUser().getFullName(), applicationName, wStatus, null, startDate, endDate, tag));
+
+            if (search != null && !search.isEmpty()) {
+                String lowerSearch = search.toLowerCase();
+                workflows = workflows.stream()
+                        .filter(w -> w.getID().toLowerCase().contains(lowerSearch)
+                                || (w.getWorkflowName() != null && w.getWorkflowName().toLowerCase().contains(lowerSearch))
+                                || (w.getApplicationName() != null && w.getApplicationName().toLowerCase().contains(lowerSearch)))
+                        .collect(Collectors.toList());
+            }
+            return workflows;
         } catch (WorkflowsDBDAOException ex) {
             logger.error("Error searching simulations for user {}", getUserEmail(), ex);
             throw new VipException(ex);
@@ -342,7 +338,7 @@ public class ListWorkflowsBusiness extends CommonBusiness {
                         Collectors.mapping(InOutData::getPath, Collectors.toList())
                     )));
             }
-        } catch (Exception e) {
+        } catch (VipException e) {
             logger.warn("Could not populate inputs/outputs for workflow {}", workflow.getID(), e);
         }
         return workflow;
