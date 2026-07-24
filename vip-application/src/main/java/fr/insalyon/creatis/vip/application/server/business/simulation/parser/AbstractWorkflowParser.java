@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fr.insalyon.creatis.vip.application.models.Descriptor;
 import fr.insalyon.creatis.vip.application.models.Source;
+import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 public abstract class AbstractWorkflowParser extends DefaultHandler {
@@ -34,15 +35,15 @@ public abstract class AbstractWorkflowParser extends DefaultHandler {
         sources = new ArrayList<Source>();
     }
 
-    public Descriptor parse(String fileName) throws IOException, SAXException, ParserConfigurationException {
-        return parse(new FileReader(fileName));
-    }
+    public Descriptor parse(String fileName) throws IOException, SAXException, ParserConfigurationException, VipException {
+            return parse(new FileReader(fileName));
+        }
 
-    public Descriptor parseString(String workflowString) throws IOException, SAXException, ParserConfigurationException {
+    public Descriptor parseString(String workflowString) throws IOException, SAXException, ParserConfigurationException, VipException {
         return parse(new StringReader(workflowString));
     }
 
-    private Descriptor parse(Reader workflowReader) throws IOException, SAXException, ParserConfigurationException {
+    private Descriptor parse(Reader workflowReader) throws IOException, SAXException, ParserConfigurationException, VipException {
 
         SAXParserFactory parserFactory = CoreUtil.getSecureSAXParserFactory();
         

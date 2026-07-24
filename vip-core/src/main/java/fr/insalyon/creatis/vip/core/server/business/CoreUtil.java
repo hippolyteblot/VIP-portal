@@ -75,7 +75,6 @@ public class CoreUtil {
             parserFactory.setNamespaceAware(true);
             
             try {
-                // Voir https://docs.semgrep.dev/cheat-sheets/java-xxe#3-c-saxparserfactory
                 parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
                 
                 parserFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
