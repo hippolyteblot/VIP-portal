@@ -1,12 +1,15 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="true" scan="true" scanPeriod="60 seconds" packagingData="true">
-
+  <conversionRule
+        conversionWord="crlf"
+        converterClass="org.owasp.security.logging.mask.CRLFConverter"/>
   <!-- main log file-->
   <appender name="VIP_LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <!--See also http://logback.qos.ch/manual/appenders.html#RollingFileAppender-->
     <file>${user.home}/.vip/vip.log</file>
     <encoder>
-      <pattern>%d |%5p |%t | %c{1}:%L - %m%n %ex{5}</pattern>
+      <pattern>%d |%5p |%t | %c{1}:%L - %crlf(%msg)%n %ex{5}</pattern>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
       <maxIndex>10</maxIndex>
@@ -31,7 +34,7 @@
       <maxHistory>12</maxHistory>
     </rollingPolicy>
     <encoder>
-      <pattern>%d |%5p |%t | %c{1}:%M:%L - %m%n %caller{10}</pattern>
+      <pattern>%d |%5p |%t | %c{1}:%M:%L - %crlf(%msg)%n %caller{10}</pattern>
     </encoder>
   </appender>
 
@@ -46,4 +49,4 @@
   <!-- <logger name="org.springframework.security" level="DEBUG" /> -->
   <!-- <logger name="org.springframework.web" level="DEBUG" /> -->
   <!-- <logger name="org.springframework.context.annotation" level="DEBUG" /> -->
-</configuration>
+</configuration> 

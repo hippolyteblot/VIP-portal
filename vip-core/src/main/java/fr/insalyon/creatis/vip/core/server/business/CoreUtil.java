@@ -10,12 +10,14 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
 
 public class CoreUtil {
-
+    
+    private static final Logger log = LoggerFactory.getLogger(CoreUtil.class);
     /*
         remove accents and non-ascii characters
     */
@@ -67,20 +69,20 @@ public class CoreUtil {
 
     
             
-    public static SAXParserFactory getSecureSAXParserFactory() {
+    public static SAXParserFactory getSecureSAXParserFactory() throws VipException  {
             SAXParserFactory parserFactory = SAXParserFactory.newInstance();
             
             parserFactory.setNamespaceAware(true);
             
             try {
+                // Voir https://docs.semgrep.dev/cheat-sheets/java-xxe#3-c-saxparserfactory
                 parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
                 
-                parserFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-                parserFactory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-                parserFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                parserFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
                 
-            } catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
-                System.err.println("The SAX parser does not support some XXE security features: " + e.getMessage());
+            }catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+                log.error("The SAX parser does not support some XXE security features: {}", e.getMessage(), e);
+                throw new VipException("The SAX parser does not support some XXE security features", e);
             }
             
             return parserFactory;
