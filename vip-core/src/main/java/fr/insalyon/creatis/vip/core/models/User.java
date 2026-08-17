@@ -345,10 +345,6 @@ public class User implements IsSerializable {
         return getTermsOfUse() != null;
        }
 
-    public boolean hasGroups(){
-        return this.groups.isEmpty();
-    }
-
     public Integer getFailedAuthentications() {
         return this.failedAuthentications;
     }
