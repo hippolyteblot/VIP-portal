@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import fr.insalyon.creatis.vip.application.server.business.*;
-import fr.insalyon.creatis.vip.application.server.business.util.WorkflowLaunchBusiness;
+import fr.insalyon.creatis.vip.application.server.business.WorkflowLaunchBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

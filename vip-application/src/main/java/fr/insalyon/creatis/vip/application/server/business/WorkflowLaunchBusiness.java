@@ -1,4 +1,4 @@
-package fr.insalyon.creatis.vip.application.server.business.util;
+package fr.insalyon.creatis.vip.application.server.business;
 
 import fr.insalyon.creatis.boutiques.model.BoutiquesDescriptor;
 import fr.insalyon.creatis.boutiques.model.Input;
@@ -8,7 +8,6 @@ import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.*;
-import fr.insalyon.creatis.vip.application.server.business.*;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
@@ -127,6 +126,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
             throw sendMailsOnLaunchException(e, engine);
         }
         logger.info("Launched workflow {}", workflowId);
+        // TODO : improve logged stuff
         workflow.setId(workflowId);
         workflow.setStatus(WorkflowStatus.Running);
         workflow.setStartDate(new Date());
