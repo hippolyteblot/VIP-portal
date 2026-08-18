@@ -31,6 +31,7 @@ import jakarta.validation.constraints.PositiveOrZero;
  * - Users can NOT create/edit/delete
  * - Devs can create/edit/delete applications of the private groups they belong to but...
  * - Devs can only associate groups at creation (not when editing)
+ * - Devs can not change the owner
  * - Admin can do everything
  */
 @RestController()

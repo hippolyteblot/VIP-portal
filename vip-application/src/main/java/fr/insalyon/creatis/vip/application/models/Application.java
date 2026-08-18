@@ -10,10 +10,12 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+import jakarta.validation.constraints.NotBlank;
 
 @JsonView(DataViews.User.class)
 public class Application implements IsSerializable {
 
+    @NotBlank
     private String name;
     private String citation;
     private String owner;

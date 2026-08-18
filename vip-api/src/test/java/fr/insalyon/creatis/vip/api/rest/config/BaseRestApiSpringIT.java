@@ -25,7 +25,6 @@ import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.InputDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.OutputDAO;
 import fr.insalyon.creatis.moteur.plugins.workflowsdb.dao.WorkflowDAO;
 import fr.insalyon.creatis.vip.api.SpringRestApiConfig;
-import fr.insalyon.creatis.vip.api.rest.mockconfig.DataConfigurator;
 import fr.insalyon.creatis.vip.application.integrationtest.SpringApplicationTestConfig;
 import fr.insalyon.creatis.vip.application.models.AppVersion;
 import fr.insalyon.creatis.vip.application.server.business.AppVersionBusiness;
@@ -117,8 +116,7 @@ abstract public class BaseRestApiSpringIT extends BaseWebSpringIT {
 
     protected AppVersion configureTestApp(String appName, String groupName, String versionName) throws VipException, GRIDAClientException, IOException {
         setAdminContext();
-        AppVersion appVersion = applicationTestConfigurer.configureAnApplication(appName, versionName, groupName);
-        applicationTestConfigurer.configureVersion(appVersion, fileUtil.read(getBoutiquesTestFile()));
+        AppVersion appVersion = applicationTestConfigurer.configureAnAppVersion(appName, versionName, fileUtil.read(getBoutiquesTestFile()), groupName);
 
         Mockito.when(server.getDataManagerPath()).thenReturn("/test/folder");
 
@@ -141,6 +139,6 @@ abstract public class BaseRestApiSpringIT extends BaseWebSpringIT {
     }
 
     public AppVersion createAVersion(String appName, String versionName, boolean visible) throws VipException {
-        return applicationTestConfigurer.createAVersion(appName, versionName, visible);
+        return applicationTestConfigurer.createAVersion(appName, versionName, null, visible);
     }
 }

@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 
 import fr.insalyon.creatis.vip.application.models.*;
 import fr.insalyon.creatis.vip.application.server.business.ListWorkflowsBusiness;
-import fr.insalyon.creatis.vip.application.server.business.util.WorkflowLaunchBusiness;
+import fr.insalyon.creatis.vip.application.server.business.WorkflowLaunchBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -388,12 +388,9 @@ public class ExecutionBusiness {
         String applicationVersion = pipelineBusiness.getApplicationVersion(pipelineId);
 
         CarminWorkflow carminWorkflow = new CarminWorkflow(
-                null,
                 executionName,
                 applicationName,
-                applicationVersion,
-                currentUserProvider.get(),
-                null, null, null, null, null);
+                applicationVersion);
         carminWorkflow.setInputsMapsList(inputMapsList);
 
         // Launch the workflow

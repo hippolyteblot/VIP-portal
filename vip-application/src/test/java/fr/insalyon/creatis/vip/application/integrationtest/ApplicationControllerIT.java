@@ -86,6 +86,7 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
 
         // // or admin
         // here it perform an update since application already exist
+        app.setOwner(developperUser.getEmail());
         mockMvc.perform(post("/internal/applications")
             .with(getUserSecurityMock(adminUser))
             .with(SecurityMockMvcRequestPostProcessors.csrf())
@@ -147,6 +148,7 @@ public class ApplicationControllerIT extends BaseInternalApiSpringIT {
                     .andExpect(status().isOk());
 
         app.setCitation("les applications sont vraiment moches");
+        app.setOwner(adminEmail);
 
         // developer try to edit application in public group
         mockMvc.perform(put("/internal/applications/" + app.getName())

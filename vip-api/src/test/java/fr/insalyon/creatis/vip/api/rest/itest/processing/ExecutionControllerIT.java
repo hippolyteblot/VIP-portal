@@ -430,6 +430,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         Map<String, List<String>> expectedParams = new HashMap<>();
         expectedParams.put("testFileInput", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser2.getFolder() + "/path/to/input.in"));
         expectedParams.put("testTextInput", List.of("best test text value"));
+        expectedParams.put("results-directory", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser2.getFolder()));
         List<Map<String, List<String>>> paramsList = new ArrayList<>();
         paramsList.add(expectedParams);
         String expectedInputs = workflowExecutionBusiness.getParametersAsJSONInput(paramsList);
