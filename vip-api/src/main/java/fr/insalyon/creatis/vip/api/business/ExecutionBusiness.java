@@ -388,12 +388,9 @@ public class ExecutionBusiness {
         String applicationVersion = pipelineBusiness.getApplicationVersion(pipelineId);
 
         CarminWorkflow carminWorkflow = new CarminWorkflow(
-                null,
                 executionName,
                 applicationName,
-                applicationVersion,
-                currentUserProvider.get(),
-                null, null, null, null, null);
+                applicationVersion);
         carminWorkflow.setInputsMapsList(inputMapsList);
 
         // Launch the workflow

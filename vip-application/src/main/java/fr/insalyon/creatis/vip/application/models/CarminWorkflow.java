@@ -13,6 +13,10 @@ public class CarminWorkflow extends Workflow {
 
     private List<Map<String,WorkflowInput>> inputsMapsList;
 
+    public CarminWorkflow(String workflowName, String applicationName, String applicationVersion) {
+        super(workflowName, applicationName, applicationVersion);
+    }
+
     public CarminWorkflow(String id, String workflowName, String applicationName, String applicationVersion,
                           User user, String status, Date startDate, Date endDate,
                           String engineEndpoint, String tags) {
