@@ -2,6 +2,9 @@ package fr.insalyon.creatis.vip.core.server.business.base;
 
 import java.util.function.Supplier;
 
+import fr.insalyon.creatis.vip.core.client.DefaultError;
+import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,5 +58,19 @@ public abstract class CommonBusiness {
 
     public UserLevel getUserLevel() {
         return getUser().getLevel();
+    }
+
+    protected void assertStringInputNotNullNotBlank(String value, String inputName, String errorContext) throws VipException {
+        if (value == null || value.isBlank()) {
+            logger.error("Null or blank input [{}]. Context: {}", inputName, errorContext);
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, inputName, errorContext);
+        }
+    }
+
+    protected void assertInputIsValid(boolean isValid, String inputName, String errorContext) throws VipException {
+        if ( ! isValid) {
+            logger.error("Invalid input [{}]. Context: {}", inputName, errorContext);
+            throw new VipException(DefaultError.BAD_INPUT_FIELD, inputName, errorContext);
+        }
     }
 }

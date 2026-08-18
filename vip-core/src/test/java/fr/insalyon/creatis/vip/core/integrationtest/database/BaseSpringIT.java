@@ -21,6 +21,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -96,8 +98,8 @@ public abstract class BaseSpringIT {
     
     @Autowired @Qualifier("db-datasource") protected DataSource dataSource; // this is a mockito spy wrapping the h2 memory datasource
     @Autowired protected ApplicationContext applicationContext;
+    @Autowired protected ResourceLoader resourceLoader;
     @Autowired protected UserBusiness userBusiness;
-    @Autowired protected ApplicationContext appContext;
     @Autowired protected DataSource lazyDataSource;
     @Autowired protected Server server;
     @Autowired protected EmailBusiness emailBusiness;
@@ -244,18 +246,18 @@ public abstract class BaseSpringIT {
     }
 
     protected <E extends Exception> void asAdminContext(CheckedRunnable<E> action) throws E, VipException, GRIDAClientException {
+        withUserContext(getAdminUser(), action);
+    }
+
+    protected <E extends Exception> void withUserContext(User user, CheckedRunnable<E> action) throws E, VipException, GRIDAClientException {
         SecurityContext original = SecurityContextHolder.getContext();
 
         try {
-            setAdminContext();
+            setCurrentUser(user);
             action.run();
         } finally {
             SecurityContextHolder.setContext(original);
         }
-    }
-
-    protected RequestPostProcessor getUserSecurityMock(User user) {
-        return SecurityMockMvcRequestPostProcessors.user(new SpringPrincipalUser(user));
     }
 
     protected User createUserInGroups(String userEmail, String nameSuffix, String... groupNames) throws VipException, GRIDAClientException {
@@ -302,5 +304,9 @@ public abstract class BaseSpringIT {
         });
     }
 
+
+    protected Resource getResourceFromClasspath(String pathFromClasspath) {
+        return resourceLoader.getResource("classpath:" + pathFromClasspath);
+    }
 
 }

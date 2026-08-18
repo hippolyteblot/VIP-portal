@@ -22,6 +22,10 @@ public class WorkflowInput {
         return workflowInput;
     }
 
+    public static WorkflowInput ofValue(String value) {
+        return ofList(List.of(value));
+    }
+
     public static WorkflowInput ofinterval(List<Double> values) {
         WorkflowInput workflowInput = new WorkflowInput();
         workflowInput.setInterval(values);
