@@ -53,6 +53,10 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void add(AppVersion version) throws VipException {
+        assertStringInputNotNullNotBlank(version.getApplicationName(), "applicationName", "Must be present at creation");
+        assertStringInputNotNullNotBlank(version.getVersion(), "version", "Must be present at creation");
+        assertInputIsValid(version.getResources() != null, "resources", "Must be present at creation");
+        assertInputIsValid(version.getTags() != null, "tags", "Must be present at creation");
         Application app = permissions.shouldExist(
             applicationBusiness.get(version.getApplicationName()),
             Application.class,
@@ -85,6 +89,10 @@ public class AppVersionBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(AppVersion version) throws VipException {
+        assertStringInputNotNullNotBlank(version.getApplicationName(), "applicationName", "Must be present at update");
+        assertStringInputNotNullNotBlank(version.getVersion(), "version", "Must be present at update");
+        assertInputIsValid(version.getResources() != null, "resources", "Must be present at update");
+        assertInputIsValid(version.getTags() != null, "tags", "Must be present at update");
         AppVersion existingVersion = permissions.shouldExist(
             get(version.getApplicationName(), version.getVersion()),
             AppVersion.class,
