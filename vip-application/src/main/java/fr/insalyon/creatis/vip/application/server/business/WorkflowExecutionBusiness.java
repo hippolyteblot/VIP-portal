@@ -49,6 +49,10 @@ public class WorkflowExecutionBusiness extends CommonBusiness {
             Map<String,String> settings = new HashMap<>(appVersion.getSettings());
             settings.put(ApplicationConstants.DEFAULT_EXECUTOR_GASW, resource.getType().toString());
             String settingsJSON = new ObjectMapper().writeValueAsString(settings);
+            logger.info("Launching workflow of [{}/{}]", appVersion.getApplicationName(), appVersion.getVersion());
+            logger.info("Launching on engine [{}] and resource [{}] (type : [{}])", engine.getName(), resource.getName(), resource.getType());
+            logger.info("inputs : {}", inputs);
+            logger.info("settings: {}", settingsJSON);
             return this.engine.launch(engine.getEndpoint(), workflowContent, inputs, settingsJSON, resource.getConfiguration(), proxyFileName);
 
         } catch (JsonProcessingException ex) {
