@@ -128,6 +128,7 @@ public class InputFileParser {
             for (Map<String, List<String>> inputMap : inputMaps) {
                 Map<String, String> parsed = new HashMap<>();
                 inputMap.forEach((name, items) -> {
+                    // Filter out  empty strings
                     List<String> filteredItems = items.stream()
                             .filter(item -> item != null && !item.isEmpty())
                             .toList();

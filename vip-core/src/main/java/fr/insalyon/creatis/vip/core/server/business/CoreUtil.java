@@ -67,19 +67,18 @@ public class CoreUtil {
         return sb.toString();
     }
 
-    
+ 
             
     public static SAXParserFactory getSecureSAXParserFactory() throws VipException  {
             SAXParserFactory parserFactory = SAXParserFactory.newInstance();
             
             parserFactory.setNamespaceAware(true);
-            
-            try {
+  
+        try {
+                // https://docs.semgrep.dev/cheat-sheets/java-xxe#3-c-saxparserfactory
                 parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-                
-                parserFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-                
-            }catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+
+            } catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
                 log.error("The SAX parser does not support some XXE security features: {}", e.getMessage(), e);
                 throw new VipException("The SAX parser does not support some XXE security features", e);
             }

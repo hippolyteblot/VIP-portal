@@ -457,8 +457,8 @@ public class SimulationData extends AbstractJobData implements SimulationDAO {
 
         // if the fields are not in the allowed list, we log an error and throw an exception
         if (!allowedFields.contains(startField) || !allowedFields.contains(endField)) {
-            logger.error("Tentative d'injection SQL détectée avec les champs : " + startField + " / " + endField);
-            throw new DAOException("Accès non autorisé aux colonnes spécifiées.");
+            logger.error("Attempted SQL injection detected with fields : " + startField + " / " + endField);
+            throw new DAOException("Unauthorized access to the specified columns.");
         }
 
         try {

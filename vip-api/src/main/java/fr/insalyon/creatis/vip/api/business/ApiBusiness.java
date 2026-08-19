@@ -61,7 +61,7 @@ public class ApiBusiness {
         try {
             // we do not care about the session, we're not in browser action
             User user = authenticationBusiness.signin(username, password);
-            logger.info("Credentials OK for " + username.replaceAll("[\\n\\r]", "_"));
+            logger.info("Credentials OK for " + username);
             return user;
         } catch (VipException e) {
             if (e.getMessage().startsWith("Authentication failed")) {
@@ -75,7 +75,7 @@ public class ApiBusiness {
         boolean generateNewApiKey = server.getCarminApikeyGenerateNewEachTime();
 
         if (generateNewApiKey) {
-            logger.info("generating a new apikey for " + email.replaceAll("[\\n\\r]", "_"));
+            logger.info("generating a new apikey for " + email);
             return userBusiness.generateNewUserApikey(email);
         } else {
             logger.debug("keeping the current api key for " + email);
