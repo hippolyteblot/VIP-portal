@@ -124,6 +124,7 @@ public class InputFileParser {
             else {
                 throw new IOException("Invalid JSON format");
             }
+            // Create result List of input maps, keep same amount of maps and apply PathHandler/List logic to their values
 
             for (Map<String, List<String>> inputMap : inputMaps) {
                 Map<String, String> parsed = new HashMap<>();

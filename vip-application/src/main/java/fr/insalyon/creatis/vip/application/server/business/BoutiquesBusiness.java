@@ -78,9 +78,9 @@ public class BoutiquesBusiness {
         String doi;
         try {
             // call publish command
-            List<String> commandArgs = Arrays.asList("bosh", "publish", server.getPublicationCommandLine());
-            List<String> output = runCommandAndFailOnError(commandArgs, tempFile.toString());
-            
+            String command = "FILE=" + tempFile + "; " + server.getPublicationCommandLine();
+            List<String> output = runCommandAndFailOnError(command);
+
             // get the doi
             // There should be only one line with the DOI
             doi = getDoiFromPublishOutput(output);
@@ -109,7 +109,7 @@ public class BoutiquesBusiness {
             throw new VipException("Can't get boutiques file size", e);
         }
         // call validate command
-        List<String> command = Arrays.asList("bosh", "validate", localPath);
+        String command = "bosh validate " + localPath;
         try {
             // if no exception : the command was successful
             runCommand(command);
@@ -186,22 +186,22 @@ public class BoutiquesBusiness {
         }
     }
 
-    private List<String> runCommandAndFailOnError(List<String> commandArgs, String tempFilePath) throws VipException {
+    private List<String> runCommandAndFailOnError(String command) throws VipException {
         try {
-            return runCommandWithEnv(commandArgs, tempFilePath);
+            return runCommand(command);
         } catch (CommandErrorException e) {
-            throw new VipException("Command failed : " + String.join("\n", e.getCout()));
+            throw new VipException("Command {" + command + "} failed : " + String.join("\n", e.getCout()));
         }
     }
 
-    private List<String> runCommand(List<String> commandArgs) throws CommandErrorException, VipException {
-        ProcessBuilder builder = new ProcessBuilder(commandArgs);
+    private List<String> runCommand(String command) throws CommandErrorException, VipException {
+        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
         builder.redirectErrorStream(true);
         Process process = null;
         List<String> cout = new ArrayList<>();
 
         try {
-            logger.info("Executing command : " + String.join(" ", commandArgs));
+            logger.info("Executing command : " + command);
             process = builder.start();
             BufferedReader r = new BufferedReader(
                     new InputStreamReader(process.getInputStream()));
@@ -227,51 +227,15 @@ public class BoutiquesBusiness {
         process = null;
         return cout;
     }
-    private List<String> runCommandWithEnv(List<String> commandArgs, String tempFilePath)throws CommandErrorException, VipException {
-    
-        ProcessBuilder builder = new ProcessBuilder(commandArgs);
-        builder.redirectErrorStream(true);
+    private void closeProcess(Process process) {
+        if (process == null)
+            return;
+        close(process.getOutputStream());
+        close(process.getInputStream());
+        close(process.getErrorStream());
+        process.destroy();
 
-        if (tempFilePath != null) {
-            builder.environment().put("FILE", tempFilePath);
-        }
-
-        Process process = null;
-        List<String> cout = new ArrayList<>();
-
-        try {
-            logger.info("Executing command with FILE=" + tempFilePath + " : " + String.join(" ", commandArgs));
-            process = builder.start();
-            
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String s;
-                while ((s = r.readLine()) != null) {
-                    cout.add(s);
-                }
-            }
-            process.waitFor();
-        } catch (IOException | InterruptedException e) {
-            logger.error("Unexpected error in a boutiques command", e);
-            throw new VipException("Unexpected error in a boutiques command", e);
-        } finally {
-            closeProcess(process);
-        }
-
-        if (process.exitValue() != 0) {
-            throw new CommandErrorException(cout);
-        }
-        return cout;
     }
-
-        private void closeProcess(Process process) {
-            if (process == null)
-                return;
-            close(process.getOutputStream());
-            close(process.getInputStream());
-            close(process.getErrorStream());
-            process.destroy();
-        }
-
     private void close(Closeable c) {
 
         if (c != null) {
