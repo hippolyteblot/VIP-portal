@@ -161,6 +161,9 @@ public class ApplicationData extends JdbcDaoSupport implements ApplicationDAO {
 
     @Override
     public List<Application> getApplicationsByGroups(Set<Group> groups) throws DAOException {
+        if (groups == null || groups.isEmpty()) {
+            return new ArrayList<>();
+        }
         String query =  "SELECT * FROM VIPApplications a "
                 +       "JOIN VIPGroupsApplications ga ON ga.applicationname = a.name "
                 +       "WHERE ga.groupname IN ("
