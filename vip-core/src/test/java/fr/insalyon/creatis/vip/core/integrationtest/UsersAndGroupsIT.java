@@ -719,8 +719,8 @@ public class UsersAndGroupsIT extends BaseSpringIT {
     public void testUpdatePassword() throws VipException {
         passwordBusiness.update(userBusiness.getUser(emailUser1), "testPassword", "testPassword updated");
 
-        // because getPassword() returns empty, try to signin
-        Assertions.assertNull(userBusiness.getUser(emailUser1).getPassword(), "incorrect password update user");
+        // because getPassword() returns "", try to signin
+        Assertions.assertEquals("", userBusiness.getUser(emailUser1).getPassword(), "incorrect password update user");
         authenticationBusiness.signin(emailUser1, "testPassword updated");
     }
 
