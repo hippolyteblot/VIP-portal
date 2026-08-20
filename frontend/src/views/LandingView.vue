@@ -577,7 +577,7 @@ onUnmounted(() => {
             </div>
           </div>
           <div class="flex flex-wrap justify-center gap-6 text-sm text-primary-300">
-            <a href="https://vip.creatis.insa-lyon.fr/documentation/" target="_blank" rel="noopener" class="transition hover:text-white">Documentation</a>
+            <a href="https://github.com/virtual-imaging-platform/VIP-portal/wiki" target="_blank" rel="noopener" class="transition hover:text-white">Documentation</a>
             <a href="https://vip.creatis.insa-lyon.fr/documentation/privacypolicy.html" target="_blank" rel="noopener" class="transition hover:text-white">Privacy Policy</a>
             <a href="https://vip.creatis.insa-lyon.fr/documentation/terms.html" target="_blank" rel="noopener" class="transition hover:text-white">Terms of Use</a>
             <a href="mailto:vip-support@creatis.insa-lyon.fr" class="transition hover:text-white">Contact</a>
