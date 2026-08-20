@@ -61,8 +61,7 @@ public class ApplicationImporterBusiness {
     public String readAndValidationBoutiquesFile(String fileLFN, User user)
             throws VipException {
         try {
-            String localFilePath =
-                    dataManagerBusiness.getRemoteFile(user, fileLFN);
+            String localFilePath = dataManagerBusiness.getRemoteFile(user, fileLFN);
             boutiquesBusiness.validateBoutiquesFile(localFilePath);
             return new Scanner(new File(localFilePath)).useDelimiter("\\Z").next();
         } catch (IOException ex) {

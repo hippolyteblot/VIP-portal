@@ -138,14 +138,19 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public User get(String email) throws DAOException {
-        String query =  "SELECT " + FIELDS
+        String query =  "SELECT " + FIELDS + ", pass "
         +               "FROM VIPUsers WHERE email=?";
         try (PreparedStatement ps = getConnection().prepareStatement(query)){
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return userFromRs(rs);
+                User user = userFromRs(rs);
+                // GWT needs to know if there is a password or not
+                if (rs.getString("pass") != null) {
+                    user.setPassword("");
+                }
+                return user;
             }
 
             logger.error("There is no user registered with the e-mail {}", email);
