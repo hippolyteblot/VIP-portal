@@ -33,6 +33,7 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Triplet;
 import fr.insalyon.creatis.vip.datamanager.client.view.DataManagerException;
 import fr.insalyon.creatis.vip.datamanager.server.business.LfcPathsBusiness;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 /**
  * Parse a m2 input file.
@@ -89,25 +90,22 @@ public class InputFileParser {
                 throw new VipException("Cannot find inputs file at this location: " + path);
         }
     }
-
     public List<Map<String, String>> handleXML(File file) throws VipException {
         try {
             XMLHandler handler = new XMLHandler();
-
-            SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-            parserFactory.setNamespaceAware(true);
+            SAXParserFactory parserFactory = CoreUtil.getSecureSAXParserFactory();
 
             XMLReader reader = parserFactory.newSAXParser().getXMLReader();
             reader.setContentHandler(handler);
             reader.parse(new InputSource(new FileReader(file)));
 
             return List.of(inputs);
-        } catch (IOException | SAXException | ParserConfigurationException e) {
+        } 
+        catch (IOException | SAXException | ParserConfigurationException e) {
             logger.error("Error parsing {}", file.getName(), e);
             throw new VipException(e);
         }
     }
-
     public List<Map<String, String>> handleJSON(File file) throws VipException {
         ObjectMapper mapper = new ObjectMapper();
         List<Map<String, String>> inputsData = new ArrayList<>();
@@ -126,12 +124,12 @@ public class InputFileParser {
             else {
                 throw new IOException("Invalid JSON format");
             }
-
             // Create result List of input maps, keep same amount of maps and apply PathHandler/List logic to their values
+
             for (Map<String, List<String>> inputMap : inputMaps) {
                 Map<String, String> parsed = new HashMap<>();
                 inputMap.forEach((name, items) -> {
-                    // Filter out empty strings
+                    // Filter out  empty strings
                     List<String> filteredItems = items.stream()
                             .filter(item -> item != null && !item.isEmpty())
                             .toList();

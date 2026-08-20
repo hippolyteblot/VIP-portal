@@ -242,7 +242,6 @@ public class BoutiquesBusiness extends CommonBusiness {
         process = null;
         return cout;
     }
-
     private void closeProcess(Process process) {
         if (process == null)
             return;
@@ -250,8 +249,8 @@ public class BoutiquesBusiness extends CommonBusiness {
         close(process.getInputStream());
         close(process.getErrorStream());
         process.destroy();
-    }
 
+    }
     private void close(Closeable c) {
 
         if (c != null) {

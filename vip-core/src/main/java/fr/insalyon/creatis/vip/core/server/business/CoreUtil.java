@@ -4,10 +4,20 @@ import java.security.SecureRandom;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import java.text.Normalizer;
 
+import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import fr.insalyon.creatis.vip.core.client.VipException;
 
 public class CoreUtil {
-
+    
+    private static final Logger log = LoggerFactory.getLogger(CoreUtil.class);
     /*
         remove accents and non-ascii characters
     */
@@ -56,4 +66,23 @@ public class CoreUtil {
         }
         return sb.toString();
     }
+
+ 
+            
+    public static SAXParserFactory getSecureSAXParserFactory() throws VipException  {
+            SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+            
+            parserFactory.setNamespaceAware(true);
+  
+        try {
+                // https://docs.semgrep.dev/cheat-sheets/java-xxe#3-c-saxparserfactory
+                parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
+            } catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+                log.error("The SAX parser does not support some XXE security features: {}", e.getMessage(), e);
+                throw new VipException("The SAX parser does not support some XXE security features", e);
+            }
+            
+            return parserFactory;
+        }
 }
