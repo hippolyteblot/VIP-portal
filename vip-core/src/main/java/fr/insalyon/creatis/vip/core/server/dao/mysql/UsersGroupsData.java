@@ -11,6 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,20 +165,19 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
         if (groups == null || groups.isEmpty()) {
             return Collections.emptyList();
         }
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < groups.size(); i++) {
-            if (i > 0) sb.append(", ");
-            sb.append("?");
-        }
+        String placeholders = groups.stream()
+                .map(g -> "?")
+                .collect(Collectors.joining(", "));
 
         String query = "SELECT DISTINCT first_name, last_name, LOWER(first_name), LOWER(last_name) "
                     + "FROM VIPUsers vu, VIPUsersGroups vg "
-                    + "WHERE vu.email = vg.email AND vg.groupname IN (" + sb.toString() + ") "
+                    + "WHERE vu.email = vg.email AND vg.groupname IN (" + placeholders + ") "
                     + "ORDER BY LOWER(first_name), LOWER(last_name)";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
-            for (int i = 0; i < groups.size(); i++) {
-                ps.setString(i + 1, groups.get(i));
+            int index = 1;
+            for (String group : groups) {
+                ps.setString(index++, group);
             }
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -192,42 +193,37 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
         }
     }
 
-    @Override
+  @Override
     public List<Boolean> getUserPropertiesGroups(String email)
             throws DAOException {
 
-        if (email == null || email.isEmpty()) {
-            throw new DAOException("Email is null or empty");
-        }
+        try {
+            PreparedStatement ps = getConnection().prepareStatement(
+                    "SELECT public "
+                    + "FROM VIPGroups g, VIPUsersGroups ug "
+                    + "WHERE g.name = ug.groupname AND ug.email= ?");
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
 
-        String query = "SELECT public "
-                 + "FROM VIPGroups g, VIPUsersGroups ug "
-                 + "WHERE g.name = ug.groupname AND ug.email = ?";
-
-    try (PreparedStatement ps = getConnection().prepareStatement(query)) {
-        
-        ps.setString(1, email);
-
-        try (ResultSet rs = ps.executeQuery()) {
+            List<Boolean> properties = new ArrayList<Boolean>();
             boolean isPublic = false;
 
             while (rs.next()) {
                 if (rs.getInt("public") == 1) {
                     isPublic = true;
-                    break; 
                 }
             }
-            List<Boolean> properties = new ArrayList<>();
-            properties.add(isPublic);
-            return properties;
-        }
-    } catch (SQLException ex) {
-        logger.error("Error getting users properties groups for {} ", email, ex);
+            properties.add(0, isPublic);
 
-        throw new DAOException(ex);
+            ps.close();
+
+            return properties;
+
+        } catch (SQLException ex) {
+            logger.error("Error getting users properties groups for {} ", email, ex);
+            throw new DAOException(ex);
         }
     }
-
     /**
      *
      * @return @throws DAOException
