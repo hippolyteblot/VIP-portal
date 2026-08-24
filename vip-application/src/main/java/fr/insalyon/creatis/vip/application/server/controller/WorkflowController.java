@@ -4,7 +4,7 @@ import java.util.Date;
 
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.server.business.ListWorkflowsBusiness;
-import fr.insalyon.creatis.vip.application.server.business.util.WorkflowLaunchBusiness;
+import fr.insalyon.creatis.vip.application.server.business.WorkflowLaunchBusiness;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;

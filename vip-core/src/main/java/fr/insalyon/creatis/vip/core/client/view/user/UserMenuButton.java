@@ -35,7 +35,7 @@ public class UserMenuButton extends ToolStripMenuButton {
 
             @Override
             public void onClick(MenuItemClickEvent event) {
-                new UpgradeLevelLayout(200, 25).show();
+                com.google.gwt.user.client.Window.open("https://github.com/virtual-imaging-platform/VIP-portal/wiki/User-levels", "_blank", "");
             }
         });
 

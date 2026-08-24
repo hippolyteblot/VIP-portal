@@ -1,4 +1,4 @@
-package fr.insalyon.creatis.vip.application.server.business.util;
+package fr.insalyon.creatis.vip.application.server.business;
 
 import fr.insalyon.creatis.boutiques.model.BoutiquesDescriptor;
 import fr.insalyon.creatis.boutiques.model.Input;
@@ -8,11 +8,11 @@ import fr.insalyon.creatis.vip.application.client.ApplicationConstants;
 import fr.insalyon.creatis.vip.application.client.view.ApplicationError;
 import fr.insalyon.creatis.vip.application.client.view.monitor.WorkflowStatus;
 import fr.insalyon.creatis.vip.application.models.*;
-import fr.insalyon.creatis.vip.application.server.business.*;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.models.User;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 import fr.insalyon.creatis.vip.core.server.business.EmailBusiness;
 import fr.insalyon.creatis.vip.core.server.business.Server;
 import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
@@ -65,7 +65,7 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
     }
 
     public Workflow launch(String workflowName, String applicationName, String applicationVersion, Map<String, String> parametersMap) throws VipException {
-        Workflow workflow = new Workflow(null, workflowName, applicationName, applicationVersion, getUser(), null, null, null, null, null);
+        Workflow workflow = new Workflow(workflowName, applicationName, applicationVersion);
         Map<String,WorkflowInput> inputsMap = new HashMap<>();
         for (String inputName : parametersMap.keySet()) {
             String valuesStr = parametersMap.get(inputName);
@@ -92,15 +92,14 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
     }
 
     public synchronized Workflow launch(Workflow workflow) throws VipException {
+        checkWorkflowForLaunch(workflow);
         checkVIPCapacities(getUser(), workflow.getWorkflowName());
 
         AppVersion appVersion = appVersionBusiness.getVersion(workflow.getApplicationName(), workflow.getApplicationVersion());
         BoutiquesDescriptor boutiquesDescriptor = boutiquesBusiness.parseBoutiquesString(appVersion.getDescriptor());
 
-        // TODO check stuff : no id, no status
         // TODO : check boutiques constraint, optional and stuff
         // TODO : check input format (character white list, see API). Maybe also boutiques types
-        // TODO : check results-directory mandatory
 
         // get the inputs as a list of maps of String -> List<String>
         // from CARMIN it is already like that. from the internal API or GWT, it is just a map of String -> List<String>
@@ -194,6 +193,34 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
             logger.error("Error launching simulation {}", workflow.getWorkflowName(), e);
             throw new VipException(e);
         }
+    }
+
+    private void checkWorkflowForLaunch(Workflow workflow) throws VipException {
+        assertInputIsValid(workflow.getID() == null, "id", "Must be null on launch");
+        assertStringInputNotNullNotBlank(workflow.getWorkflowName(), "workflowName", "Must be present on launch");
+        assertStringInputNotNullNotBlank(workflow.getApplicationName(), "applicationName", "Must be present on launch");
+        assertStringInputNotNullNotBlank(workflow.getApplicationVersion(), "applicationVersion", "Must be present on launch");
+        assertInputIsValid(workflow.getUserId() == null, "userId", "Must be null on launch");
+        assertInputIsValid(workflow.getStatus() == null || workflow.getStatus() == WorkflowStatus.Queued,
+                "status", "Must be null or QUEUD on launch");
+        // inputs must contain results-dir. Return if ok. Throw error an the end of the method if not
+        if (workflow instanceof CarminWorkflow carminWorkflow) {
+            assertInputIsValid(carminWorkflow.getInputsMapsList() != null && ! carminWorkflow.getInputsMapsList().isEmpty(),
+                    "inputs", "Must be present on launch");
+            if (carminWorkflow.getInputsMapsList().stream()
+                    .allMatch(i -> i.containsKey(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME))) {
+                return;
+            }
+        } else {
+            assertInputIsValid(workflow.getInputs() != null,
+                    "inputs", "Must be present on launch");
+            if ( workflow.getInputs().containsKey(CoreConstants.RESULTS_DIRECTORY_PARAM_NAME)) {
+                return;
+            }
+        }
+        // Must have return if res-dir if present : throw error
+        logger.error("results-directory absent for new workflow to launch");
+        throw new VipException(ApplicationError.INVALID_WORKFLOW_INPUT, CoreConstants.RESULTS_DIRECTORY_PARAM_NAME, "Must be present on launch");
     }
 
     private void checkVIPCapacities(User user, String workflowName) throws VipException {

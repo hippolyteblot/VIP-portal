@@ -56,7 +56,7 @@ public class InputBusiness {
         } catch (DAOException ex) {
             throw new VipException(ex);
         }
-    }
+    } 
 
     public void updateSimulationInput(
             String email, SimulationInput simulationInput)

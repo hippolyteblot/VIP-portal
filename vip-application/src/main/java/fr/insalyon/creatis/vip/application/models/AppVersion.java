@@ -13,15 +13,22 @@ import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import fr.insalyon.creatis.vip.core.server.inter.DataViews;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @JsonView(DataViews.User.class)
 public class AppVersion implements IsSerializable {
+
+    @NotBlank
     private String applicationName;
+    @NotBlank
     private String version;
     private String descriptor;
     private String doi;
     private boolean visible;
+    @NotNull
     private Set<Resource> resources;
+    @NotNull
     private Set<Tag> tags;
     private Map<String, String> settings;
     private String source;

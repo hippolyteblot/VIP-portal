@@ -3,16 +3,20 @@ package fr.insalyon.creatis.vip.core.integrationtest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.insalyon.creatis.grida.client.GRIDAClient;
 import fr.insalyon.creatis.vip.core.integrationtest.database.BaseSpringIT;
+import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.server.dao.UserDAO;
+import fr.insalyon.creatis.vip.core.server.security.common.SpringPrincipalUser;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -34,8 +38,6 @@ abstract public class BaseWebSpringIT extends BaseSpringIT {
     @Autowired
     protected WebApplicationContext wac;
     protected MockMvc mockMvc;
-    @Autowired
-    protected ResourceLoader resourceLoader;
     @Autowired
     protected UserDAO userDAO;
 
@@ -61,13 +63,13 @@ abstract public class BaseWebSpringIT extends BaseSpringIT {
                 .build();
     }
 
+    protected RequestPostProcessor getUserSecurityMock(User user) {
+        return SecurityMockMvcRequestPostProcessors.user(new SpringPrincipalUser(user));
+    }
+
     protected String getResourceAsString(String pathFromClasspath) throws IOException {
         Resource resource = getResourceFromClasspath(pathFromClasspath);
         return IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
-    }
-
-    protected Resource getResourceFromClasspath(String pathFromClasspath) {
-        return resourceLoader.getResource("classpath:" + pathFromClasspath);
     }
 
     public WebApplicationContext getWac() {

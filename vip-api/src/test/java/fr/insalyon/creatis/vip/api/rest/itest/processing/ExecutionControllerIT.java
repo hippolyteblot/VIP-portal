@@ -374,7 +374,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         verify(webServiceEngine).kill(w2.getEngine(), WORKFLOW_2.getID());
     }
 
-    // the difference (at the moment) is that with moteurLite the optional and absent parameters are not included
+    // the difference (at the moment) is that with moteurLite the optional/absent/default parameters are not included
     @Test
     @SuppressWarnings("unchecked")
     public void testInitBoutiquesExecution() throws Exception
@@ -425,12 +425,11 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
         // verify workflow path
         Assertions.assertEquals(fileUtil.read(getBoutiquesTestFile()), workflowContentCaptor.getValue());
 
-        // verify inputs / same as gwendia without optional one
+        // verify inputs / same as gwendia without optional and default ones
         String inputs = inputsCaptor.getValue();
         Map<String, List<String>> expectedParams = new HashMap<>();
         expectedParams.put("testFileInput", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser2.getFolder() + "/path/to/input.in"));
         expectedParams.put("testTextInput", List.of("best test text value"));
-        expectedParams.put("testFlagInput", List.of("false"));
         expectedParams.put("results-directory", List.of("lfn:" + ServerMockConfig.TEST_USERS_ROOT + "/" +  baseUser2.getFolder()));
         List<Map<String, List<String>>> paramsList = new ArrayList<>();
         paramsList.add(expectedParams);

@@ -52,6 +52,9 @@ public class EmailBusiness {
     private void sendWithSMA(String subject, String content, String[] recipients, boolean direct, String username)
             throws VipException {
         try {
+            // with the SMA client-server protocol, the content MUST NOT contain any new line as they are considered
+            // as parameters separators
+            content = content.replaceAll("[\\n\\r]", "");
             smaClient.sendEmail(subject, content, recipients, direct, username);
         } catch (SMAClientException ex) {
             logger.error("Error sending {} email to {}", subject, Arrays.toString(recipients), ex);

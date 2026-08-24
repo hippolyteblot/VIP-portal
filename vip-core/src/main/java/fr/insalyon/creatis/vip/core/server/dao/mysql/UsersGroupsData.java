@@ -11,6 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -160,39 +162,38 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
      */
     @Override
     public List<String> getUsersFromGroups(List<String> groups) throws DAOException {
+        if (groups == null || groups.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String placeholders = groups.stream()
+                .map(g -> "?")
+                .collect(Collectors.joining(", "));
 
-        try {
-            StringBuilder sb = new StringBuilder();
-
-            for (String groupName : groups) {
-                if (sb.length() > 0) {
-                    sb.append(" OR ");
-                }
-                sb.append("groupname = '").append(groupName).append("'");
-            }
-            PreparedStatement ps = getConnection().prepareStatement("SELECT DISTINCT "
-                    + "first_name, last_name, LOWER(first_name), LOWER(last_name) "
+        String query = "SELECT DISTINCT first_name, last_name, LOWER(first_name), LOWER(last_name) "
                     + "FROM VIPUsers vu, VIPUsersGroups vg "
-                    + "WHERE vu.email = vg.email AND (" + sb.toString() + ") "
-                    + "ORDER BY LOWER(first_name), LOWER(last_name)");
+                    + "WHERE vu.email = vg.email AND vg.groupname IN (" + placeholders + ") "
+                    + "ORDER BY LOWER(first_name), LOWER(last_name)";
 
-            ResultSet rs = ps.executeQuery();
-            List<String> users = new ArrayList<String>();
-
-            while (rs.next()) {
-                users.add(rs.getString("first_name") + " "
-                        + rs.getString("last_name"));
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            int index = 1;
+            for (String group : groups) {
+                ps.setString(index++, group);
             }
-            ps.close();
-            return users;
 
+            try (ResultSet rs = ps.executeQuery()) {
+                List<String> users = new ArrayList<>();
+                while (rs.next()) {
+                    users.add(rs.getString("first_name") + " " + rs.getString("last_name"));
+                }
+                return users;
+            }
         } catch (SQLException ex) {
             logger.error("Error getting users from {}", groups, ex);
             throw new DAOException(ex);
         }
     }
 
-    @Override
+  @Override
     public List<Boolean> getUserPropertiesGroups(String email)
             throws DAOException {
 
@@ -223,7 +224,6 @@ public class UsersGroupsData extends JdbcDaoSupport implements UsersGroupsDAO {
             throw new DAOException(ex);
         }
     }
-
     /**
      *
      * @return @throws DAOException

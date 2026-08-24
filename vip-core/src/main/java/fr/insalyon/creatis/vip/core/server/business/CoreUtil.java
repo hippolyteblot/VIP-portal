@@ -1,12 +1,31 @@
 package fr.insalyon.creatis.vip.core.server.business;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.security.SecureRandom;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.xml.XMLConstants;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CoreUtil {
+    
+    private static final Logger log = LoggerFactory.getLogger(CoreUtil.class);
 
     /*
         remove accents and non-ascii characters
@@ -55,5 +74,72 @@ public class CoreUtil {
             sb.append(alphabet.charAt(random.nextInt(alphabet.length())));
         }
         return sb.toString();
+    }
+
+    static public class CommandErrorException extends Exception {
+
+        private final List<String> cout;
+
+        public CommandErrorException(List<String> cout) {
+            this.cout = cout;
+        }
+
+        public String getFirstLine() {
+            return cout != null && !cout.isEmpty() ? cout.getFirst() : "<No output>";
+        }
+
+        public String getOutput() {
+            return cout == null ? "<No output>" : String.join("\n", cout);
+        }
+    }
+
+    static public List<String> runCommand(String... command) throws CommandErrorException, VipException {
+        return runCommand(Arrays.asList(command));
+    }
+
+    static public List<String> runCommand(List<String> command) throws CommandErrorException, VipException {
+        ProcessBuilder builder = new ProcessBuilder(command);
+        builder.redirectErrorStream(true);
+        Process process = null;
+        List<String> cout = new ArrayList<>();
+
+        try {
+            log.info("Executing command : {}", command);
+            process = builder.start();
+
+            try (BufferedReader reader = process.inputReader()) {
+                cout = reader.lines().toList();
+            }
+            process.waitFor();
+        } catch (IOException | InterruptedException e) {
+            log.error("Unexpected error in a boutiques command : {}",
+                    String.join("\n", cout), e);
+            throw new VipException("Unexpected error in a boutiques command", e);
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+
+        if (process.exitValue() != 0) {
+            log.error("Command failed : {}", String.join("\n", cout));
+            throw new CommandErrorException(cout);
+        }
+        return cout;
+    }
+
+    public static SAXParserFactory getSecureSAXParserFactory() throws VipException  {
+        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+        parserFactory.setNamespaceAware(true);
+  
+        try {
+            // https://docs.semgrep.dev/cheat-sheets/java-xxe#3-c-saxparserfactory
+            parserFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+
+        } catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
+            log.error("The SAX parser does not support some XXE security features: {}", e.getMessage(), e);
+            throw new VipException("The SAX parser does not support some XXE security features", e);
+        }
+        return parserFactory;
     }
 }
