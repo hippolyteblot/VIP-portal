@@ -17,6 +17,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
 
 /**
  * Parse a input file.
@@ -40,8 +41,7 @@ public class InputParser extends DefaultHandler {
 
     public String parse(String fileName) throws VipException {
         try {
-            SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-            parserFactory.setNamespaceAware(true);
+            SAXParserFactory parserFactory = CoreUtil.getSecureSAXParserFactory();
             reader = parserFactory.newSAXParser().getXMLReader();
             reader.setContentHandler(this);
             reader.parse(new InputSource(new FileReader(fileName)));

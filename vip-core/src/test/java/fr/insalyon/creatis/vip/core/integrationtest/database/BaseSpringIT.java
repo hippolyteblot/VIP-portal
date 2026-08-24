@@ -13,6 +13,7 @@ import java.util.logging.ErrorManager;
 
 import javax.sql.DataSource;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import fr.insalyon.creatis.grida.client.GRIDAPoolClient;
 import fr.insalyon.creatis.vip.core.integrationtest.ServerMockConfig;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -95,8 +98,8 @@ public abstract class BaseSpringIT {
     
     @Autowired @Qualifier("db-datasource") protected DataSource dataSource; // this is a mockito spy wrapping the h2 memory datasource
     @Autowired protected ApplicationContext applicationContext;
+    @Autowired protected ResourceLoader resourceLoader;
     @Autowired protected UserBusiness userBusiness;
-    @Autowired protected ApplicationContext appContext;
     @Autowired protected DataSource lazyDataSource;
     @Autowired protected Server server;
     @Autowired protected EmailBusiness emailBusiness;
@@ -124,9 +127,9 @@ public abstract class BaseSpringIT {
     protected User admin;
     protected Group group1;
     protected Group group2;
-    protected User nonExistentUser = new User(CoreUtil.createUUID(), "test firstName suffix0",
+    protected User nonExistentUser = new User( "test firstName suffix0",
             "test lastName suffix0", "unexisting_user@test.fr", "institution",
-            CountryCode.fr, null);
+            UserLevel.Beginner, CountryCode.fr);
 
     @BeforeEach
     protected void setUp() throws Exception {
@@ -173,17 +176,26 @@ public abstract class BaseSpringIT {
     }
 
     protected User createUser(String testEmail, String nameSuffix, String password) throws GRIDAClientException, VipException {
-        User newUser = new User(CoreUtil.createUUID(), "test firstName " + nameSuffix,
+        User newUser = new User("test firstName " + nameSuffix,
                 "test lastName " + nameSuffix, testEmail, "test institution",
-                CountryCode.fr, null);
+                CountryCode.fr);
         newUser.setPassword(password);
         return createUser(newUser);
     }
 
     protected User createUser(User user) throws GRIDAClientException, VipException {
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-
-        authenticationBusiness.signup(user, "", (Group) null);
+        asAdminContext(() -> {
+            User newUser = new User();
+            newUser.setEmail(user.getEmail());
+            newUser.setFirstName(user.getFirstName());
+            newUser.setLastName(user.getLastName());
+            newUser.setCountryCode(user.getCountryCode());
+            newUser.setPassword(user.getPassword());
+            newUser = authenticationBusiness.signup(newUser, "");
+            user.setId(newUser.getId());
+            userBusiness.update(user);
+        });
         return user;
     }
 
@@ -215,12 +227,16 @@ public abstract class BaseSpringIT {
     }
 
     public void setAdminContext() throws VipException, GRIDAClientException {
-        SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
         User adminUser = getAdminUser();
+        setCurrentUser(adminUser);
+    }
+
+    public void setCurrentUser(User user) {
+        SessionAuthenticationProvider provider = new SessionAuthenticationProvider();
 
         // we need to create a different context object since SecurityContextHolder hold a reference
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(provider.createAuthenticationFromUser(adminUser));
+        context.setAuthentication(provider.createAuthenticationFromUser(user));
 
         SecurityContextHolder.setContext(context);
     }
@@ -230,27 +246,27 @@ public abstract class BaseSpringIT {
     }
 
     protected <E extends Exception> void asAdminContext(CheckedRunnable<E> action) throws E, VipException, GRIDAClientException {
+        withUserContext(getAdminUser(), action);
+    }
+
+    protected <E extends Exception> void withUserContext(User user, CheckedRunnable<E> action) throws E, VipException, GRIDAClientException {
         SecurityContext original = SecurityContextHolder.getContext();
 
         try {
-            setAdminContext();
+            setCurrentUser(user);
             action.run();
         } finally {
             SecurityContextHolder.setContext(original);
         }
     }
 
-    protected RequestPostProcessor getUserSecurityMock(User user) {
-        return SecurityMockMvcRequestPostProcessors.user(new SpringPrincipalUser(user));
-    }
-
     protected User createUserInGroups(String userEmail, String nameSuffix, String... groupNames) throws VipException, GRIDAClientException {
-        User newUser = new User(CoreUtil.createUUID(), "test firstName " + nameSuffix,
+        User newUser = new User("test firstName " + nameSuffix,
                 "test lastName " + nameSuffix, userEmail, "test institution",
-                CountryCode.fr, null);
+                CountryCode.fr);
         newUser.setPassword("testPassword");
         Mockito.when(gridaClient.exist(anyString())).thenReturn(true, false);
-        authenticationBusiness.signup(newUser, "", false, true, new HashSet<>());
+        authenticationBusiness.signup(newUser, "");
 
         asAdminContext(() -> {
             for (String groupName : groupNames) {
@@ -269,6 +285,7 @@ public abstract class BaseSpringIT {
         // by default JsonPath uses json-smart, change to jackson with strict mode
         mapper = new ObjectMapper();
         mapper.enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         Configuration.setDefaults(new Configuration.Defaults() {
             @Override
             public JsonProvider jsonProvider() {
@@ -287,5 +304,9 @@ public abstract class BaseSpringIT {
         });
     }
 
+
+    protected Resource getResourceFromClasspath(String pathFromClasspath) {
+        return resourceLoader.getResource("classpath:" + pathFromClasspath);
+    }
 
 }

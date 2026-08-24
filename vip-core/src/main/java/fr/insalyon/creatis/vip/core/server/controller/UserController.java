@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,10 +16,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
+import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.models.ActivationCode;
 import fr.insalyon.creatis.vip.core.models.User;
 import fr.insalyon.creatis.vip.core.models.UserAndPassword;
@@ -34,6 +37,34 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 
+/**
+ * Permissions:
+ * - An user can only see/edit/delete himself
+ * - Admins can do everything (on the updatable field)
+ *
+ * User can see:
+ * - id, first name, last name, email, level, institution, country code, registration time, last login time, ...
+ * - max running simulation number, terms of use validation date, last publication update date, confirmed, groups, apikey
+ *
+ * Admin can see in addition:
+ * - locked, folder
+ *
+ * On creation:
+ * - first name, last name, email, institution, country code, groups (only public ones)
+ * - password
+ * - MUST BE ABSENT : id, level, dates, max running simulation number, confirmed
+ *
+ * Users can only edit:
+ * - institution, country code
+ * - groups : can join public group, and leave any group
+ * - terms of use validation date, last publication update date set to NOW() through dedicated endpoints
+ *
+ * Admin can also edit :
+ * - folder, accountLocked, first name, last name, email, confirmed, level, max running simulation
+ *
+ * About password and api key management:
+ * - done through specific endpoints
+ */
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -119,7 +150,7 @@ public class UserController {
         // Set password on user object from the separate password field
         form.user.setPassword(form.password);
         // the returned data may be partial, but enough for the frontend to do it own stuff!
-        User createdUser = authenticationBusiness.signup(form.user, form.comment, false, false, form.user.getGroups());
+        User createdUser = authenticationBusiness.signup(form.user, form.comment);
         logger.info("Signup completed: email='{}', generatedId='{}'", createdUser.getEmail(), createdUser.getId());
         return createdUser;
     }
@@ -136,5 +167,40 @@ public class UserController {
         } catch (UnsupportedEncodingException e) {
             throw new VipException("Failed to create session after activation", e);
         }
+    }
+
+    @GetMapping(value = "{userId}/apikey")
+    public String getApiKey(@PathVariable String userId) throws VipException {
+        String email = resolveEmail(userId);
+        logger.debug("Getting API key for user: {}", email);
+        return userBusiness.getUserApikey(email);
+    }
+
+    @PostMapping(value = "{userId}/apikey")
+    @ResponseStatus(HttpStatus.CREATED)
+    public String generateApiKey(@PathVariable String userId) throws VipException {
+        String email = resolveEmail(userId);
+        logger.info("Generating new API key for user: {}", email);
+        return userBusiness.generateNewUserApikey(email);
+    }
+
+    @DeleteMapping(value = "{userId}/apikey")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApiKey(@PathVariable String userId) throws VipException {
+        String email = resolveEmail(userId);
+        logger.info("Deleting API key for user: {}", email);
+        userBusiness.deleteUserApikey(email);
+    }
+
+    private String resolveEmail(String userId) throws VipException {
+        User currentUser = userBusiness.getCurrentUser();
+        if ("me".equals(userId)) {
+            return currentUser.getEmail();
+        }
+        if (currentUser.getLevel() != UserLevel.Administrator) {
+            logger.error("User {} attempted to access API key for user {}", currentUser.getEmail(), userId);
+            throw new VipException(DefaultError.ACCESS_DENIED);
+        }
+        return userId;
     }
 }

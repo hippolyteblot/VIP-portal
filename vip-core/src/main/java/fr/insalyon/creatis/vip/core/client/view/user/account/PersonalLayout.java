@@ -15,7 +15,6 @@ import fr.insalyon.creatis.vip.core.client.rpc.ConfigurationServiceAsync;
 import fr.insalyon.creatis.vip.core.client.view.CoreConstants;
 import fr.insalyon.creatis.vip.core.client.view.common.AbstractFormLayout;
 import fr.insalyon.creatis.vip.core.client.view.layout.Layout;
-import fr.insalyon.creatis.vip.core.client.view.user.UpgradeLevelLayout;
 import fr.insalyon.creatis.vip.core.client.view.user.UserLevel;
 import fr.insalyon.creatis.vip.core.client.view.util.CountryCode;
 import fr.insalyon.creatis.vip.core.client.view.util.FieldUtil;
@@ -67,14 +66,13 @@ public class PersonalLayout extends AbstractFormLayout {
                         if (institutionField.validate() & countryField.validate()) {
 
                             User user = new User(
-                                    CoreModule.user.getId(),
                                     CoreModule.user.getFirstName(),
                                     CoreModule.user.getLastName(),
                                     CoreModule.user.getEmail(),
                                     institutionField.getValueAsString().trim(),
                                     UserLevel.valueOf(levelLabel.getContents()),
                                     CountryCode.valueOf(countryField.getValueAsString()));
-                            user.setFolder(CoreModule.user.getFolder());
+                            user.setId(CoreModule.user.getId());
 
                             ConfigurationServiceAsync service = ConfigurationService.Util.getInstance();
                             final AsyncCallback<User> callback = new AsyncCallback<User>() {
@@ -120,7 +118,7 @@ public class PersonalLayout extends AbstractFormLayout {
                     new ClickHandler() {
                         @Override
                         public void onClick(ClickEvent event) {
-                            new UpgradeLevelLayout(event.getX(), event.getY()).show();
+                            com.google.gwt.user.client.Window.open("https://github.com/virtual-imaging-platform/VIP-portal/wiki/User-levels", "_blank", "");
                         }
                     });
             levelLabel.setPrompt("Upgrade your Account!");

@@ -67,16 +67,11 @@ public class CoreModule extends Module {
         Layout.getInstance().addTab(CoreConstants.TAB_HOME, () -> homeTab);
 
         // open account tab to accept the terms of use if necessary
-        // Also open the tab for users with no group :
-        // It was possible with former Mozilla Persona but keep it just in case
-
-        if (!user.hasGroups() || !user.hasAcceptTermsOfUse()) {
+        if (!user.hasAcceptTermsOfUse()) {
             final AccountTab accountTab =
                 (AccountTab) Layout.getInstance().addTab(
                     CoreConstants.TAB_ACCOUNT, AccountTab::new);
-            if (!user.hasAcceptTermsOfUse()) {
-                showDialog("Please accept our Terms of Use", accountTab);
-            }
+            showDialog("Please accept our Terms of Use", accountTab);
         }
 
         // check if the user has requested an email change
@@ -85,27 +80,27 @@ public class CoreModule extends Module {
         }
 
         //call to terms of use
-         if (user.hasAcceptTermsOfUse()) {
-        final AsyncCallback<Boolean> callback = new AsyncCallback<Boolean>() {
-            @Override
-            public void onFailure(Throwable caught) {
+        if (user.hasAcceptTermsOfUse()) {
+            final AsyncCallback<Boolean> callback = new AsyncCallback<Boolean>() {
+                @Override
+                public void onFailure(Throwable caught) {
 
-                Layout.getInstance().setWarningMessage("Cannot get last update of Terms of Use" + caught.getMessage(), 10);
-
-            }
-
-            @Override
-            public void onSuccess(Boolean result) {
-                if (result) {
-                    final AccountTab accountTab =
-                        (AccountTab) Layout.getInstance().addTab(
-                            CoreConstants.TAB_ACCOUNT, AccountTab::new);
-                    showDialog("Our Terms of Use have changed. Please accept them again.", accountTab);
+                    Layout.getInstance().setWarningMessage("Cannot get last update of Terms of Use" + caught.getMessage(), 10);
 
                 }
-            }
-        };
-        ConfigurationService.Util.getInstance().compare(callback);
+
+                @Override
+                public void onSuccess(Boolean result) {
+                    if (result) {
+                        final AccountTab accountTab =
+                            (AccountTab) Layout.getInstance().addTab(
+                                CoreConstants.TAB_ACCOUNT, AccountTab::new);
+                        showDialog("Our Terms of Use have changed. Please accept them again.", accountTab);
+
+                    }
+                }
+            };
+            ConfigurationService.Util.getInstance().compare(callback);
         }
 
     }

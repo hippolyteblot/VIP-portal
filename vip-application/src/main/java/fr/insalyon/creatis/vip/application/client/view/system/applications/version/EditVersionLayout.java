@@ -143,9 +143,14 @@ public class EditVersionLayout extends AbstractFormLayout {
             @Override
             public void onClick(ClickEvent event) {
                 if (versionField.validate()) {
-                    AppVersion toSave = new AppVersion(applicationName, versionField.getValueAsString().trim(),
-                            descriptorField.getValueAsString(), settingsToMap(), isVisibleField.getValueAsBoolean(),
-                            sourceField.getValueAsString(), noteField.getValueAsString().trim());
+                    AppVersion toSave = new AppVersion(
+                            applicationName,
+                            versionField.getValueAsString().trim(),
+                            descriptorField.getValueAsString(),
+                            settingsToMap(),
+                            isVisibleField.getValueAsBoolean(),
+                            sourceField.getValueAsString(),
+                            noteField.getValueAsString() == null ? null : noteField.getValueAsString().trim());
 
                     toSave.setResources(resourcesToSet(Arrays.asList(resourcesList.getValues())));
                     toSave.setTags(tagsToSet(toSave.getApplicationName(), toSave.getVersion()));
@@ -307,7 +312,7 @@ public class EditVersionLayout extends AbstractFormLayout {
             this.descriptorField.setDisabled(true);
             this.isVisibleField.setValue(isVisible);
             this.sourceField.setValue(source);
-            this.noteField.setValue(note);
+            this.noteField.setValue(note == null ? "" : note);
             this.resourcesList.setValues(resources);
             this.removeButton.setDisabled(false);
             this.newVersion = false;

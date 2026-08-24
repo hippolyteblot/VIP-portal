@@ -138,14 +138,19 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public User get(String email) throws DAOException {
-        String query =  "SELECT " + FIELDS
+        String query =  "SELECT " + FIELDS + ", pass "
         +               "FROM VIPUsers WHERE email=?";
         try (PreparedStatement ps = getConnection().prepareStatement(query)){
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                return userFromRs(rs);
+                User user = userFromRs(rs);
+                // GWT needs to know if there is a password or not
+                if (rs.getString("pass") != null) {
+                    user.setPassword("");
+                }
+                return user;
             }
 
             logger.error("There is no user registered with the e-mail {}", email);
@@ -308,7 +313,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
         +               "code = ?, confirmed = ?, folder = ?, session = ?, registration = ?, last_login = ?, "
         +               "level = ?, country_code = ?, max_simulations = ?, termsUse = ?, lastUpdatePublications = ?, "
         +               "failed_authentications = ?, account_locked = ? "
-        +               "WHERE email = ?";
+        +               "WHERE id = ?";
 
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             ps.setString(1, user.getEmail());
@@ -329,7 +334,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             ps.setTimestamp(16, user.getLastUpdatePublications());
             ps.setInt(17, user.getFailedAuthentications());
             ps.setBoolean(18, user.isAccountLocked());
-            ps.setString(19, user.getEmail());
+            ps.setString(19, user.getId());
 
             ps.executeUpdate();
 
@@ -893,6 +898,9 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
 
     @Override
     public List<User> getByFullNames(List<String> fullNames) throws DAOException {
+        if (fullNames == null || fullNames.isEmpty()) {
+            return new ArrayList<>();
+        }
         String query =  "SELECT " + FIELDS
                 +               "FROM VIPUsers WHERE CONCAT(first_name, ' ', last_name) IN ("
                 + fullNames.stream().map(v -> "?").collect(Collectors.joining(", "))
@@ -913,7 +921,7 @@ public class UserData extends JdbcDaoSupport implements UserDAO {
             return users;
 
         } catch (SQLException ex) {
-            logger.error("Error getting all administrators with fullnames : {}", fullNames, ex);
+            logger.error("Error getting users with fullnames : {}", fullNames, ex);
             throw new DAOException(ex);
         }
     }

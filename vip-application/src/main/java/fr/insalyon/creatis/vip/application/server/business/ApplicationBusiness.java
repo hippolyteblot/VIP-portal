@@ -42,13 +42,24 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void add(Application app) throws VipException {
+        // must have name and groups
+        assertStringInputNotNullNotBlank(app.getName(), "name", "Must be present at creation");
+        assertInputIsValid(app.getGroups() != null, "groups", "Must be present at creation");
         permissions.filter((chain) -> chain
             .admin()
             .developer(() -> {
                 // developers can only assign from private groups they belong to
                 // at application creation
                 permissions.checkOnlyUserPrivateGroups(app.getGroups());
+                // dev cannot set the owner to someone else
+                if (app.getOwner() != null && ! app.getOwner().equals(getUserEmail())) {
+                    logger.error("{} cannot set application owner to {}", getUserEmail(), app.getOwner());
+                    throw new VipException(DefaultError.BAD_INPUT_FIELD, "owner", "Cannot set someone else");
+                }
             }));
+        if (app.getOwner() == null) {
+            app.setOwner(getUserEmail());
+        }
         try {
             applicationDAO.add(app);
 
@@ -83,6 +94,10 @@ public class ApplicationBusiness extends CommonBusiness {
 
     @VIPExternalSafe
     public void update(Application app) throws VipException {
+        // must have name and owner and groups
+        assertStringInputNotNullNotBlank(app.getName(), "name", "Must be present at update");
+        assertStringInputNotNullNotBlank(app.getOwner(), "owner", "Must be present at update");
+        assertInputIsValid(app.getGroups() != null, "groups", "Must be present at update");
         Application existingApp = permissions.shouldExist(get(app.getName()), Application.class, app.getName());
 
         permissions.filter((chain) -> chain
@@ -92,6 +107,12 @@ public class ApplicationBusiness extends CommonBusiness {
                 permissions.checkUnchanged(app.getGroups(), existingApp.getGroups());
                 // edition only on application from privates groups
                 permissions.checkOnlyUserPrivateGroups(existingApp.getGroups());
+                // dev cannot change the owner
+                if ( ! app.getOwner().equals(existingApp.getOwner())) {
+                    logger.error("{} cannot change application owner from {} to {}",
+                            getUserEmail(), existingApp.getOwner(), app.getOwner());
+                    throw new VipException(DefaultError.BAD_INPUT_FIELD, "owner", "Cannot be changed by developper");
+                }
             }));
         try {
             Set<String> beforeGroupsNames = existingApp.getGroupsNames();

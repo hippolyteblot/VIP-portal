@@ -1,6 +1,7 @@
 {
   "name" : "Exec test 1",
   "pipelineIdentifier" : "test application/4.2",
+  "resultsLocation": "/vip/Home",
   "inputValues" :
   {
     "testFileInput" : "/vip/Home/path/to/input.in",

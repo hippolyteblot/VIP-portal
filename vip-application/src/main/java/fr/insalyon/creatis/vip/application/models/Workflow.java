@@ -48,6 +48,12 @@ public class Workflow implements IsSerializable {
     public Workflow() {
     }
 
+    public Workflow(String workflowName, String applicationName, String applicationVersion) {
+        this.workflowName = workflowName;
+        this.applicationName = applicationName;
+        this.applicationVersion = applicationVersion;
+    }
+
     public Workflow(String id, String workflowName, String applicationName, String applicationVersion,
                     User user, String status, Date startDate, Date endDate,
                     String engineEndpoint, String tags) {
@@ -91,7 +97,11 @@ public class Workflow implements IsSerializable {
     }
 
     public void setUser(User user) {
-        this.userId = user.getId();
+        if (user == null) {
+            this.userId = null;
+        } else {
+            this.userId = user.getId();
+        }
     }
 
     public String getApplicationName() {
@@ -100,6 +110,14 @@ public class Workflow implements IsSerializable {
 
     public String getApplicationVersion() {
         return applicationVersion;
+    }
+
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
+    }
+
+    public void setApplicationVersion(String applicationVersion) {
+        this.applicationVersion = applicationVersion;
     }
 
     public Date getStartDate() {

@@ -2,7 +2,7 @@ package fr.insalyon.creatis.vip.application.server.controller;
 
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.server.business.ListWorkflowsBusiness;
-import fr.insalyon.creatis.vip.application.server.business.util.WorkflowLaunchBusiness;
+import fr.insalyon.creatis.vip.application.server.business.WorkflowLaunchBusiness;
 import fr.insalyon.creatis.vip.core.client.DefaultError;
 import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.server.model.PrecisePage;
@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 
+/**
+ * Permissions:
+ * - To be defined
+ */
 @RestController()
 @RequestMapping("/workflows")
 public class WorkflowController {

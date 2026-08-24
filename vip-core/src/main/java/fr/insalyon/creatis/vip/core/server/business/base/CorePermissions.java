@@ -16,6 +16,10 @@ import fr.insalyon.creatis.vip.core.client.VipException;
 import fr.insalyon.creatis.vip.core.models.Group;
 import fr.insalyon.creatis.vip.core.models.User;
 
+/**
+ * TODO : add log (errors or warn or info when throwing an exception)
+ */
+
 @Service
 public class CorePermissions {
     private final Supplier<User> uSupplier;

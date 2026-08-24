@@ -12,6 +12,9 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import fr.insalyon.creatis.boutiques.model.Input;
+import fr.insalyon.creatis.vip.core.server.business.CoreUtil;
+import fr.insalyon.creatis.vip.core.server.business.base.CommonBusiness;
+import fr.insalyon.creatis.vip.core.server.business.base.PermissionChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +34,7 @@ import fr.insalyon.creatis.vip.core.server.business.Server;
 
 @Service
 @Transactional
-public class BoutiquesBusiness {
+public class BoutiquesBusiness extends CommonBusiness {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -48,6 +51,10 @@ public class BoutiquesBusiness {
 
     public String publishVersion(User user, String applicationName, String version)
             throws VipException {
+        permissions.filter((chain) -> {
+            chain.developer();
+            chain.admin();
+        });
         AppVersion appVersion = appVersionBusiness.getVersion(applicationName, version);
 
         // verify that the descriptor has an author
@@ -77,9 +84,12 @@ public class BoutiquesBusiness {
         // do the publishing, and cleanup tempFile+tempDir afterward
         String doi;
         try {
-            // call publish command
-            String command = "FILE=" + tempFile + "; " + server.getPublicationCommandLine();
-            List<String> output = runCommandAndFailOnError(command);
+            // call publish command. Come from conf, file will be added at the end
+            List<String> command = new ArrayList<>(List.of(server.getPublicationCommandLine().split(" ")));
+            command.addLast(tempFile.toString());
+            command.addFirst("publish");
+            command.addFirst("bosh");
+            List<String> output = CoreUtil.runCommand(command);
 
             // get the doi
             // There should be only one line with the DOI
@@ -87,20 +97,27 @@ public class BoutiquesBusiness {
 
             // save the doi in database
             saveDoiForVersion(doi, applicationName, version);
+        } catch (CoreUtil.CommandErrorException e) {
+            throw new VipException("bosh publish failed failed : " + e.getFirstLine());
         } finally {
             // failure to clean up temp files is not fatal
             try {
                 Files.delete(tempFile);
                 Files.delete(tempDir);
             } catch (IOException e) {
-                logger.warn("Failed deleting temporary file after publish:" + tempFile, e);
+                logger.warn("Failed deleting temporary file after publish:{}", tempFile, e);
             }
         }
         return doi;
     }
 
     public void validateBoutiquesFile(String localPath) throws VipException {
+        permissions.filter((chain) -> {
+            chain.developer();
+            chain.admin();
+        });
         // check file size, 100 kiB max
+
         try {
             if (Files.size(Paths.get(localPath)) >= 100 * 1024) {
                 throw new VipException("Boutiques file too large");
@@ -108,21 +125,21 @@ public class BoutiquesBusiness {
         } catch (IOException e) {
             throw new VipException("Can't get boutiques file size", e);
         }
-        // call validate command
-        String command = "bosh validate " + localPath;
         try {
             // if no exception : the command was successful
-            runCommand(command);
-        } catch (CommandErrorException e) {
+            CoreUtil.runCommand("bosh", "validate", localPath);
+        } catch (CoreUtil.CommandErrorException e) {
             // if there's an error, only keep the first line because the output can be very
-            // long
-            // and the first line contains the json validation error message
-            String firstLine = e.getCout().isEmpty() ? "< No Information> " : e.getCout().get(0);
-            throw new VipException(ApplicationError.BOUTIQUES_FILE_NOT_VALID, firstLine);
+            // long and the first line contains the json validation error message
+            throw new VipException(ApplicationError.BOUTIQUES_FILE_NOT_VALID, e.getFirstLine());
         }
     }
 
     public void validateBoutiquesString(String descriptorJson) throws VipException {
+        permissions.filter((chain) -> {
+            chain.developer();
+            chain.admin();
+        });
         try {
             // Write in a temp file to validate with the descriptor
             Path tempFile = Files.createTempFile("boutiques", ".json");
@@ -170,82 +187,7 @@ public class BoutiquesBusiness {
                     String.join("\n", publishOutput));
             throw new VipException("Wrong publication output.");
         }
-        return publishOutput.get(0);
-    }
-
-    private class CommandErrorException extends Exception {
-
-        private List<String> cout;
-
-        public CommandErrorException(List<String> cout) {
-            this.cout = cout;
-        }
-
-        public List<String> getCout() {
-            return cout;
-        }
-    }
-
-    private List<String> runCommandAndFailOnError(String command) throws VipException {
-        try {
-            return runCommand(command);
-        } catch (CommandErrorException e) {
-            throw new VipException("Command {" + command + "} failed : " + String.join("\n", e.getCout()));
-        }
-    }
-
-    private List<String> runCommand(String command) throws CommandErrorException, VipException {
-        ProcessBuilder builder = new ProcessBuilder("bash", "-c", command);
-        builder.redirectErrorStream(true);
-        Process process = null;
-        List<String> cout = new ArrayList<>();
-
-        try {
-            logger.info("Executing command : " + command);
-            process = builder.start();
-            BufferedReader r = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
-            String s;
-            while ((s = r.readLine()) != null) {
-                cout.add(s);
-            }
-            process.waitFor();
-            closeProcess(process);
-        } catch (IOException | InterruptedException e) {
-            logger.error("Unexpected error in a boutiques command : {}",
-                    String.join("\n", cout), e);
-            throw new VipException("Unexpected error in a boutiques command", e);
-        } finally {
-            closeProcess(process);
-        }
-
-        if (process.exitValue() != 0) {
-            logger.error("Command failed : {}",
-                    String.join("\n", cout));
-            throw new CommandErrorException(cout);
-        }
-        process = null;
-        return cout;
-    }
-
-    private void closeProcess(Process process) {
-        if (process == null)
-            return;
-        close(process.getOutputStream());
-        close(process.getInputStream());
-        close(process.getErrorStream());
-        process.destroy();
-    }
-
-    private void close(Closeable c) {
-
-        if (c != null) {
-            try {
-                c.close();
-            } catch (IOException ex) {
-                logger.error("Error closing {}", c);
-            }
-        }
+        return publishOutput.getFirst();
     }
 
     @SuppressWarnings("unchecked")

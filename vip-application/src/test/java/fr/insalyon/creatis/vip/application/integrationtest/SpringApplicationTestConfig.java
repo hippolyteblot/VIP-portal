@@ -77,23 +77,16 @@ public class SpringApplicationTestConfig {
             applicationBusiness.associate(new Application(appName, null), groupname);
         }
 
-        public AppVersion createAVersion(String appName, String versionName, boolean visible) throws VipException {
-            AppVersion appVersion = new AppVersion(appName, versionName, null, visible);
+        public AppVersion createAVersion(String appName, String versionName, String descriptor, boolean visible) throws VipException {
+            AppVersion appVersion = new AppVersion(appName, versionName, descriptor, visible);
             appVersionBusiness.add(appVersion);
             return appVersion;
         }
 
-        public AppVersion configureAnApplication(String appName, String versionName, String groupName) throws VipException {
+        public AppVersion configureAnAppVersion(String appName, String versionName, String descriptor, String groupName) throws VipException {
             groupBusiness.add(new Group(groupName, true, GroupType.APPLICATION));
             createAnApplication(appName, groupName);
-            return createAVersion(appName, versionName, true);
-        }
-
-        public void configureVersion(AppVersion appVersion, String descriptor) throws VipException {
-            appVersion = new AppVersion(
-                    appVersion.getApplicationName(), appVersion.getVersion(), descriptor,
-                    appVersion.isVisible());
-            appVersionBusiness.update(appVersion);
+            return createAVersion(appName, versionName, descriptor, true);
         }
     }
 
