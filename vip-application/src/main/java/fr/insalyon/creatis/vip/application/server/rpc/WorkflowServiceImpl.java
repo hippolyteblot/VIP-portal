@@ -40,23 +40,6 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     private ApplicationInputDAO applicationInputDAO;
     private BoutiquesBusiness boutiquesBusiness;
 
-    private Workflow stripInOutForGwt(Workflow w) {
-        if (w != null) {
-            w.setInputs(null);
-            w.setOutputs(null);
-        }
-        return w;
-    }
-
-    private List<Workflow> stripInOutForGwt(List<Workflow> list) {
-        if (list != null) {
-            for (Workflow w : list) {
-                stripInOutForGwt(w);
-            }
-        }
-        return list;
-    }
-
     @Override
     public void init() throws ServletException {
         super.init();
@@ -77,9 +60,9 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     @Override
     public List<Workflow> getSimulations() throws VipException {
         if (isSystemAdministrator()) {
-            return stripInOutForGwt(listWorkflowsBusiness.getAllWorkflows(null));
+            return listWorkflowsBusiness.getAllWorkflows(null);
         } else {
-            return stripInOutForGwt(listWorkflowsBusiness.getCurrentUserWorkflows(null));
+            return listWorkflowsBusiness.getCurrentUserWorkflows(null);
         }
     }
 
@@ -93,18 +76,18 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
     @Override
     public List<Workflow> getSimulations(Date lastDate) throws VipException {
         if (isSystemAdministrator()) {
-            return stripInOutForGwt(listWorkflowsBusiness.getAllWorkflows(lastDate));
+            return listWorkflowsBusiness.getAllWorkflows(lastDate);
         } else {
-            return stripInOutForGwt(listWorkflowsBusiness.getCurrentUserWorkflows(lastDate));
+            return listWorkflowsBusiness.getCurrentUserWorkflows(lastDate);
         }
     }
 
     @Override
     public List<Workflow> getSimulations(String userName, String applicationName,
                                          String status, Date startDate, Date endDate) throws VipException {
-        return stripInOutForGwt(listWorkflowsBusiness.refreshRunningWorkflows(
+        return listWorkflowsBusiness.refreshRunningWorkflows(
                     listWorkflowsBusiness.searchWithAdminRightsAndIncludeCurrentUserWorkflows(
-                        userName, applicationName,status, startDate, endDate, null)));
+                        userName, applicationName,status, startDate, endDate, null));
     }
 
     @Override
@@ -378,7 +361,7 @@ public class WorkflowServiceImpl extends AbstractRemoteServiceServlet implements
      * @throws VipException
      */
     public Workflow getSimulation(String workflowId) throws VipException {
-        return stripInOutForGwt(listWorkflowsBusiness.getNotRefreshedWorkflow(workflowId));
+        return listWorkflowsBusiness.getNotRefreshedWorkflow(workflowId);
     }
 
     public String getFile(String baseDir, String fileName) {

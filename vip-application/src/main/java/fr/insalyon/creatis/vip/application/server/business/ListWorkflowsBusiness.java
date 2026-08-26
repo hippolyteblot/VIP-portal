@@ -281,10 +281,14 @@ public class ListWorkflowsBusiness extends CommonBusiness {
 
 
     private Workflow parseDbWorkflow(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow) throws VipException {
-        return parseDbWorkflow(dbWorkflow, null);
+        return parseDbWorkflow(dbWorkflow, null, true);
     }
 
     private Workflow parseDbWorkflow(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow, Map<String, User> usersByFullname) throws VipException {
+        return parseDbWorkflow(dbWorkflow, usersByFullname, false);
+    }
+
+    private Workflow parseDbWorkflow(fr.insalyon.creatis.moteur.plugins.workflowsdb.bean.Workflow dbWorkflow, Map<String, User> usersByFullname, boolean populateInOut) throws VipException {
         Optional<User> workflowUser;
         if (usersByFullname == null) {
             workflowUser = userBusiness.getByFullname(dbWorkflow.getUsername());
@@ -317,29 +321,33 @@ public class ListWorkflowsBusiness extends CommonBusiness {
                     dbWorkflow.getEngine(),
                     dbWorkflow.getTags());
         }
-        try {
-            String folder = getUser().getFolder();
-            List<InOutData> inputData = workflowBusiness.getInputData(workflow.getID(), folder);
-            if (inputData != null && !inputData.isEmpty()) {
-                workflow.setInputs(inputData.stream()
-                    .collect(Collectors.groupingBy(
-                        InOutData::getProcessor,
-                        Collectors.collectingAndThen(
-                            Collectors.mapping(InOutData::getPath, Collectors.toList()),
-                            WorkflowInput::ofList
-                        )
-                    )));
+        if (populateInOut) {
+            try {
+                String folder = getUser().getFolder();
+                List<InOutData> inputData = workflowBusiness.getInputData(workflow.getID(), folder);
+                if (inputData != null && !inputData.isEmpty()) {
+                    workflow.setInputs(inputData.stream()
+                        .collect(Collectors.groupingBy(
+                            InOutData::getProcessor,
+                            Collectors.collectingAndThen(
+                                Collectors.mapping(InOutData::getPath,
+                                    Collectors.toCollection(ArrayList::new)),
+                                WorkflowInput::ofList
+                            )
+                        )));
+                }
+                List<InOutData> outputData = workflowBusiness.getOutputData(workflow.getID(), folder);
+                if (outputData != null && !outputData.isEmpty()) {
+                    workflow.setOutputs(outputData.stream()
+                        .collect(Collectors.groupingBy(
+                            InOutData::getProcessor,
+                            Collectors.mapping(InOutData::getPath,
+                                Collectors.toCollection(ArrayList::new))
+                        )));
+                }
+            } catch (VipException e) {
+                logger.warn("Could not populate inputs/outputs for workflow {}", workflow.getID(), e);
             }
-            List<InOutData> outputData = workflowBusiness.getOutputData(workflow.getID(), folder);
-            if (outputData != null && !outputData.isEmpty()) {
-                workflow.setOutputs(outputData.stream()
-                    .collect(Collectors.groupingBy(
-                        InOutData::getProcessor,
-                        Collectors.mapping(InOutData::getPath, Collectors.toList())
-                    )));
-            }
-        } catch (VipException e) {
-            logger.warn("Could not populate inputs/outputs for workflow {}", workflow.getID(), e);
         }
         return workflow;
     }
