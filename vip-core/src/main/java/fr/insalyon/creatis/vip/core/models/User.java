@@ -420,7 +420,7 @@ public class User implements IsSerializable {
                 groups, apiKey, groupsWithRoles, nextEmail, code, session, password, failedAuthentications);
     }
 
-    public static class GroupWithRole {
+    public static class GroupWithRole implements IsSerializable {
 
         private String name;
         private boolean publicGroup;
