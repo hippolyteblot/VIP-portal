@@ -420,6 +420,7 @@ public class User implements IsSerializable {
                 groups, apiKey, groupsWithRoles, nextEmail, code, session, password, failedAuthentications);
     }
 
+    @JsonView(DataViews.User.class)
     public static class GroupWithRole implements IsSerializable {
 
         private String name;
