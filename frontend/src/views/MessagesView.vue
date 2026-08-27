@@ -22,10 +22,16 @@ const { formatRelativeTime } = useFormatters()
 
 const isAdmin = computed(() => authStore.user?.level === 'Administrator')
 
+const isDeveloper = computed(() => authStore.user?.level === 'Developer')
+
+const canSendUserMessage = computed(() => isAdmin.value || isDeveloper.value)
+
 const canSendGroupMessage = computed(() => {
   if (isAdmin.value) return true
   return authStore.user?.groupsWithRoles?.some((g) => g.role === 'Admin') ?? false
 })
+
+const canSendMessage = computed(() => canSendUserMessage.value || canSendGroupMessage.value)
 
 function canDeleteGroupMessage(groupName: string | undefined): boolean {
   if (isAdmin.value) return true
@@ -96,6 +102,9 @@ async function sendMessage() {
 
 function openComposeModal() {
   resetForm()
+  if (!canSendUserMessage.value && canSendGroupMessage.value) {
+    composeMode.value = 'groups'
+  }
   showComposeModal.value = true
 }
 
@@ -527,7 +536,7 @@ watch(composeMode, (mode) => {
           </button>
         </div>
         <form class="mt-4 space-y-4" @submit.prevent="sendMessage">
-          <div v-if="canSendGroupMessage" class="flex flex-wrap gap-2">
+          <div v-if="canSendUserMessage && canSendGroupMessage" class="flex flex-wrap gap-2">
             <AppButton
               type="button"
               :variant="composeMode === 'users' ? 'primary' : 'secondary'"

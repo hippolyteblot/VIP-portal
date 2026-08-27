@@ -70,7 +70,7 @@ const team = [
     role: 'Research Engineer',
     org: 'CREATIS',
     url: null,
-    photo: '/team/bertrand_pautet.jpg',
+    photo: `${frontendBase}team/photo_bertrand.png`,
   },
   {
     name: 'Guillaume Vinet',
@@ -85,13 +85,6 @@ const team = [
     org: 'CREATIS',
     url: null,
     photo: `${frontendBase}team/mayssa_rouissi.png`,
-  },
-  {
-    name: 'Bertrand Patet',
-    role: '',
-    org: 'CREATIS',
-    url: null,
-    photo: `${frontendBase}team/photo_bertrand.png`,
   },
   {
     name: 'Hippolyte Blot',
