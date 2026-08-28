@@ -39,8 +39,9 @@ public class User implements IsSerializable {
     @JsonView(DataViews.User.class) private Set<Group> groups;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonView(DataViews.User.class) private String apiKey;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonView(DataViews.User.class) private Map<Group, GROUP_ROLE> groupsMap;
     
-    private Map<Group, GROUP_ROLE> groupsMap;
     private String nextEmail;
     private String code;
     private String session;
@@ -248,13 +249,10 @@ public class User implements IsSerializable {
         this.registration = registration;
     }
 
-    @JsonIgnore // this field can't be jsonified (need a string as key of map)
+    @JsonIgnore
     public void setGroups(Map<Group, GROUP_ROLE> groups) {
         this.groupsMap = groups;
         this.groups = new HashSet<>(groups.keySet());
-        for (Map.Entry<Group, GROUP_ROLE> groupRole : groups.entrySet()) {
-            groupRole.getKey().setRole(groupRole.getValue().name());
-        }
         filterGroups();
     }
 

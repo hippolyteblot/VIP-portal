@@ -3,6 +3,7 @@ package fr.insalyon.creatis.vip.core.models;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonKey;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -11,12 +12,11 @@ import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 @JsonView(DataViews.User.class)
 public class Group implements IsSerializable {
 
+    @JsonKey
     private String name;
     private boolean publicGroup;
     private GroupType type;
     private boolean auto;
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    private String role;
 
     public Group() { }
 
@@ -69,14 +69,6 @@ public class Group implements IsSerializable {
 
     public boolean isAuto() {
         return auto;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
     }
 
     @Override
