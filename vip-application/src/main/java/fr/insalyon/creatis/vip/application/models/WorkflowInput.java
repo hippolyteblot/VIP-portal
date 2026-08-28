@@ -6,6 +6,7 @@ import fr.insalyon.creatis.vip.core.server.inter.DataViews;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
+import java.util.ArrayList;
 
 @JsonView(DataViews.User.class)
 public class WorkflowInput implements IsSerializable {
@@ -21,7 +22,7 @@ public class WorkflowInput implements IsSerializable {
     }
 
     public static WorkflowInput ofValue(String value) {
-        return ofList(new java.util.ArrayList<>(List.of(value)));
+        return ofList(new ArrayList<>(List.of(value)));
     }
 
     public static WorkflowInput ofinterval(List<Double> values) {
@@ -39,7 +40,7 @@ public class WorkflowInput implements IsSerializable {
     }
 
     public void setValues(List<String> values) {
-        this.values = values;
+        this.values = new ArrayList<>(values);
     }
 
     public List<Double> getInterval() {
@@ -47,6 +48,6 @@ public class WorkflowInput implements IsSerializable {
     }
 
     public void setInterval(List<Double> interval) {
-        this.interval = interval;
+        this.interval = new ArrayList<>(interval);
     }
 }
