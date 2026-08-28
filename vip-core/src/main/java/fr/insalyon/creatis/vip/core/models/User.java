@@ -37,7 +37,6 @@ public class User implements IsSerializable {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonView(DataViews.User.class) private Timestamp lastUpdatePublications;
     @JsonView(DataViews.User.class) private Set<Group> groups;
-    @JsonView(DataViews.User.class) private List<GroupWithRole> groupsWithRoles;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonView(DataViews.User.class) private String apiKey;
     
@@ -253,10 +252,9 @@ public class User implements IsSerializable {
     public void setGroups(Map<Group, GROUP_ROLE> groups) {
         this.groupsMap = groups;
         this.groups = new HashSet<>(groups.keySet());
-        this.groupsWithRoles = groups.entrySet().stream()
-                .filter(e -> e.getValue() != GROUP_ROLE.None)
-                .map(e -> new GroupWithRole(e.getKey(), e.getValue().name()))
-                .collect(Collectors.toList());
+        for (Map.Entry<Group, GROUP_ROLE> groupRole : groups.entrySet()) {
+            groupRole.getKey().setRole(groupRole.getValue().name());
+        }
         filterGroups();
     }
 
@@ -304,10 +302,6 @@ public class User implements IsSerializable {
 
     public Set<Group> getGroups() {
         return groups == null ? Collections.emptySet() : groups;
-    }
-
-    public List<GroupWithRole> getGroupsWithRoles() {
-        return groupsWithRoles == null ? Collections.emptyList() : groupsWithRoles;
     }
 
     @JsonIgnore
@@ -404,7 +398,6 @@ public class User implements IsSerializable {
                 && Objects.equals(lastUpdatePublications, user.lastUpdatePublications)
                 && Objects.equals(groups, user.groups)
                 && Objects.equals(apiKey, user.apiKey)
-                && Objects.equals(groupsWithRoles, user.groupsWithRoles)
                 && Objects.equals(nextEmail, user.nextEmail)
                 && Objects.equals(nextEmail, user.nextEmail)
                 && Objects.equals(code, user.code)
@@ -417,66 +410,6 @@ public class User implements IsSerializable {
     public int hashCode() {
         return Objects.hash(accountLocked, folder, id, firstName, lastName, email, confirmed, institution,
                 registration, lastLogin, level, maxRunningSimulations, countryCode, termsOfUse, lastUpdatePublications,
-                groups, apiKey, groupsWithRoles, nextEmail, code, session, password, failedAuthentications);
-    }
-
-    @JsonView(DataViews.User.class)
-    public static class GroupWithRole implements IsSerializable {
-
-        private String name;
-        private boolean publicGroup;
-        private GroupType type;
-        private boolean auto;
-        private String role;
-
-        public GroupWithRole() { }
-
-        public GroupWithRole(Group group, String role) {
-            this.name = group.getName();
-            this.publicGroup = group.isPublicGroup();
-            this.type = group.getType();
-            this.auto = group.isAuto();
-            this.role = role;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public boolean isPublicGroup() {
-            return publicGroup;
-        }
-
-        public void setPublicGroup(boolean publicGroup) {
-            this.publicGroup = publicGroup;
-        }
-
-        public GroupType getType() {
-            return type;
-        }
-
-        public void setType(GroupType type) {
-            this.type = type;
-        }
-
-        public boolean isAuto() {
-            return auto;
-        }
-
-        public void setAuto(boolean auto) {
-            this.auto = auto;
-        }
-
-        public String getRole() {
-            return role;
-        }
-
-        public void setRole(String role) {
-            this.role = role;
-        }
+                groups, apiKey, nextEmail, code, session, password, failedAuthentications);
     }
 }
