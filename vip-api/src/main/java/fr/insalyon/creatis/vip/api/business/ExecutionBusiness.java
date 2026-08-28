@@ -472,7 +472,7 @@ public class ExecutionBusiness {
             return;
         }
         Workflow s = listWorkflowsBusiness.getNotRefreshedWorkflow(executionId);
-        if (s.getUserFullName().equals(user.getFullName())) {
+        if (s.getUserFullName() != null && s.getUserFullName().equals(user.getFullName())) {
             return;
         }
         logger.error("Permission denied for {} on exec {}", user, executionId);

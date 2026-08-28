@@ -344,7 +344,7 @@ public class ExecutionControllerIT extends BaseRestApiSpringIT {
 
         when(workflowDAO.get(eq(WORKFLOW_2.getID()))).thenReturn(w2, (Workflow) null);
         Output output = new Output(new OutputID("workflowID", resultPath, "processor"), DataType.URI, "port");
-        when(outputDAO.get(eq(WORKFLOW_2.getID()))).thenReturn(Arrays.asList(output), (List<Output>) null);
+        when(outputDAO.get(eq(WORKFLOW_2.getID()))).thenReturn(Arrays.asList(output), Arrays.asList(output), (List<Output>) null);
 
         Mockito.when(server.getDataManagerUsersHome()).thenReturn("/root/user");
         Mockito.when(gridaClient.getPathInfo(resultPath)).thenReturn(new GridPathInfo(true, GridData.Type.File));
