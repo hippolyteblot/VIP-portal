@@ -27,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-// import static fr.insalyon.creatis.vip.core.client.CoreModule.user;
-
 @Service
 @Transactional
 public class WorkflowLaunchBusiness extends CommonBusiness {
