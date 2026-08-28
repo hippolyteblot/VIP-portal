@@ -27,8 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
-// import static fr.insalyon.creatis.vip.core.client.CoreModule.user;
-
 @Service
 @Transactional
 public class WorkflowLaunchBusiness extends CommonBusiness {
@@ -79,10 +77,10 @@ public class WorkflowLaunchBusiness extends CommonBusiness {
                 Double start = Double.parseDouble(values[0]);
                 Double stop = Double.parseDouble(values[1]);
                 Double step = Double.parseDouble(values[2]);
-                inputsMap.put(inputName, WorkflowInput.ofinterval(List.of(start,stop,step)));
+                inputsMap.put(inputName, WorkflowInput.ofinterval(List.of(start, stop, step)));
             } else if (valuesStr.contains(ApplicationConstants.SEPARATOR_LIST)) {
                 String[] values = valuesStr.split(ApplicationConstants.SEPARATOR_LIST);
-                inputsMap.put(inputName, WorkflowInput.ofList(Arrays.asList(values)));
+                inputsMap.put(inputName, WorkflowInput.ofList(List.of(values)));
             } else {
                 inputsMap.put(inputName, WorkflowInput.ofList(List.of(valuesStr)));
             }

@@ -1,5 +1,7 @@
 package fr.insalyon.creatis.vip.application.server.controller;
 
+import java.util.Date;
+
 import fr.insalyon.creatis.vip.application.models.Workflow;
 import fr.insalyon.creatis.vip.application.server.business.ListWorkflowsBusiness;
 import fr.insalyon.creatis.vip.application.server.business.WorkflowLaunchBusiness;
@@ -13,8 +15,6 @@ import jakarta.validation.constraints.PositiveOrZero;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Date;
 
 /**
  * Permissions:
@@ -33,6 +33,7 @@ public class WorkflowController {
         this.listWorkflowsBusiness = listWorkflowsBusiness;
     }
 
+    // TODO : add filters : status, user, application, start date, end date
     @GetMapping
     public PrecisePage<Workflow> list(
             @RequestParam(defaultValue = "0") @PositiveOrZero int offset,
@@ -40,15 +41,10 @@ public class WorkflowController {
             @RequestParam(defaultValue = "true") boolean refreshed,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate) throws VipException {
-        PrecisePage<Workflow> workflows;
-        if (search != null || status != null || startDate != null || endDate != null) {
-            workflows = listWorkflowsBusiness.searchCurrentUserWorkflowsPaginated(
-                    offset, quantity, search, status, startDate, endDate);
-        } else {
-            workflows = listWorkflowsBusiness.getCurrentUserWorkflowsPaginated(offset, quantity, null);
-        }
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) throws VipException {
+        PrecisePage<Workflow> workflows = listWorkflowsBusiness.searchOwnWorkflowsPaginated(
+                offset, quantity, search, status, startDate, endDate);
         if (refreshed) {
             listWorkflowsBusiness.refreshRunningWorkflows(workflows.data);
         }
