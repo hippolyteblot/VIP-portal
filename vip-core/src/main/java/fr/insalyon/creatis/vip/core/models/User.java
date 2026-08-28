@@ -39,7 +39,6 @@ public class User implements IsSerializable {
     @JsonView(DataViews.User.class) private Set<Group> groups;
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonView(DataViews.User.class) private String apiKey;
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @JsonView(DataViews.User.class) private Map<Group, GROUP_ROLE> groupsMap;
     
     private String nextEmail;
@@ -396,7 +395,6 @@ public class User implements IsSerializable {
                 && Objects.equals(lastUpdatePublications, user.lastUpdatePublications)
                 && Objects.equals(groups, user.groups)
                 && Objects.equals(apiKey, user.apiKey)
-                && Objects.equals(nextEmail, user.nextEmail)
                 && Objects.equals(nextEmail, user.nextEmail)
                 && Objects.equals(code, user.code)
                 && Objects.equals(session, user.session)
