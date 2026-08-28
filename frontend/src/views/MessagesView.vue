@@ -31,6 +31,8 @@ const canSendGroupMessage = computed(() => {
   return Object.values(authStore.user?.groupsMap ?? {}).some((role) => role === 'Admin')
 })
 
+const canSendMessage = computed(() => canSendUserMessage.value || canSendGroupMessage.value)
+
 function canDeleteGroupMessage(groupName: string | undefined): boolean {
   if (isAdmin.value) return true
   if (!groupName) return false
@@ -283,7 +285,7 @@ watch(composeMode, (mode) => {
           {{ messagesStore.unreadCount }}
         </AppBadge>
       </h1>
-      <AppButton @click="openComposeModal">
+      <AppButton v-if="canSendMessage" @click="openComposeModal">
         <Plus class="h-4 w-4" />
         New message
       </AppButton>
