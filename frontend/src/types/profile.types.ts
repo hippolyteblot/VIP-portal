@@ -1,5 +1,4 @@
 import type { Group } from './group.types'
-import type { GroupWithRole } from './user.types'
 
 export interface ProfileUser {
   id: string
@@ -14,7 +13,6 @@ export interface ProfileUser {
   lastUpdatePublications: string | null
   welcomeDismissed: string | null
   groups: Group[]
-  groupsWithRoles?: GroupWithRole[]
   folder?: string
 }
 
