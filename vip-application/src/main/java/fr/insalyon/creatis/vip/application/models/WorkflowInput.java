@@ -22,7 +22,7 @@ public class WorkflowInput implements IsSerializable {
     }
 
     public static WorkflowInput ofValue(String value) {
-        return ofList(new ArrayList<>(List.of(value)));
+        return ofList(List.of(value));
     }
 
     public static WorkflowInput ofinterval(List<Double> values) {
