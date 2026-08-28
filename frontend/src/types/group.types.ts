@@ -3,7 +3,6 @@ export interface Group {
   publicGroup: boolean
   type: string
   auto: boolean
-  role?: string
 }
 
 export type GroupType = 'APPLICATION' | 'RESOURCE'

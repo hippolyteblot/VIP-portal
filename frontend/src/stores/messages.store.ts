@@ -145,7 +145,9 @@ export const useMessagesStore = defineStore('messages', () => {
         availableGroups.value = []
       }
     } else {
-      availableGroups.value = (authStore.user?.groups ?? []).filter((g) => g.name)
+      availableGroups.value = (authStore.user?.groups ?? []).filter(
+        (g) => g.name && authStore.user?.groupsMap?.[g.name],
+      )
     }
 
     if (availableGroups.value.length === 0) {

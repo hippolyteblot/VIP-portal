@@ -28,13 +28,13 @@ const canSendUserMessage = computed(() => isAdmin.value || isDeveloper.value)
 
 const canSendGroupMessage = computed(() => {
   if (isAdmin.value) return true
-  return authStore.user?.groups?.some((g) => g.role === 'Admin') ?? false
+  return Object.values(authStore.user?.groupsMap ?? {}).some((role) => role === 'Admin')
 })
 
 function canDeleteGroupMessage(groupName: string | undefined): boolean {
   if (isAdmin.value) return true
   if (!groupName) return false
-  return authStore.user?.groups?.some((g) => g.role === 'Admin' && g.name === groupName) ?? false
+  return authStore.user?.groupsMap?.[groupName] === 'Admin'
 }
 
 const showComposeModal = ref(false)
@@ -227,7 +227,8 @@ watch(
           } else {
             // For normal users, only suggest groups where they are an Admin
             if (activeQuery.value === query) {
-              const myAdminGroups = authStore.user?.groups?.filter((g) => g.role === 'Admin') ?? []
+              const myAdminGroups =
+                authStore.user?.groups?.filter((g) => authStore.user?.groupsMap?.[g.name] === 'Admin') ?? []
               groupSuggestions.value = myAdminGroups.filter((g) =>
                 g.name.toLowerCase().includes(query.toLowerCase()),
               )

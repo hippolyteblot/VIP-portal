@@ -13,6 +13,7 @@ export interface ProfileUser {
   lastUpdatePublications: string | null
   welcomeDismissed: string | null
   groups: Group[]
+  groupsMap?: Record<string, string>
   folder?: string
 }
 
